@@ -155,14 +155,21 @@ export function LandingPage() {
       </section>
 
       {/* Desire */}
-      <section className="bg-desire py-20 transition-colors duration-200" aria-labelledby="desire-section">
+      <section
+        className="relative isolate overflow-hidden py-20 transition-colors duration-200"
+        aria-labelledby="desire-section"
+      >
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-accent/40 via-background/60 to-accent/10 dark:from-accent/35 dark:via-slate-900/70 dark:to-slate-950" />
         <div className="mx-auto w-full max-w-6xl px-6">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Desire</p>
-            <h2 id="desire-section" className="mt-3 text-3xl font-bold sm:text-4xl">
+            <h2
+              id="desire-section"
+              className="mt-3 text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl"
+            >
               양성화의 장점과 확실한 절차
             </h2>
-            <p className="mt-4 text-base text-muted-foreground">
+            <p className="mt-4 text-base text-slate-700 dark:text-slate-200">
               30년 노하우로 진행되는 맞춤 컨설팅과 함께 합법화의 모든 과정을 한 번에 해결하세요.
             </p>
           </div>
@@ -172,7 +179,9 @@ export function LandingPage() {
             ))}
           </div>
           <div className="mt-16 space-y-6">
-            <h3 className="text-center text-2xl font-semibold text-foreground">양성화 절차 타임라인</h3>
+            <h3 className="text-center text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              양성화 절차 타임라인
+            </h3>
             <Timeline steps={timelineSteps} />
           </div>
         </div>
