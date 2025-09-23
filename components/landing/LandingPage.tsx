@@ -60,12 +60,15 @@ export function LandingPage() {
       <ConsultationModal open={isModalOpen} onClose={() => setModalOpen(false)} />
 
       {/* Attention */}
-      <section className="relative isolate overflow-hidden bg-slate-900 text-white" aria-labelledby="attention-section">
+      <section
+        className="relative isolate overflow-hidden bg-slate-900/50 text-white"
+        aria-labelledby="attention-section"
+      >
         <div
           className="absolute inset-0 -z-10"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(24,24,27,0.35), rgba(24,24,27,0.35)), url('https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1600&q=80')",
+              "linear-gradient(rgba(24,24,27,0.15), rgba(24,24,27,0.15)), url('https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1600&q=80')",
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
