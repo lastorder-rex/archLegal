@@ -110,14 +110,18 @@ export function LandingPage() {
       </section>
 
       {/* Interest */}
-      <section className="bg-secondary py-20 transition-colors duration-200 dark:bg-secondary" aria-labelledby="interest-section">
+      <section
+        className="relative isolate overflow-hidden border-y border-primary/10 bg-secondary py-20 transition-colors duration-200 dark:border-primary/20 dark:bg-secondary"
+        aria-labelledby="interest-section"
+      >
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/15 via-white to-transparent dark:from-primary/25 dark:via-slate-900/80 dark:to-slate-950" />
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-xl space-y-4">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Interest</p>
-            <h2 id="interest-section" className="text-3xl font-bold sm:text-4xl">
+            <h2 id="interest-section" className="text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl">
               법 시행 안내 & 소요 기간
             </h2>
-            <p className="text-base text-muted-foreground">
+            <p className="text-base text-slate-700 dark:text-slate-200">
               특별법 시행 기간은 단 1년입니다. 건축위원회 심의 일정까지 고려하면 지금 바로 준비해야
               여유롭게 절차를 마칠 수 있습니다.
             </p>
