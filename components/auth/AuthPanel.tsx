@@ -26,12 +26,14 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
 
   const handleSignIn = useCallback(async () => {
     setLoading(true);
-    const origin = window.location.origin;
+    const origin =
+      process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
 
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
       options: {
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo: `${cleanOrigin}/auth/callback`,
         queryParams: {
           scope: 'account_email'
         }
