@@ -37,6 +37,22 @@ function extractProfileDetails(profile?: unknown) {
   };
 }
 
+function resolveUserPhone(user: unknown) {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+
+  if ('phone' in user) {
+    const phoneValue = (user as { phone?: unknown }).phone;
+
+    if (typeof phoneValue === 'string' || phoneValue === null) {
+      return phoneValue;
+    }
+  }
+
+  return null;
+}
+
 export const authOptions: NextAuthOptions = {
   secret: ensureEnv('NEXTAUTH_SECRET'),
   providers: [
@@ -95,7 +111,7 @@ export const authOptions: NextAuthOptions = {
               auth_id: authId,
               email: email ?? user.email ?? null,
               full_name: name ?? user.name ?? null,
-              phone: phone ?? (user as Record<string, string | null | undefined>).phone ?? null
+              phone: phone ?? resolveUserPhone(user)
             },
             { onConflict: 'auth_id' }
           );
