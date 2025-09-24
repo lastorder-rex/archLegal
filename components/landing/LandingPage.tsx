@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 import { CTAButton } from '../ui/cta-button';
 import { ConsultationModal } from './ConsultationModal';
+import { LoginModal } from './LoginModal';
 import { InfoCard } from './InfoCard';
 import { Timeline } from './Timeline';
 
@@ -54,10 +58,69 @@ const timelineSteps = [
 
 export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
+  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [sessionUser, setSessionUser] = useState<User | null>(null);
+  const supabase = useMemo(() => createClientComponentClient(), []);
+  const router = useRouter();
+  const procedureGuideUrl = useMemo(() => encodeURI('/docu/양성화 절차 안내.pdf'), []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadSession = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (active) {
+        setSessionUser(user ?? null);
+        if (user) {
+          setLoginModalOpen(false);
+        }
+      }
+    };
+
+    loadSession();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionUser(session?.user ?? null);
+      if (session?.user) {
+        setLoginModalOpen(false);
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setSessionUser(null);
+      setLoginModalOpen(false);
+      router.refresh();
+      router.replace('/landing');
+    }
+  }, [router, supabase]);
+
+  const handleDownloadGuide = useCallback(() => {
+    const link = document.createElement('a');
+    link.href = procedureGuideUrl;
+    link.download = '양성화 절차 안내.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [procedureGuideUrl]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground transition-colors duration-200">
       <ConsultationModal open={isModalOpen} onClose={() => setModalOpen(false)} />
+      <LoginModal open={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
       {/* Attention */}
       <section
@@ -73,6 +136,44 @@ export function LandingPage() {
             backgroundPosition: 'center'
           }}
         />
+        <header className="absolute inset-x-0 top-0 z-20 bg-slate-950/30 pb-4 pt-6 backdrop-blur">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6">
+            <a
+              href="#attention-section"
+              className="text-sm font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:text-white"
+            >
+              Interworld
+            </a>
+            <nav className="flex flex-wrap items-center justify-end gap-4 text-xs font-medium text-white/80 sm:gap-8 sm:text-sm">
+              <a href="#interest-section" className="transition hover:text-white">
+                법 시행 안내
+              </a>
+              <a href="#desire-section" className="transition hover:text-white">
+                양성화 절차
+              </a>
+              <a href="#action-section" className="transition hover:text-white">
+                상담 안내
+              </a>
+              {sessionUser ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="rounded-full border border-white/50 px-4 py-1.5 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 sm:text-sm"
+                >
+                  Logout
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setLoginModalOpen(true)}
+                  className="rounded-full border border-white/50 px-4 py-1.5 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 sm:text-sm"
+                >
+                  Login
+                </button>
+              )}
+            </nav>
+          </div>
+        </header>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-24 sm:py-32 lg:flex-row lg:items-center lg:gap-16">
           <div className="flex-1 space-y-6">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground opacity-70">
@@ -82,14 +183,15 @@ export function LandingPage() {
               특정건축물 정리에 관한 특별법 안내
             </h1>
             <p className="text-lg text-primary-foreground opacity-80 sm:text-xl">
-              2025년 특정건축물 정리에 관한 특별 조치법 시행 – 단 1년의 기회! 지금 준비를 시작해야
+              2025년 특정건축물 정리에 관한 특별 조치법 시행
+              단 1년의 기회! 지금 준비를 시작해야
               안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
               <CTAButton className="sm:w-auto" onClick={() => setModalOpen(true)}>
                 무료 상담 신청
               </CTAButton>
-              <CTAButton tone="secondary" className="sm:w-auto" onClick={() => setModalOpen(true)}>
+              <CTAButton tone="secondary" className="sm:w-auto" onClick={handleDownloadGuide}>
                 절차 자세히 보기
               </CTAButton>
             </div>
@@ -109,6 +211,18 @@ export function LandingPage() {
               <p className="mt-6 text-sm font-medium text-amber-200">빠르게 준비해야 안전합니다.</p>
             </div>
           </div>
+        </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-[0.625rem] font-semibold uppercase tracking-[0.35em] text-white/70"
+        >
+          <div className="flex h-14 w-8 items-start justify-center rounded-full border border-white/60 p-2">
+            <span
+              className="block h-2 w-2 rounded-full bg-white/80"
+              style={{ animation: 'scroll-indicator 2.4s ease-in-out infinite' }}
+            />
+          </div>
+          <span>Scroll</span>
         </div>
       </section>
 
@@ -203,29 +317,53 @@ export function LandingPage() {
                 30년 전문가와 함께 안전하게 합법화 하세요. 빠른 대응이 합법화 성공을 결정합니다.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <CTAButton className="sm:w-auto" onClick={() => setModalOpen(true)}>
-                  지금 상담 신청하기
+                <CTAButton
+                  tone="secondary"
+                  className="sm:w-auto hover:bg-[#ffeb00] hover:text-black focus-visible:ring-[#ffeb00]"
+                  onClick={() => setModalOpen(true)}
+                >
+                  카카오톡 문의하기
                 </CTAButton>
-                <CTAButton tone="secondary" className="sm:w-auto" onClick={() => setModalOpen(true)}>
+                <CTAButton
+                  tone="secondary"
+                  className="sm:w-auto hover:bg-[#ffeb00] hover:text-black focus-visible:ring-[#ffeb00]"
+                  onClick={() => setModalOpen(true)}
+                >
                   문의 남기기
                 </CTAButton>
               </div>
             </div>
-              <div className="space-y-4 rounded-2xl border border-primary-foreground bg-primary-foreground p-8 text-sm border-opacity-20 bg-opacity-10">
+              <div className="space-y-4 rounded-2xl border border-primary-foreground bg-primary-foreground p-8 text-sm border-opacity-20 bg-opacity-10 text-black dark:text-black">
                 <div>
-                  <p className="font-semibold uppercase tracking-wide text-primary-foreground opacity-70">Contact</p>
-                  <p className="mt-1 text-base font-medium text-primary-foreground">
+                  <p className="font-semibold uppercase tracking-wide opacity-70">Contact</p>
+                  <p className="mt-1 text-base font-medium">
                     ㈜인터월드엔지니어링 건축사사무소
                   </p>
                 </div>
-                <div className="space-y-2 text-primary-foreground opacity-80">
-                  <p>웹사이트: <span className="font-semibold">www.양성화.com</span> / <span className="font-semibold">www.archlegal.co.kr</span></p>
-                  <p>전화번호: 02-0000-0000</p>
+                <div className="space-y-2 opacity-80">
+                  <p>문의전화: </p>
+                  <p><span className="font-semibold">010-7332-3815</span> / <span className="font-semibold">02-6348-1009</span></p>
                 </div>
             </div>
           </div>
         </div>
       </section>
+      <style jsx>{`
+        @keyframes scroll-indicator {
+          0% {
+            transform: translateY(0);
+            opacity: 0.55;
+          }
+          50% {
+            transform: translateY(10px);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(0);
+            opacity: 0.55;
+          }
+        }
+      `}</style>
     </div>
   );
 }
