@@ -26,7 +26,7 @@ export default async function HomePage() {
       profile = {
         auth_id: session.user.id,
         full_name: (session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email) ?? null,
-        email: session.user.email,
+        email: session.user.email ?? null,
         phone: session.user.phone ?? null
       };
     }
