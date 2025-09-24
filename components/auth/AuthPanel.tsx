@@ -33,7 +33,7 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
       options: {
         redirectTo: `${origin}/auth/callback`,
         queryParams: {
-          scope: 'account_email phone_number'
+          scope: 'account_email'
         }
       }
     });
@@ -41,9 +41,14 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
 
   const handleSignOut = useCallback(async () => {
     setLoading(true);
-    await supabase.auth.signOut();
-    setLoading(false);
-    router.refresh();
+
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setLoading(false);
+      router.refresh();
+      router.replace('/landing');
+    }
   }, [router, supabase]);
 
   if (sessionUser) {

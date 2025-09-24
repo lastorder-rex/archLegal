@@ -11,7 +11,7 @@ export default function AuthErrorPage({ searchParams }: { searchParams: { reason
           카카오 인증 중 문제가 발생했습니다. (사유: {reason})
         </p>
         <p className="text-xs text-muted-foreground opacity-80">
-          카카오 개발자 콘솔에서 `account_email`과 `phone_number` 권한이 허용되어 있는지 확인한 뒤 다시 시도해주세요.
+          카카오 개발자 콘솔에서 `account_email` 권한이 허용되어 있는지 확인한 뒤 다시 시도해주세요.
         </p>
         <Link
           href="/"
