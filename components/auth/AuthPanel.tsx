@@ -4,8 +4,9 @@ import type { User } from '@supabase/auth-helpers-nextjs';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
+import { getKakaoCallbackUrl } from '@/lib/env';
+import type { UserProfile } from '@/types/profile';
 import { Button } from '../ui/button';
-import type { UserProfile } from '../../types/profile';
 
 function resolveDisplayName(sessionUser: User | null, profile: UserProfile | null) {
   if (profile?.full_name) return profile.full_name;
@@ -26,19 +27,20 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
 
   const handleSignIn = useCallback(async () => {
     setLoading(true);
-    const origin =
-      process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
 
-    await supabase.auth.signInWithOAuth({
-      provider: 'kakao',
-      options: {
-        redirectTo: `${cleanOrigin}/auth/callback`,
-        queryParams: {
-          scope: 'account_email'
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: getKakaoCallbackUrl(),
+          queryParams: {
+            scope: 'account_email'
+          }
         }
-      }
-    });
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [supabase]);
 
   const handleSignOut = useCallback(async () => {

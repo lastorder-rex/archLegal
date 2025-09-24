@@ -2,6 +2,7 @@
 
 import { Dialog, Transition } from '@headlessui/react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getKakaoCallbackUrl } from '@/lib/env';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { CTAButton } from '../ui/cta-button';
 
@@ -16,15 +17,11 @@ export function LoginModal({ open, onClose }: LoginModalProps) {
 
   const handleLogin = useCallback(async () => {
     setLoading(true);
-    const origin =
-      process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: `${cleanOrigin}/auth/callback`,
+          redirectTo: getKakaoCallbackUrl(),
           queryParams: {
             scope: 'account_email'
           }
