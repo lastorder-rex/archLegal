@@ -47,7 +47,7 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
     } finally {
       setLoading(false);
       router.refresh();
-      router.replace('/landing');
+      router.replace('/');
     }
   }, [router, supabase]);
 

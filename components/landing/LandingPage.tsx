@@ -104,7 +104,7 @@ export function LandingPage() {
       setSessionUser(null);
       setLoginModalOpen(false);
       router.refresh();
-      router.replace('/landing');
+      router.replace('/');
     }
   }, [router, supabase]);
 
