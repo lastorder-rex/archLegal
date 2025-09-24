@@ -13,8 +13,7 @@ const themeInitializer = `(function() {
   const storageKey = 'ui-theme';
   const root = document.documentElement;
   const stored = window.localStorage.getItem(storageKey);
-  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = stored ?? (systemPrefersDark ? 'dark' : 'light');
+  const theme = stored ?? 'light';
 
   if (theme === 'dark') {
     root.classList.add('dark');
