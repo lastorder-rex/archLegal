@@ -3,7 +3,7 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { useEffect, useState } from 'react';
-import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
 type Props = {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function SupabaseProvider({ children, initialSession }: Props) {
-  const [supabase] = useState<SupabaseClient>(() => createClientComponentClient());
+  const [supabase] = useState(() => createClientComponentClient());
 
   useEffect(() => {
     // refresh session when auth state changes
