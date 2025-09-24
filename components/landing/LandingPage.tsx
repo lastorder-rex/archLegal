@@ -1,9 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { User } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { CTAButton } from '../ui/cta-button';
 import { ConsultationModal } from './ConsultationModal';
 import { LoginModal } from './LoginModal';
@@ -59,54 +57,25 @@ const timelineSteps = [
 export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-  const [sessionUser, setSessionUser] = useState<User | null>(null);
-  const supabase = useMemo(() => createClientComponentClient(), []);
-  const router = useRouter();
+  const { data: session } = useSession();
   const procedureGuideUrl = useMemo(() => encodeURI('/docu/양성화 절차 안내.pdf'), []);
 
   useEffect(() => {
-    let active = true;
-
-    const loadSession = async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
-      if (active) {
-        setSessionUser(user ?? null);
-        if (user) {
-          setLoginModalOpen(false);
-        }
-      }
-    };
-
-    loadSession();
-
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSessionUser(session?.user ?? null);
-      if (session?.user) {
-        setLoginModalOpen(false);
-      }
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
+    if (session?.user) {
+      setLoginModalOpen(false);
+    }
+  }, [session?.user?.id]);
 
   const handleLogout = useCallback(async () => {
-    try {
-      await supabase.auth.signOut();
-    } finally {
-      setSessionUser(null);
-      setLoginModalOpen(false);
-      router.refresh();
-      router.replace('/');
-    }
-  }, [router, supabase]);
+    // FIX: Use NextAuth sign-out to clear Kakao sessions consistently.
+    await signOut({ callbackUrl: '/' });
+  }, []);
+
+  const handleLoginClick = useCallback(() => {
+    setLoginModalOpen(true);
+    // FIX: Use NextAuth sign-in to avoid Supabase OAuth redirects.
+    void signIn('kakao', { callbackUrl: '/' });
+  }, []);
 
   const handleDownloadGuide = useCallback(() => {
     const link = document.createElement('a');
@@ -154,7 +123,7 @@ export function LandingPage() {
               <a href="#action-section" className="transition hover:text-white">
                 상담 안내
               </a>
-              {sessionUser ? (
+              {session?.user ? (
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -165,7 +134,7 @@ export function LandingPage() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setLoginModalOpen(true)}
+                  onClick={handleLoginClick}
                   className="rounded-full border border-white/50 px-4 py-1.5 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 sm:text-sm"
                 >
                   Login
@@ -333,17 +302,19 @@ export function LandingPage() {
                 </CTAButton>
               </div>
             </div>
-              <div className="space-y-4 rounded-2xl border border-primary-foreground bg-primary-foreground p-8 text-sm border-opacity-20 bg-opacity-10 text-black dark:text-black">
-                <div>
-                  <p className="font-semibold uppercase tracking-wide opacity-70">Contact</p>
-                  <p className="mt-1 text-base font-medium">
-                    ㈜인터월드엔지니어링 건축사사무소
-                  </p>
-                </div>
-                <div className="space-y-2 opacity-80">
-                  <p>문의전화: </p>
-                  <p><span className="font-semibold">010-7332-3815</span> / <span className="font-semibold">02-6348-1009</span></p>
-                </div>
+            <div className="space-y-4 rounded-2xl border border-primary-foreground bg-primary-foreground p-8 text-sm border-opacity-20 bg-opacity-10 text-black dark:text-black">
+              <div>
+                <p className="font-semibold uppercase tracking-wide opacity-70">Contact</p>
+                <p className="mt-1 text-base font-medium">
+                  ㈜인터월드엔지니어링 건축사사무소
+                </p>
+              </div>
+              <div className="space-y-2 opacity-80">
+                <p>문의전화: </p>
+                <p>
+                  <span className="font-semibold">010-7332-3815</span> / <span className="font-semibold">02-6348-1009</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>

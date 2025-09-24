@@ -1,59 +1,48 @@
 'use client';
 
-import type { User } from '@supabase/auth-helpers-nextjs';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
-import { getKakaoCallbackUrl } from '@/lib/env';
+import { useCallback, useState } from 'react';
+import type { Session } from 'next-auth';
+import { signIn, signOut } from 'next-auth/react';
 import type { UserProfile } from '@/types/profile';
 import { Button } from '../ui/button';
 
-function resolveDisplayName(sessionUser: User | null, profile: UserProfile | null) {
+type SessionUser = (Session['user'] & { id?: string | null; phone?: string | null }) | null;
+
+function resolveDisplayName(sessionUser: SessionUser, profile: UserProfile | null) {
   if (profile?.full_name) return profile.full_name;
-  if (sessionUser?.user_metadata?.name) return sessionUser.user_metadata.name as string;
-  if (sessionUser?.user_metadata?.full_name) return sessionUser.user_metadata.full_name as string;
+  if (sessionUser?.name) return sessionUser.name;
   return sessionUser?.email ?? '사용자';
 }
 
 type Props = {
-  sessionUser: User | null;
+  sessionUser: SessionUser;
   profile: UserProfile | null;
 };
 
 export default function AuthPanel({ sessionUser, profile }: Props) {
-  const supabase = useMemo(() => createClientComponentClient(), []);
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = useCallback(async () => {
     setLoading(true);
 
     try {
-      await supabase.auth.signInWithOAuth({
-        provider: 'kakao',
-        options: {
-          redirectTo: getKakaoCallbackUrl(),
-          queryParams: {
-            scope: 'account_email'
-          }
-        }
-      });
+      // FIX: Switch to NextAuth sign-in flow.
+      await signIn('kakao', { callbackUrl: '/' });
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   const handleSignOut = useCallback(async () => {
     setLoading(true);
 
     try {
-      await supabase.auth.signOut();
+      // FIX: Sign out via NextAuth to remove Kakao cookies.
+      await signOut({ callbackUrl: '/' });
     } finally {
       setLoading(false);
-      router.refresh();
-      router.replace('/');
     }
-  }, [router, supabase]);
+  }, []);
 
   if (sessionUser) {
     const displayName = resolveDisplayName(sessionUser, profile);
@@ -65,7 +54,9 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
           {profile?.email || sessionUser.email ? (
             <p className="text-sm text-muted-foreground">{profile?.email ?? sessionUser.email}</p>
           ) : null}
-          {profile?.phone ? <p className="text-sm text-muted-foreground">연락처: {profile.phone}</p> : null}
+          {profile?.phone || sessionUser.phone ? (
+            <p className="text-sm text-muted-foreground">연락처: {profile?.phone ?? sessionUser.phone}</p>
+          ) : null}
         </div>
         <Button onClick={handleSignOut} disabled={loading} variant="outline">
           카카오 로그아웃

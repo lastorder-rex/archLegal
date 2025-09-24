@@ -1,9 +1,8 @@
 'use client';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { getKakaoCallbackUrl } from '@/lib/env';
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
+import { signIn } from 'next-auth/react';
 import { CTAButton } from '../ui/cta-button';
 
 interface LoginModalProps {
@@ -12,29 +11,17 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ open, onClose }: LoginModalProps) {
-  const supabase = useMemo(() => createClientComponentClient(), []);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = useCallback(async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'kakao',
-        options: {
-          redirectTo: getKakaoCallbackUrl(),
-          queryParams: {
-            scope: 'account_email'
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Kakao sign-in failed', error);
-      }
+      // FIX: Trigger Kakao OAuth through NextAuth to avoid Supabase fallback.
+      await signIn('kakao', { callbackUrl: '/' });
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   return (
     <Transition appear show={open} as={Fragment}>
