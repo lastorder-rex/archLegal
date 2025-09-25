@@ -417,7 +417,15 @@ export function LandingPage() {
                 </div>
                 <div className="space-y-2 opacity-80">
                   <p>문의전화: </p>
-                  <p><span className="font-semibold">010-7332-3815</span> / <span className="font-semibold">02-6348-1009</span></p>
+                  <p>
+                    <a href="tel:01073323815" className="font-semibold hover:underline">
+                      010-7332-3815
+                    </a>
+                    <span className="px-1">/</span>
+                    <a href="tel:0263481009" className="font-semibold hover:underline">
+                      02-6348-1009
+                    </a>
+                  </p>
                 </div>
             </div>
           </div>
