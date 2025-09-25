@@ -1,10 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { Menu } from 'lucide-react';
 import { CTAButton } from '../ui/cta-button';
+import { ThemeToggle } from '../ui/theme-toggle';
+import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { ConsultationModal } from './ConsultationModal';
 import { LoginModal } from './LoginModal';
 import { InfoCard } from './InfoCard';
@@ -56,10 +59,17 @@ const timelineSteps = [
   '재산가치 상승'
 ];
 
+const navigationItems = [
+  { label: '법시행안내', target: 'attention-section' },
+  { label: '양성화절차', target: 'interest-section' },
+  { label: '상담안내', target: 'action-section' }
+];
+
 export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
+  const [isNavOpen, setNavOpen] = useState(false);
   const supabase = useMemo(() => createClientComponentClient(), []);
   const router = useRouter();
   const procedureGuideUrl = useMemo(() => encodeURI('/docu/양성화 절차 안내.pdf'), []);
@@ -117,6 +127,52 @@ export function LandingPage() {
     document.body.removeChild(link);
   }, [procedureGuideUrl]);
 
+  const handleSectionNavigate = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>, targetId: string) => {
+      event.preventDefault();
+      setNavOpen(false);
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    },
+    [setNavOpen]
+  );
+
+  const renderAuthButton = useCallback(
+    (size: 'desktop' | 'mobile') => {
+      const sizeClasses =
+        size === 'desktop'
+          ? 'px-4 py-1.5 text-xs sm:text-sm'
+          : 'px-3 py-1 text-xs';
+      const baseClasses =
+        'rounded-full border border-white/50 font-semibold text-white transition hover:border-white hover:bg-white/10';
+
+      if (sessionUser) {
+        return (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className={`${baseClasses} ${sizeClasses}`}
+          >
+            로그아웃
+          </button>
+        );
+      }
+
+      return (
+        <button
+          type="button"
+          onClick={() => setLoginModalOpen(true)}
+          className={`${baseClasses} ${sizeClasses}`}
+        >
+          로그인
+        </button>
+      );
+    },
+    [handleLogout, sessionUser, setLoginModalOpen]
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground transition-colors duration-200">
       <ConsultationModal open={isModalOpen} onClose={() => setModalOpen(false)} />
@@ -144,34 +200,51 @@ export function LandingPage() {
             >
               Interworld
             </a>
-            <nav className="flex flex-wrap items-center justify-end gap-4 text-xs font-medium text-white/80 sm:gap-8 sm:text-sm">
-              <a href="#interest-section" className="transition hover:text-white">
-                법 시행 안내
-              </a>
-              <a href="#desire-section" className="transition hover:text-white">
-                양성화 절차
-              </a>
-              <a href="#action-section" className="transition hover:text-white">
-                상담 안내
-              </a>
-              {sessionUser ? (
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="rounded-full border border-white/50 px-4 py-1.5 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 sm:text-sm"
-                >
-                  Logout
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setLoginModalOpen(true)}
-                  className="rounded-full border border-white/50 px-4 py-1.5 text-xs font-semibold text-white transition hover:border-white hover:bg-white/10 sm:text-sm"
-                >
-                  Login
-                </button>
-              )}
-            </nav>
+            <div className="flex items-center gap-3">
+              <nav className="hidden items-center gap-6 text-sm font-medium text-white/80 lg:flex">
+                {navigationItems.map(({ label, target }) => (
+                  <a
+                    key={target}
+                    href={`#${target}`}
+                    onClick={(event) => handleSectionNavigate(event, target)}
+                    className="transition hover:text-white"
+                  >
+                    {label}
+                  </a>
+                ))}
+                {renderAuthButton('desktop')}
+                <ThemeToggle />
+              </nav>
+              <div className="flex items-center gap-2 lg:hidden">
+                {renderAuthButton('mobile')}
+                <ThemeToggle />
+                <Sheet open={isNavOpen} onOpenChange={setNavOpen}>
+                  <SheetTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="메뉴 열기"
+                      className="rounded-full border border-white/50 p-2 text-white transition hover:border-white hover:bg-white/10"
+                    >
+                      <Menu className="h-5 w-5" aria-hidden />
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent className="flex flex-col bg-background text-foreground">
+                    <nav className="mt-10 flex flex-col gap-6 text-base font-medium">
+                      {navigationItems.map(({ label, target }) => (
+                        <a
+                          key={target}
+                          href={`#${target}`}
+                          onClick={(event) => handleSectionNavigate(event, target)}
+                          className="transition hover:text-primary"
+                        >
+                          {label}
+                        </a>
+                      ))}
+                    </nav>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            </div>
           </div>
         </header>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-24 sm:py-32 lg:flex-row lg:items-center lg:gap-16">
@@ -197,18 +270,20 @@ export function LandingPage() {
             </div>
           </div>
           <div className="flex-1">
-            <div className="rounded-3xl border border-white/30 bg-white/10 p-8 shadow-2xl backdrop-blur">
+            <div className="rounded-3xl border border-white bg-white/10 p-8 shadow-2xl backdrop-blur">
               <h2 className="text-xl font-semibold text-white">필수 일정 요약</h2>
               <dl className="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-100 sm:grid-cols-2">
                 {interestItems.map((item) => (
-                  <div key={item.title} className="rounded-2xl border border-white/20 bg-white/10 p-4">
-                    <dt className="text-xs uppercase tracking-wide text-primary-foreground opacity-70">{item.title}</dt>
+                  <div key={item.title} className="rounded-2xl border border-white bg-white/10 p-4">
+                    <dt className="text-xs uppercase tracking-wide text-primary-foreground opacity-70 text-slate-200">{item.title}</dt>
                     <dd className="mt-2 text-lg font-semibold text-white">{item.highlight}</dd>
-                    <p className="mt-2 text-xs text-primary-foreground opacity-70">{item.description}</p>
+                    <p className="mt-2 text-xs font-medium text-white">{item.description}</p>
                   </div>
                 ))}
               </dl>
-              <p className="mt-6 text-sm font-medium text-amber-200">빠르게 준비해야 안전합니다.</p>
+              <p className="mt-6 inline-flex items-center rounded-full border border-white/70 bg-white/90 px-4 py-1 text-sm font-semibold text-amber-500 shadow-sm">
+                빠르게 준비해야 안전합니다.
+              </p>
             </div>
           </div>
         </div>

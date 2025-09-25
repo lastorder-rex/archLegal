@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import SupabaseProvider from '../components/providers/SupabaseProvider';
-import { ThemeToggle } from '../components/ui/theme-toggle';
 import { cn } from '../lib/utils';
 import './globals.css';
 
@@ -40,9 +39,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={cn('min-h-screen bg-background text-foreground antialiased', inter.className)}>
         <SupabaseProvider initialSession={session}>
-          <div className="fixed right-4 top-4 z-50 flex items-center">
-            <ThemeToggle />
-          </div>
           {children}
         </SupabaseProvider>
       </body>
