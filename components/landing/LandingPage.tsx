@@ -5,6 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { Menu } from 'lucide-react';
+import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
@@ -431,6 +432,7 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+      <SiteFooter />
       <style jsx>{`
         @keyframes scroll-indicator {
           0% {
