@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Source lives in `app/` (Next.js 14 app router) with domain-specific route groups derived from `docs/project_spec.md`. Shared UI sits in `components/` and follows the shadcn/TweakCN theme tokens. Non-UI logic and Supabase accessors belong to `lib/` and `supabase/` respectively; keep SQL policies alongside RLS notes from `docs/모듈별 상세 개발정의서.md`. Static assets stay under `public/`. Write Vitest suites in `tests/unit`, Playwright scenarios in `tests/e2e`, and keep architectural notes inside `docs/` with versioned headers.
+Source lives in `app/` (Next.js 14 app router) with domain-specific route groups derived from `docs/project_spec.md`. Shared UI sits in `components/` and follows the shadcn/TweakCN theme tokens. Non-UI logic and Supabase accessors belong to `lib/` and `supabase/` respectively; keep SQL policies alongside RLS notes from `docs/모듈별 상세 개발정의서.md`. Static assets stay under `public/`. Write Vitest suites in `tests/unit`, Playwright scenarios in `tests/e2e`, and keep architectural notes inside `docs/` with versioned headers. For a quick visual of the workspace layout, review `docs/folder-structure.md` before reorganizing files.
 
 ## Build, Test, and Development Commands
 Install dependencies with `npm install` (or `pnpm install` if already set up). `npm run dev` launches the local Next.js server with Tailwind hot reload. `npm run lint` runs ESLint/Prettier. `npm run build` generates the production bundle that Vercel deploys. `npm run test:unit` executes Vitest, while `npm run test:e2e` (Playwright) targets the staged build; both must pass before opening a PR. Use `npm run test` to run the full suite. Trigger a Vercel preview by pushing to any feature branch.
