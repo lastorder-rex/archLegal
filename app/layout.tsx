@@ -22,8 +22,33 @@ const themeInitializer = `(function() {
 })();`;
 
 export const metadata: Metadata = {
-  title: 'Kakao Auth Demo',
-  description: 'Kakao social login powered by Supabase Auth'
+  metadataBase: new URL('https://www.archlegal.co.kr'),
+  title: 'ArchLegal - 건축물 양성화 전문 플랫폼',
+  description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼',
+  icons: {
+    icon: [
+      { url: '/docu/archlegal-fa.ico', rel: 'icon', sizes: 'any' },
+      { url: '/docu/archlegal-fa-p.png', rel: 'icon', type: 'image/png', sizes: '512x512' }
+    ]
+  },
+  openGraph: {
+    title: 'ArchLegal - 건축물 양성화 전문 플랫폼',
+    description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼',
+    url: 'https://www.archlegal.co.kr',
+    type: 'website',
+    images: [
+      {
+        url: 'https://www.archlegal.co.kr/docu/archlegal-og.png'
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ArchLegal - 건축물 양성화 전문 플랫폼',
+    description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼',
+    images: ['https://www.archlegal.co.kr/docu/archlegal-og.png']
+  }, 
+  
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
