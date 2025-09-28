@@ -29,10 +29,10 @@
 
 
 # Juso (행안부 도로명주소 API)
-JUSO_API_KEY=U01TX0FVVEgyMDI1MDkyNjExNTgwODExNjI2OTQ=
+JUSO_API_KEY=U01TX0,........
 
 # 국토교통부 건축물대장 API
-BLD_RGST_API_KEY=3b4110d3a8421692995e1f0a86454f0f6c77a5f92d0f96a22f816ca7f1e70530
+BLD_RGST_API_KEY=3b4110d3a84......
 
 
 ------------------------------------------------------------------------
