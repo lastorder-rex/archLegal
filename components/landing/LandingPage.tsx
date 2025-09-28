@@ -310,7 +310,6 @@ export function LandingPage() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/15 via-white to-transparent dark:from-primary/25 dark:via-slate-900/80 dark:to-slate-950" />
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-xl space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Interest</p>
             <h2 id="interest-section" className="text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl">
               법 시행 안내 & 소요 기간
             </h2>
@@ -352,7 +351,6 @@ export function LandingPage() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-accent/40 via-background/60 to-accent/10 dark:from-accent/35 dark:via-slate-900/70 dark:to-slate-950" />
         <div className="mx-auto w-full max-w-6xl px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Desire</p>
             <h2
               id="desire-section"
               className="mt-3 text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl"
@@ -385,7 +383,6 @@ export function LandingPage() {
         <div className="mx-auto w-full max-w-6xl px-6 py-20">
           <div className="grid gap-12 lg:grid-cols-[2fr,1fr] lg:items-center">
             <div className="space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground opacity-80">Action</p>
               <h2 id="action-section" className="text-4xl font-bold">
                 무허가·위반 건축물 양성화, 마지막 기회!
               </h2>
