@@ -4,14 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 interface JusoResultItem {
   roadAddr: string;      // 도로명주소
   jibunAddr: string;     // 지번주소
-  sigunguCd: string;     // 시군구코드
-  bjdongCd: string;      // 법정동코드
-  platGbCd: string;      // 대지구분코드 (0:대지, 1:산, 2:블록)
-  bun: string;           // 번
-  ji: string;            // 지
   zipNo: string;         // 우편번호
   bdNm?: string;         // 건물명
   detBdNmList?: string;  // 상세건물명
+  admCd?: string;        // 행정구역코드 (시군구+법정동)
+  mtYn?: string;         // 산 여부 (0:대지, 1:산)
+  lnbrMnnm?: string;     // 번(본번)
+  lnbrSlno?: string;     // 지(부번)
 }
 
 interface JusoApiResponse {
@@ -23,7 +22,7 @@ interface JusoApiResponse {
       errorCode: string;
       currentPage: string;
     };
-    juso: JusoResultItem[];
+    juso: JusoResultItem[] | null;
   };
 }
 
@@ -82,22 +81,46 @@ export async function POST(request: NextRequest) {
     }
 
     // Transform response for frontend
-    const addresses = data.results.juso.map(item => ({
-      id: `${item.sigunguCd}-${item.bjdongCd}-${item.platGbCd}-${item.bun}-${item.ji}`,
-      roadAddr: item.roadAddr,
-      jibunAddr: item.jibunAddr,
-      zipNo: item.zipNo,
-      buildingName: item.bdNm || null,
-      detailBuildingName: item.detBdNmList || null,
-      // Data needed for building registry lookup
-      addressCode: {
-        sigunguCd: item.sigunguCd,
-        bjdongCd: item.bjdongCd,
-        platGbCd: item.platGbCd,
-        bun: item.bun,
-        ji: item.ji
+    const jusoItems = data.results.juso ?? [];
+
+    const padLotNumber = (value: string | undefined) => {
+      if (!value || value === '' || value === '0') {
+        return '0000';
       }
-    }));
+      return value.padStart(4, '0');
+    };
+
+    const addresses = jusoItems
+      .map(item => {
+        const sigunguCd = item.admCd?.slice(0, 5) || '';
+        const bjdongCd = item.admCd?.slice(5) || '';
+        const platGbCd = item.mtYn ?? '';
+
+        const bun = padLotNumber(item.lnbrMnnm);
+        const ji = padLotNumber(item.lnbrSlno);
+
+        if (!sigunguCd || !bjdongCd || platGbCd === '') {
+          return null;
+        }
+
+        return {
+          id: `${sigunguCd}-${bjdongCd}-${platGbCd}-${bun}-${ji}`,
+          roadAddr: item.roadAddr,
+          jibunAddr: item.jibunAddr,
+          zipNo: item.zipNo,
+          buildingName: item.bdNm || null,
+          detailBuildingName: item.detBdNmList || null,
+          // Data needed for building registry lookup
+          addressCode: {
+            sigunguCd,
+            bjdongCd,
+            platGbCd,
+            bun,
+            ji
+          }
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
     return NextResponse.json({
       addresses,

@@ -1,7 +1,9 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import ConsultationForm from '@/components/consultation/ConsultationForm';
+import { Button } from '@/components/ui/button';
 
 export const revalidate = 0;
 
@@ -25,7 +27,7 @@ export default async function RequestPage() {
       {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-2xl font-bold">상담 문의 등록</h1>
               <p className="text-muted-foreground mt-1">
@@ -33,14 +35,22 @@ export default async function RequestPage() {
               </p>
             </div>
 
-            {/* Development Notice */}
-            <div className="hidden md:block bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-xs text-yellow-800 font-medium">
-                🚧 개발 테스트 페이지
-              </p>
-              <p className="text-xs text-yellow-700">
-                임시 페이지입니다 (feature/request-form)
-              </p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+              <Link href="/request/history" className="sm:w-auto">
+                <Button variant="outline" className="sm:w-auto">
+                  나의 상담 내역 보기
+                </Button>
+              </Link>
+
+              {/* Development Notice */}
+              <div className="hidden lg:block bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-xs text-yellow-800 font-medium">
+                  🚧 개발 테스트 페이지
+                </p>
+                <p className="text-xs text-yellow-700">
+                  임시 페이지입니다 (feature/request-form)
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -128,6 +138,8 @@ export default async function RequestPage() {
                 <p>개발 환경: {process.env.NODE_ENV}</p>
                 <p>사용자 ID: {session.user.id}</p>
                 <p>이메일: {session.user.email}</p>
+                <p>메타데이터: {JSON.stringify(session.user.user_metadata)}</p>
+                <p>전체 사용자 정보: {JSON.stringify(session.user, null, 2)}</p>
               </div>
             )}
           </div>

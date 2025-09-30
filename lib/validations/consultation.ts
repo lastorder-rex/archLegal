@@ -60,6 +60,12 @@ export const consultationFormSchema = z.object({
     .min(5, '주소를 선택해주세요')
     .max(200, '주소가 너무 깁니다'),
 
+  addressDetail: z
+    .string()
+    .max(100, '상세 주소는 100글자 이하로 입력해주세요')
+    .optional()
+    .or(z.literal('')),
+
   addressCode: addressCodeSchema,
 
   // Building information
