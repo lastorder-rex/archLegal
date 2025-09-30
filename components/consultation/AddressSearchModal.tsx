@@ -46,12 +46,13 @@ export function AddressSearchModal({ isOpen, onClose, onSelect }: AddressSearchM
     setIsSearching(true);
     setError('');
 
-    try {
-      const response = await fetch('/api/juso/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery.trim(), page }),
-      });
+      try {
+        const response = await fetch('/api/juso/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ query: searchQuery.trim(), page }),
+        });
 
       if (response.ok) {
         const data: SearchResponse = await response.json();

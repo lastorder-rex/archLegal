@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { sendConsultationNotification } from '@/lib/telegram';
 
 // Types for request validation
 interface ConsultationRequest {
@@ -8,6 +9,7 @@ interface ConsultationRequest {
   phone: string;
   email?: string;
   address: string;
+  addressDetail?: string;
   addressCode: {
     sigunguCd: string;
     bjdongCd: string;
@@ -15,14 +17,29 @@ interface ConsultationRequest {
     bun: string;
     ji: string;
   };
-  buildingInfo: {
+  buildingInfo?: {
     mainPurpsCdNm: string;
     totArea: number | null;
     platArea: number | null;
     groundFloorCnt: number | null;
     rawData: any;
-  };
+    [key: string]: any;
+  } | null;
   message?: string;
+}
+
+function createFallbackBuildingInfo(address: string, addressCode: ConsultationRequest['addressCode']) {
+  return {
+    mainPurpsCdNm: '확인 필요',
+    totArea: null,
+    platArea: null,
+    groundFloorCnt: null,
+    rawData: { status: 'UNAVAILABLE' as const, address },
+    addressInfo: {
+      ...addressCode,
+      roadAddr: address,
+    }
+  };
 }
 
 // Korean phone number validation
@@ -65,12 +82,12 @@ function validateConsultationData(data: any): { valid: boolean; errors: string[]
     errors.push('주소 정보가 올바르지 않습니다. 주소를 다시 선택해주세요.');
   }
 
-  if (!data.buildingInfo || !data.buildingInfo.mainPurpsCdNm) {
-    errors.push('건축물 정보가 필요합니다. 건축물 조회를 먼저 해주세요.');
-  }
-
   if (data.message && data.message.length > 1000) {
     errors.push('상담 내용은 1000글자 이하로 입력해주세요.');
+  }
+
+  if (data.addressDetail && data.addressDetail.length > 100) {
+    errors.push('상세 주소는 100글자 이하로 입력해주세요.');
   }
 
   return { valid: errors.length === 0, errors };
@@ -117,6 +134,10 @@ export async function POST(request: NextRequest) {
                     session.user.email?.split('@')[0] ||
                     '사용자';
 
+    const resolvedBuildingInfo = body.buildingInfo && body.buildingInfo.mainPurpsCdNm
+      ? body.buildingInfo
+      : createFallbackBuildingInfo(body.address, body.addressCode);
+
     // Prepare consultation data
     const consultationData = {
       user_id: session.user.id,
@@ -125,16 +146,19 @@ export async function POST(request: NextRequest) {
       phone: body.phone,
       email: body.email?.trim() || null,
       address: body.address.trim(),
+      address_detail: body.addressDetail?.trim() || null,
       address_code: body.addressCode,
       building_info: {
-        ...body.buildingInfo,
+        ...resolvedBuildingInfo,
         queryTimestamp: new Date().toISOString()
       },
-      main_purps: body.buildingInfo.mainPurpsCdNm,
-      tot_area: body.buildingInfo.totArea,
-      plat_area: body.buildingInfo.platArea,
-      ground_floor_cnt: body.buildingInfo.groundFloorCnt,
-      message: body.message?.trim() || null
+      main_purps: resolvedBuildingInfo.mainPurpsCdNm,
+      tot_area: resolvedBuildingInfo.totArea ?? null,
+      plat_area: resolvedBuildingInfo.platArea ?? null,
+      ground_floor_cnt: resolvedBuildingInfo.groundFloorCnt ?? null,
+      message: body.message?.trim() || null,
+      is_del: 'N',
+      deleted_at: null
     };
 
     // Insert into database
@@ -168,11 +192,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 텔레그램 알림 전송 (비동기로 처리해서 응답 속도에 영향 없음)
+    sendConsultationNotification({
+      name: consultationData.name,
+      phone: consultationData.phone,
+      email: consultationData.email,
+      address: consultationData.address,
+      address_detail: consultationData.address_detail,
+      main_purps: consultationData.main_purps,
+      message: consultationData.message
+    }).catch(error => {
+      console.error('Telegram notification failed:', error);
+      // 알림 실패는 상담 저장에 영향 없음
+    });
+
     // Success response
     return NextResponse.json({
       success: true,
       id: consultation.id,
-      message: '상담 요청이 정상적으로 접수되었습니다.',
+      message: '상담 요청이 저장되었습니다.',
       submittedAt: consultation.created_at
     }, { status: 201 });
 
@@ -218,6 +256,10 @@ export async function GET(request: NextRequest) {
         phone,
         email,
         address,
+        address_detail,
+        is_del,
+        address_code,
+        building_info,
         main_purps,
         tot_area,
         plat_area,
@@ -226,6 +268,7 @@ export async function GET(request: NextRequest) {
         created_at
       `)
       .eq('user_id', session.user.id)
+      .eq('is_del', 'N')
       .order('created_at', { ascending: false });
 
     if (fetchError) {

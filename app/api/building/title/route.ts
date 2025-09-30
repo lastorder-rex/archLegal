@@ -75,11 +75,29 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    const responseText = await response.text();
+
     if (!response.ok) {
-      throw new Error(`Building API error: ${response.status}`);
+      const maintenanceMessage = responseText.includes('시스템 점검')
+        ? '건축물대장 서비스가 일시적으로 중단되었습니다. 잠시 후 다시 시도해주세요.'
+        : '건축물 정보 조회 중 오류가 발생했습니다.';
+
+      return NextResponse.json(
+        { error: maintenanceMessage },
+        { status: response.status === 404 ? 503 : response.status }
+      );
     }
 
-    const data: BuildingApiResponse = await response.json();
+    let data: BuildingApiResponse;
+    try {
+      data = JSON.parse(responseText) as BuildingApiResponse;
+    } catch (parseError) {
+      console.error('Building registry API parse error:', parseError);
+      return NextResponse.json(
+        { error: '건축물 정보 응답을 해석할 수 없습니다. 잠시 후 다시 시도해주세요.' },
+        { status: 502 }
+      );
+    }
 
     // Handle API errors
     if (data.response.header.resultCode !== '00') {
