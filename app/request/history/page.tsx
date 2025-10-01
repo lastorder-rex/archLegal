@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Download, FileText, X } from 'lucide-react';
+import { getFileUrl, getFileIcon, formatFileSize, AttachmentFile } from '@/lib/utils/file-upload';
+import FileUpload from '@/components/consultation/FileUpload';
 
 interface ConsultationRecord {
   id: string;
@@ -40,6 +43,12 @@ interface ConsultationRecord {
   plat_area: number | null;
   ground_floor_cnt: number | null;
   message: string | null;
+  attachments: {
+    name: string;
+    size: number;
+    type: string;
+    storagePath: string;
+  }[];
   created_at: string;
   is_del: 'Y' | 'N';
   deleted_at?: string | null;
@@ -50,6 +59,7 @@ interface EditFormState {
   phone: string;
   email: string;
   message: string;
+  attachments: ConsultationRecord['attachments'];
 }
 
 export default function ConsultationHistoryPage() {
@@ -58,18 +68,66 @@ export default function ConsultationHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [user, setUser] = useState<{ id: string } | null>(null);
   const [formState, setFormState] = useState<EditFormState>({
     name: '',
     phone: '',
     email: '',
     message: '',
+    attachments: [],
   });
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [newUploadedFiles, setNewUploadedFiles] = useState<ConsultationRecord['attachments']>([]);
+
+  // Download attachment file
+  const downloadAttachment = async (attachment: ConsultationRecord['attachments'][0]) => {
+    try {
+      const result = await getFileUrl(attachment.storagePath);
+      if (result.url) {
+        // Fetch file as blob to force download instead of opening in browser
+        const response = await fetch(result.url);
+        if (!response.ok) {
+          throw new Error('파일 다운로드에 실패했습니다.');
+        }
+
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = attachment.name;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 100);
+      } else {
+        alert(`다운로드 실패: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('파일 다운로드 중 오류가 발생했습니다.');
+    }
+  };
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
+        // Get user info first
+        const userResponse = await fetch('/api/debug/user-info', {
+          credentials: 'include',
+        });
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser({ id: userData.user_id });
+        }
+
         const response = await fetch('/api/consultations', {
           credentials: 'include',
         });
@@ -104,13 +162,15 @@ export default function ConsultationHistoryPage() {
       phone: record.phone,
       email: record.email ?? '',
       message: record.message ?? '',
+      attachments: record.attachments || [],
     });
     setActionMessage(null);
   };
 
   const resetEditing = () => {
     setEditingId(null);
-    setFormState({ name: '', phone: '', email: '', message: '' });
+    setFormState({ name: '', phone: '', email: '', message: '', attachments: [] });
+    setNewUploadedFiles([]);
     setSubmitting(false);
   };
 
@@ -118,23 +178,35 @@ export default function ConsultationHistoryPage() {
     setFormState(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAttachmentsChange = (attachments: AttachmentFile[]) => {
+    // Convert AttachmentFile[] to the expected format
+    const formattedAttachments = attachments
+      .filter(file => file.uploadStatus === 'completed' && file.storagePath)
+      .map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        storagePath: file.storagePath!
+      }));
+
+    setFormState(prev => ({ ...prev, attachments: formattedAttachments }));
+  };
+
   const handleUpdate = async (record: ConsultationRecord) => {
     setSubmitting(true);
     setActionMessage(null);
 
     try {
+      // 기존 첨부파일 + 새로 업로드된 파일을 합침
+      const allAttachments = [...formState.attachments, ...newUploadedFiles];
+
       const response = await fetch(`/api/consultations/${record.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          name: formState.name,
-          phone: formState.phone,
-          email: formState.email,
-          address: record.address,
-          addressCode: record.address_code,
-          buildingInfo: record.building_info,
           message: formState.message,
+          attachments: allAttachments,
         }),
       });
 
@@ -148,16 +220,19 @@ export default function ConsultationHistoryPage() {
           item.id === record.id
             ? {
                 ...item,
-                name: formState.name,
-                phone: formState.phone,
-                email: formState.email || null,
                 message: formState.message || null,
+                attachments: allAttachments,
               }
             : item
         )
       );
       setActionMessage('상담 요청이 수정되었습니다.');
       resetEditing();
+
+      // 페이지 새로고침하여 최신 데이터 반영
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err: any) {
       setActionMessage(err.message || '수정에 실패했습니다.');
     } finally {
@@ -333,36 +408,31 @@ export default function ConsultationHistoryPage() {
                   </div>
                 </div>
 
+                {/* Attachments Section */}
+                {(record.attachments || []).length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">첨부파일</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(record.attachments || []).map((attachment, index) => (
+                        <button
+                          key={index}
+                          onClick={() => downloadAttachment(attachment)}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
+                        >
+                          <span>{getFileIcon(attachment.type)}</span>
+                          <span className="truncate max-w-[120px]">{attachment.name}</span>
+                          <Download className="h-3 w-3 flex-shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {isEditing && (
                   <div className="border-t border-border pt-4 space-y-4">
                     <h3 className="text-md font-semibold">상담 요청 수정</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor={`edit-name-${record.id}`}>이름</Label>
-                        <Input
-                          id={`edit-name-${record.id}`}
-                          value={formState.name}
-                          onChange={e => handleInputChange('name', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`edit-phone-${record.id}`}>연락처</Label>
-                        <Input
-                          id={`edit-phone-${record.id}`}
-                          value={formState.phone}
-                          onChange={e => handleInputChange('phone', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor={`edit-email-${record.id}`}>이메일</Label>
-                        <Input
-                          id={`edit-email-${record.id}`}
-                          value={formState.email}
-                          onChange={e => handleInputChange('email', e.target.value)}
-                          placeholder="example@email.com"
-                        />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
                         <Label htmlFor={`edit-message-${record.id}`}>상담 요청 내용</Label>
                         <Textarea
                           id={`edit-message-${record.id}`}
@@ -373,6 +443,97 @@ export default function ConsultationHistoryPage() {
                         <p className="text-xs text-muted-foreground text-right">
                           {formState.message.length}/1000
                         </p>
+                      </div>
+
+                      {/* Attachments Edit Section */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>첨부파일 관리</Label>
+                        <div className="rounded-md border border-border bg-muted/10 p-4 space-y-3">
+                          {/* Existing Attachments */}
+                          {formState.attachments.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">기존 첨부파일</p>
+                              <div className="space-y-2">
+                                {formState.attachments.map((attachment, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-3 p-3 border border-border rounded-lg bg-background"
+                                  >
+                                    {/* File Icon/Preview */}
+                                    <div className="flex-shrink-0">
+                                      {attachment.type.startsWith('image/') ? (
+                                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded">
+                                          <span className="text-lg">{getFileIcon(attachment.type)}</span>
+                                        </div>
+                                      ) : (
+                                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded">
+                                          <span className="text-lg">{getFileIcon(attachment.type)}</span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* File Info */}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{attachment.name}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatFileSize(attachment.size)}
+                                      </p>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-1">
+                                      {/* Remove Button */}
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          const newAttachments = formState.attachments.filter((_, i) => i !== index);
+                                          setFormState(prev => ({ ...prev, attachments: newAttachments }));
+                                        }}
+                                        disabled={submitting}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Add New Files */}
+                          {formState.attachments.length < 3 && (
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">새 파일 추가</p>
+                              <FileUpload
+                                key={`file-upload-${record.id}-${editingId}`}
+                                userId={user?.id || ''}
+                                consultationId={record.id}
+                                initialFiles={[]}
+                                onFilesChange={(newFiles) => {
+                                  // 새로 업로드한 파일만 별도 state에 저장
+                                  const completedFiles = newFiles
+                                    .filter(file => file.uploadStatus === 'completed' && file.storagePath)
+                                    .map(file => ({
+                                      name: file.name,
+                                      size: file.size,
+                                      type: file.type,
+                                      storagePath: file.storagePath!
+                                    }));
+
+                                  setNewUploadedFiles(completedFiles);
+                                }}
+                                disabled={submitting}
+                              />
+                            </div>
+                          )}
+
+                          {formState.attachments.length >= 3 && (
+                            <p className="text-sm text-muted-foreground">
+                              최대 3개 파일까지 첨부 가능합니다. 새 파일을 추가하려면 기존 파일을 삭제해주세요.
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
