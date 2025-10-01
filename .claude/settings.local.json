@@ -9,7 +9,12 @@
       "Bash(npx supabase:*)",
       "Bash(node:*)",
       "Bash(kill:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(claude --version)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npm view:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

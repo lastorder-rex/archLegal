@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AddressSearchModal } from './AddressSearchModal';
 import { BuildingInfoDisplay } from './BuildingInfoDisplay';
+import FileUpload from './FileUpload';
 import {
   consultationFormSchema,
   type ConsultationForm,
@@ -16,6 +17,7 @@ import {
   type BuildingSearchResult,
   validatePhoneInput,
 } from '@/lib/validations/consultation';
+import { AttachmentFile } from '@/lib/utils/file-upload';
 
 interface ConsultationFormProps {
   user: User;
@@ -46,6 +48,21 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
   const [buildingInfo, setBuildingInfo] = useState<BuildingSearchResult | null>(null);
   const [isBuildingLoading, setIsBuildingLoading] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+  const [consultationId, setConsultationId] = useState<string | null>(null);
+
+  // Handle attachments change with useCallback to prevent re-render issues
+  const handleAttachmentsChange = useCallback((files: AttachmentFile[]) => {
+    console.log('🔄 FileUpload onFilesChange called with:', files);
+    console.log('🔄 Number of files:', files.length);
+    console.log('🔄 Files details:', files.map(f => ({
+      name: f.name,
+      status: f.uploadStatus,
+      hasPath: !!f.storagePath
+    })));
+    setAttachments(files);
+    console.log('✅ setAttachments called');
+  }, []);
 
   const createFallbackBuildingInfo = useCallback((address: AddressSearchResult) => ({
     mainPurpsCdNm: '확인 필요',
@@ -182,6 +199,8 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('🚀 Submit button clicked!'); // 디버깅용 로그
+    console.log('🚀 Current attachments state at submit:', attachments);
+    console.log('🚀 Attachments length:', attachments.length);
 
     // 필수값 체크 (유효성 검증 전에 먼저 확인)
     const newErrors: FormErrors = {};
@@ -237,6 +256,30 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
     setIsSubmitting(true);
     setErrors({});
 
+    // Process attachments for submission
+    console.log('📎 All attachments:', attachments);
+    console.log('📎 Attachment details:', attachments.map(f => ({
+      name: f.name,
+      status: f.uploadStatus,
+      hasStoragePath: !!f.storagePath,
+      storagePath: f.storagePath
+    })));
+
+    const attachmentsData = attachments
+      .filter(file => file.uploadStatus === 'completed' && file.storagePath)
+      .map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        storagePath: file.storagePath
+      }));
+    console.log('📎 Filtered attachments for submission:', attachmentsData);
+
+    if (attachments.length > 0 && attachmentsData.length === 0) {
+      console.warn('⚠️ WARNING: Files were selected but none are ready for submission!');
+      console.warn('⚠️ Make sure all files have uploadStatus="completed" and storagePath');
+    }
+
     const requestData = {
       name: submissionData.name,
       phone: submissionData.phone,
@@ -246,6 +289,7 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
       addressCode: submissionData.addressCode,
       buildingInfo: submissionData.buildingInfo,
       message: submissionData.message || undefined,
+      attachments: attachmentsData,
     };
 
     console.log('Submitting consultation data:', requestData);
@@ -259,6 +303,8 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
       });
 
       if (response.ok) {
+        const responseData = await response.json();
+        setConsultationId(responseData.id); // Store consultation ID for file uploads
         setSubmitSuccess(true);
         setFormData({
           name: '',
@@ -270,6 +316,7 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
         });
         setSelectedAddress(null);
         setBuildingInfo(null);
+        setAttachments([]);
         setErrors({});
       } else {
         const errorData = await response.json();
@@ -296,7 +343,7 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, selectedAddress, buildingInfo, createFallbackBuildingInfo, validateForm, user.email]);
+  }, [formData, selectedAddress, buildingInfo, createFallbackBuildingInfo, validateForm, user.email, attachments]);
 
   // Success message display
   if (submitSuccess) {
@@ -511,6 +558,30 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
         </div>
       </div>
 
+      {/* Attachments Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">첨부파일</h3>
+        <div className="rounded-md border border-border bg-muted/10 p-4">
+          <FileUpload
+            userId={user.id}
+            consultationId={consultationId}
+            onFilesChange={handleAttachmentsChange}
+            disabled={isSubmitting}
+          />
+          <div className="mt-3 text-xs text-muted-foreground">
+            <p>📋 <strong>권장 첨부파일:</strong> 위임장, 인감증명서</p>
+            <p>💡 <strong>안내:</strong> 첨부파일은 상담 완료 후에도 안전하게 보관됩니다</p>
+          </div>
+        </div>
+        {/* Debug info */}
+        {attachments.length > 0 && (
+          <div className="text-xs text-muted-foreground">
+            현재 첨부파일: {attachments.length}개
+            ({attachments.filter(f => f.uploadStatus === 'completed').length}개 업로드 완료)
+          </div>
+        )}
+      </div>
+
       {/* Submit Section */}
       <div className="space-y-4">
         {errors.submit && (
@@ -521,11 +592,18 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
 
         <Button
           type="submit"
-          disabled={isSubmitting || !selectedAddress}
+          disabled={
+            isSubmitting ||
+            !selectedAddress ||
+            attachments.some(f => f.uploadStatus === 'uploading' || f.uploadStatus === 'pending')
+          }
           className="w-full"
           onClick={() => console.log('🔘 Submit button clicked (before form submission)')}
         >
-          {isSubmitting ? '제출 중...' : '상담 요청 제출'}
+          {isSubmitting ? '제출 중...' :
+           attachments.some(f => f.uploadStatus === 'uploading' || f.uploadStatus === 'pending') ?
+           '파일 업로드 중...' :
+           '상담 요청 제출'}
         </Button>
 
         <p className="text-xs text-muted-foreground text-center">

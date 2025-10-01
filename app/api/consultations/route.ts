@@ -26,6 +26,12 @@ interface ConsultationRequest {
     [key: string]: any;
   } | null;
   message?: string;
+  attachments?: {
+    name: string;
+    size: number;
+    type: string;
+    storagePath: string;
+  }[];
 }
 
 function createFallbackBuildingInfo(address: string, addressCode: ConsultationRequest['addressCode']) {
@@ -88,6 +94,10 @@ function validateConsultationData(data: any): { valid: boolean; errors: string[]
 
   if (data.addressDetail && data.addressDetail.length > 100) {
     errors.push('상세 주소는 100글자 이하로 입력해주세요.');
+  }
+
+  if (data.attachments && data.attachments.length > 3) {
+    errors.push('첨부파일은 최대 3개까지 업로드 가능합니다.');
   }
 
   return { valid: errors.length === 0, errors };
@@ -157,6 +167,7 @@ export async function POST(request: NextRequest) {
       plat_area: resolvedBuildingInfo.platArea ?? null,
       ground_floor_cnt: resolvedBuildingInfo.groundFloorCnt ?? null,
       message: body.message?.trim() || null,
+      attachments: body.attachments || [],
       is_del: 'N',
       deleted_at: null
     };
@@ -265,6 +276,7 @@ export async function GET(request: NextRequest) {
         plat_area,
         ground_floor_cnt,
         message,
+        attachments,
         created_at
       `)
       .eq('user_id', session.user.id)
