@@ -131,17 +131,6 @@ export default async function RequestPage() {
                 <p><strong>운영시간:</strong> 평일 09:00 - 18:00</p>
               </div>
             </div>
-
-            {/* Development Info */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-4 text-xs text-muted-foreground">
-                <p>개발 환경: {process.env.NODE_ENV}</p>
-                <p>사용자 ID: {session.user.id}</p>
-                <p>이메일: {session.user.email}</p>
-                <p>메타데이터: {JSON.stringify(session.user.user_metadata)}</p>
-                <p>전체 사용자 정보: {JSON.stringify(session.user, null, 2)}</p>
-              </div>
-            )}
           </div>
         </div>
       </div>

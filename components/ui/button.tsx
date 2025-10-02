@@ -2,7 +2,7 @@ import { ButtonHTMLAttributes, forwardRef } from 'react';
 import clsx from 'clsx';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'outline';
+  variant?: 'primary' | 'outline' | 'sidebar-primary';
   size?: 'sm' | 'default' | 'lg';
 };
 
@@ -13,8 +13,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'default', ...props }, ref) => {
     const variantClasses =
       variant === 'primary'
-        ? 'bg-primary text-primary-foreground hover:opacity-90 focus-visible:ring-primary'
-        : 'border border-primary bg-background text-primary hover:bg-primary hover:bg-opacity-10 focus-visible:ring-primary focus-visible:ring-opacity-40 border-opacity-40';
+        ? 'bg-primary text-primary-foreground hover:opacity-85 focus-visible:ring-primary'
+        : variant === 'sidebar-primary'
+        ? 'bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] hover:opacity-85 focus-visible:ring-[hsl(var(--sidebar-primary))]'
+        : 'border border-primary bg-background text-primary hover:bg-primary hover:bg-opacity-20 hover:text-white focus-visible:ring-primary focus-visible:ring-opacity-40 border-opacity-40';
 
     const sizeClasses = {
       sm: 'h-8 px-3 text-xs',
