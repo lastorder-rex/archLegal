@@ -140,32 +140,32 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
                 </Dialog.Description>
 
                 <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
-                  <div>
-                    <label className="text-sm font-medium text-foreground" htmlFor="name">
-                      성함
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      placeholder="홍길동"
-                      className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
-                      value={formValues.name}
-                      onChange={handleFieldChange('name')}
-                      aria-invalid={Boolean(errors.name)}
-                      aria-describedby={errors.name ? 'consult-name-error' : undefined}
-                      required
-                    />
-                    {errors.name ? (
-                      <p id="consult-name-error" className="mt-2 text-xs text-red-400">
-                        {errors.name}
-                      </p>
-                    ) : null}
-                  </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
+                      <label className="text-sm font-medium text-foreground" htmlFor="name">
+                        성함 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        placeholder="홍길동"
+                        className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
+                        value={formValues.name}
+                        onChange={handleFieldChange('name')}
+                        aria-invalid={Boolean(errors.name)}
+                        aria-describedby={errors.name ? 'consult-name-error' : undefined}
+                        required
+                      />
+                      {errors.name ? (
+                        <p id="consult-name-error" className="mt-2 text-xs text-red-400">
+                          {errors.name}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div>
                       <label className="text-sm font-medium text-foreground" htmlFor="phone">
-                        연락처
+                        연락처 <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="phone"
@@ -186,29 +186,29 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
                         </p>
                       ) : null}
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-foreground" htmlFor="email">
-                        이메일
-                      </label>
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        inputMode="email"
-                        placeholder="you@example.com"
-                        className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
-                        value={formValues.email}
-                        onChange={handleFieldChange('email')}
-                        aria-invalid={Boolean(errors.email)}
-                        aria-describedby={errors.email ? 'consult-email-error' : undefined}
-                        required
-                      />
-                      {errors.email ? (
-                        <p id="consult-email-error" className="mt-2 text-xs text-red-400">
-                          {errors.email}
-                        </p>
-                      ) : null}
-                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground" htmlFor="email">
+                      이메일
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      inputMode="email"
+                      placeholder="you@example.com"
+                      className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
+                      value={formValues.email}
+                      onChange={handleFieldChange('email')}
+                      aria-invalid={Boolean(errors.email)}
+                      aria-describedby={errors.email ? 'consult-email-error' : undefined}
+                      required
+                    />
+                    {errors.email ? (
+                      <p id="consult-email-error" className="mt-2 text-xs text-red-400">
+                        {errors.email}
+                      </p>
+                    ) : null}
                   </div>
                   <div>
                     <label className="text-sm font-medium text-foreground" htmlFor="message">

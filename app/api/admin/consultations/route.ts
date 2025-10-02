@@ -2,35 +2,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
-// Verify admin authentication
-async function verifyAdmin(supabase: any, adminSessionId: string | undefined) {
-  if (!adminSessionId) {
-    return null;
-  }
-
-  const { data: adminUser, error } = await supabase
-    .from('admin_users')
-    .select('id, username, is_active')
-    .eq('id', adminSessionId)
-    .single();
-
-  if (error || !adminUser || !adminUser.is_active) {
-    return null;
-  }
-
-  return adminUser;
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const adminSessionId = cookieStore.get('admin_session')?.value;
+    const cookieStore = await cookies();
+    const adminCookie = cookieStore.get('admin_session');
 
-    const supabase = createRouteHandlerClient({ cookies });
+    if (!adminCookie) {
+      return NextResponse.json(
+        { error: '관리자 인증이 필요합니다.' },
+        { status: 401 }
+      );
+    }
 
-    // Verify admin authentication
-    const admin = await verifyAdmin(supabase, adminSessionId);
-    if (!admin) {
+    // Parse admin session
+    let adminId;
+    try {
+      const sessionData = JSON.parse(adminCookie.value);
+      adminId = sessionData.adminId;
+    } catch (e) {
+      // Fallback for old format (just ID string)
+      adminId = adminCookie.value;
+    }
+
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+
+    // Verify admin user exists
+    const { data: adminUser, error: adminError } = await supabase
+      .from('admin_users')
+      .select('id, username')
+      .eq('id', adminId)
+      .single();
+
+    if (adminError || !adminUser) {
       return NextResponse.json(
         { error: '관리자 인증이 필요합니다.' },
         { status: 401 }

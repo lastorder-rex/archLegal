@@ -23,7 +23,18 @@
       "mcp__chrome-devtools__list_pages",
       "mcp__chrome-devtools__handle_dialog",
       "mcp__chrome-devtools__take_snapshot",
-      "mcp__chrome-devtools__list_network_requests"
+      "mcp__chrome-devtools__list_network_requests",
+      "Bash(grep:*)",
+      "Bash(winget install:*)",
+      "WebFetch(domain:supabase.com)",
+      "Bash($env:SUPABASE_ACCESS_TOKEN=\"sbp_9d87698d1b8b76f28e065dd7c50f4389df0c486b\")",
+      "Bash(export SUPABASE_ACCESS_TOKEN=\"sbp_9d87698d1b8b76f28e065dd7c50f4389df0c486b\")",
+      "Bash(cat:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=\"sbp_9d87698d1b8b76f28e065dd7c50f4389df0c486b\" npx supabase db push)",
+      "Bash(taskkill:*)",
+      "Bash(Get-Process node)",
+      "Bash(Stop-Process -Force)",
+      "Bash(netstat:*)"
     ],
     "deny": [],
     "ask": []
