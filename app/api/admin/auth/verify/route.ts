@@ -4,27 +4,37 @@ import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const adminSessionId = cookieStore.get('admin_session')?.value;
+    const cookieStore = await cookies();
+    const adminCookie = cookieStore.get('admin_session');
 
-    if (!adminSessionId) {
+    if (!adminCookie) {
       return NextResponse.json(
         { error: '인증되지 않았습니다.' },
         { status: 401 }
       );
     }
 
-    // Initialize Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Parse admin session
+    let adminId;
+    try {
+      const sessionData = JSON.parse(adminCookie.value);
+      adminId = sessionData.adminId;
+    } catch (e) {
+      // Fallback for old format (just ID string)
+      adminId = adminCookie.value;
+    }
 
-    // Verify admin user exists and is active
+    // Initialize Supabase client
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+
+    // Verify admin user exists
     const { data: adminUser, error: fetchError } = await supabase
       .from('admin_users')
-      .select('id, username, is_active')
-      .eq('id', adminSessionId)
+      .select('id, username')
+      .eq('id', adminId)
       .single();
 
-    if (fetchError || !adminUser || !adminUser.is_active) {
+    if (fetchError || !adminUser) {
       return NextResponse.json(
         { error: '인증되지 않았습니다.' },
         { status: 401 }

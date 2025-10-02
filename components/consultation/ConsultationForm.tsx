@@ -456,7 +456,7 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
                 type="button"
                 variant="outline"
                 onClick={() => setIsAddressModalOpen(true)}
-                className="w-full whitespace-nowrap"
+                className="w-full whitespace-nowrap !border-opacity-100 !bg-white hover:!bg-primary hover:!text-white"
               >
                 주소 검색
               </Button>
@@ -590,21 +590,32 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
           </div>
         )}
 
-        <Button
-          type="submit"
-          disabled={
-            isSubmitting ||
-            !selectedAddress ||
-            attachments.some(f => f.uploadStatus === 'uploading' || f.uploadStatus === 'pending')
-          }
-          className="w-full"
-          onClick={() => console.log('🔘 Submit button clicked (before form submission)')}
-        >
-          {isSubmitting ? '제출 중...' :
-           attachments.some(f => f.uploadStatus === 'uploading' || f.uploadStatus === 'pending') ?
-           '파일 업로드 중...' :
-           '상담 요청 제출'}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            type="submit"
+            disabled={
+              isSubmitting ||
+              !selectedAddress ||
+              attachments.some(f => f.uploadStatus === 'uploading' || f.uploadStatus === 'pending')
+            }
+            className="w-full"
+            onClick={() => console.log('🔘 Submit button clicked (before form submission)')}
+          >
+            {isSubmitting ? '제출 중...' :
+             attachments.some(f => f.uploadStatus === 'uploading' || f.uploadStatus === 'pending') ?
+             '파일 업로드 중...' :
+             '상담 요청 제출'}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full !border-opacity-100 !bg-white hover:!bg-primary hover:!text-white"
+            onClick={() => window.history.back()}
+          >
+            닫기
+          </Button>
+        </div>
 
         <p className="text-xs text-muted-foreground text-center">
           제출 시 개인정보 수집 및 이용에 동의한 것으로 간주됩니다.

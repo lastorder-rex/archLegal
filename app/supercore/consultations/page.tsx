@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 
 interface Admin {
   id: string;
@@ -112,7 +113,9 @@ export default function ConsultationsPage() {
         setTotalCount(data.total || 0);
         setCurrentPage(page);
       } else {
-        console.error('Failed to load consultations');
+        const errorData = await response.json();
+        console.error('Failed to load consultations:', errorData);
+        alert(errorData.error || '상담 목록을 불러올 수 없습니다.');
       }
     } catch (error) {
       console.error('Load consultations error:', error);
@@ -179,20 +182,8 @@ export default function ConsultationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center">
-          <h1 className="text-xl font-bold text-slate-900 flex-[6] md:flex-[8]">상담 게시판</h1>
-          <div className="flex-[4] md:flex-[2] flex justify-end">
-            <Button variant="ghost" onClick={() => router.push('/supercore')} className="h-8 px-2 text-sm min-w-0 whitespace-nowrap">
-              ← 대시보드
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8 space-y-6">
+    <SupercoreLayout title="상담 게시판">
+      <div className="space-y-6">
         {/* Search Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">검색 필터</h2>
@@ -401,6 +392,6 @@ export default function ConsultationsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </SupercoreLayout>
   );
 }

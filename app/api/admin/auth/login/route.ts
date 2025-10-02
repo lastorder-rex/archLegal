@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
+import speakeasy from 'speakeasy';
 
 interface LoginRequest {
   username: string;
   password: string;
+  twoFactorCode?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Get admin user from database
     const { data: adminUser, error: fetchError } = await supabase
       .from('admin_users')
-      .select('id, username, password_hash, is_active')
+      .select('id, username, password_hash, two_factor_enabled, two_factor_secret')
       .eq('username', body.username)
       .single();
 
@@ -33,13 +35,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: '아이디 또는 비밀번호가 올바르지 않습니다.' },
         { status: 401 }
-      );
-    }
-
-    if (!adminUser.is_active) {
-      return NextResponse.json(
-        { error: '비활성화된 계정입니다.' },
-        { status: 403 }
       );
     }
 
@@ -53,13 +48,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update last login time
-    await supabase
-      .from('admin_users')
-      .update({ last_login_at: new Date().toISOString() })
-      .eq('id', adminUser.id);
+    // Check if 2FA is enabled
+    if (adminUser.two_factor_enabled === true) {
+      // If 2FA is enabled but no code provided, ask for it
+      if (!body.twoFactorCode) {
+        return NextResponse.json(
+          {
+            requires2FA: true,
+            message: '2단계 인증 코드를 입력해주세요.'
+          },
+          { status: 200 }
+        );
+      }
+
+      // Verify 2FA code
+      const verified = speakeasy.totp.verify({
+        secret: adminUser.two_factor_secret!,
+        encoding: 'base32',
+        token: body.twoFactorCode,
+        window: 2
+      });
+
+      if (!verified) {
+        return NextResponse.json(
+          { error: '2단계 인증 코드가 올바르지 않습니다.' },
+          { status: 401 }
+        );
+      }
+    }
 
     // Create session (store in cookie)
+    const sessionData = {
+      adminId: adminUser.id,
+      username: adminUser.username
+    };
+
     const response = NextResponse.json({
       success: true,
       admin: {
@@ -69,7 +92,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Set secure HTTP-only cookie for admin session
-    response.cookies.set('admin_session', adminUser.id, {
+    response.cookies.set('admin_session', JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

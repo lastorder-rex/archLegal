@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 
 interface Admin {
   id: string;
@@ -117,22 +118,8 @@ export default function UserConsultationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center">
-          <h1 className="text-xl font-bold text-slate-900 flex-[6] md:flex-[8]">
-            회원 상담 내역 {userEmail && <span className="text-sm text-slate-600 font-normal ml-2">({userEmail})</span>}
-          </h1>
-          <div className="flex-[4] md:flex-[2] flex justify-end">
-            <Button variant="ghost" onClick={() => router.push('/supercore/users')} className="h-8 px-2 text-sm min-w-0 whitespace-nowrap">
-              ← 회원 목록
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8 space-y-6">
+    <SupercoreLayout title={`회원 상담 내역${userEmail ? ` (${userEmail})` : ''}`}>
+      <div className="space-y-6">
         {/* Results */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200">
           <div className="p-6 border-b border-slate-200">
@@ -277,7 +264,6 @@ export default function UserConsultationsPage() {
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </SupercoreLayout>
   );
 }

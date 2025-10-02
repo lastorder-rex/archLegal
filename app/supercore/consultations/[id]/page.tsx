@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { getFileUrl } from '@/lib/utils/file-upload';
+import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 
 interface Admin {
   id: string;
@@ -159,21 +160,8 @@ export default function ConsultationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center">
-          <h1 className="text-xl font-bold text-slate-900 flex-[6] md:flex-[8]">상담 상세</h1>
-          <div className="flex-[4] md:flex-[2] flex justify-end">
-            <Button variant="ghost" onClick={() => router.push('/supercore/consultations')} className="h-8 px-2 text-sm min-w-0 whitespace-nowrap">
-              ← 목록으로
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
+    <SupercoreLayout title="상담 상세">
+      <div className="space-y-6">
           {/* 기본 정보 */}
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
             <h2 className="text-xl font-semibold text-slate-900 mb-4">기본 정보</h2>
@@ -341,7 +329,6 @@ export default function ConsultationDetailPage() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </SupercoreLayout>
   );
 }
