@@ -16,20 +16,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Parse admin cookie to get admin ID
-    let adminId;
-    try {
-      const cookieData = JSON.parse(adminCookie.value);
-      adminId = cookieData.adminId;
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    // Get target admin ID from request body
+    const body = await request.json();
+    const targetAdminId = body.targetAdminId;
+
+    if (!targetAdminId) {
+      return NextResponse.json({ error: 'Target admin ID is required' }, { status: 400 });
     }
 
     // Get admin info
     const { data: admin, error: fetchError } = await supabase
       .from('admin_users')
       .select('username, two_factor_enabled')
-      .eq('id', adminId)
+      .eq('id', targetAdminId)
       .single();
 
     if (fetchError || !admin) {
