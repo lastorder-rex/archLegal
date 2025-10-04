@@ -48,9 +48,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if 2FA is enabled
-    if (adminUser.two_factor_enabled === true) {
-      // If 2FA is enabled but no code provided, ask for it
+    // Check 2FA (skip for rex master account, required for all others)
+    if (adminUser.username !== 'rex') {
+      // 2FA is mandatory for non-rex accounts
+      if (!adminUser.two_factor_enabled || !adminUser.two_factor_secret) {
+        return NextResponse.json(
+          { error: '2단계 인증이 설정되지 않았습니다. 관리자에게 문의하세요.' },
+          { status: 403 }
+        );
+      }
+
+      // If 2FA code not provided, ask for it
       if (!body.twoFactorCode) {
         return NextResponse.json(
           {
@@ -63,7 +71,7 @@ export async function POST(request: NextRequest) {
 
       // Verify 2FA code
       const verified = speakeasy.totp.verify({
-        secret: adminUser.two_factor_secret!,
+        secret: adminUser.two_factor_secret,
         encoding: 'base32',
         token: body.twoFactorCode,
         window: 2
@@ -71,7 +79,7 @@ export async function POST(request: NextRequest) {
 
       if (!verified) {
         return NextResponse.json(
-          { error: '2단계 인증 코드가 올바르지 않습니다.' },
+          { error: '인증이 실패되었습니다. 코드를 다시 확인해주세요.' },
           { status: 401 }
         );
       }

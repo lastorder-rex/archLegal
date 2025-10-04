@@ -39,7 +39,7 @@ export async function GET(
       .from('consultations')
       .select('*')
       .eq('user_id', userId)
-      .is('deleted_at', null)
+      .eq('is_del', 'N')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -53,7 +53,7 @@ export async function GET(
       .from('consultations')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .is('deleted_at', null);
+      .eq('is_del', 'N');
 
     if (countError) {
       console.error('Count error:', countError);

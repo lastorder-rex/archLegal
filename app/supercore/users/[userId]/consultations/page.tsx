@@ -264,6 +264,7 @@ export default function UserConsultationsPage() {
             )}
           </div>
         </div>
+      </div>
     </SupercoreLayout>
   );
 }

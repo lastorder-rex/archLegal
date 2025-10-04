@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (error.code === '23505') { // Unique constraint violation
-        return NextResponse.json({ error: 'Username already exists' }, { status: 409 });
+        return NextResponse.json({ error: '이미 존재하는 아이디입니다.' }, { status: 409 });
       }
       console.error('Error creating admin:', error);
       return NextResponse.json({ error: 'Failed to create admin' }, { status: 500 });

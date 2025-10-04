@@ -15,19 +15,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Parse admin cookie to get admin ID
-    let adminId;
-    try {
-      const cookieData = JSON.parse(adminCookie.value);
-      adminId = cookieData.adminId;
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
+    const { secret, token, targetAdminId } = await request.json();
 
-    const { secret, token } = await request.json();
-
-    if (!secret || !token) {
-      return NextResponse.json({ error: 'Secret and token are required' }, { status: 400 });
+    if (!secret || !token || !targetAdminId) {
+      return NextResponse.json({ error: 'Secret, token, and target admin ID are required' }, { status: 400 });
     }
 
     // Verify token
@@ -49,7 +40,7 @@ export async function POST(request: NextRequest) {
         two_factor_secret: secret,
         two_factor_enabled: true
       })
-      .eq('id', adminId);
+      .eq('id', targetAdminId);
 
     if (updateError) {
       console.error('Error enabling 2FA:', updateError);

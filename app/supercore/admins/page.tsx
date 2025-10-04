@@ -209,7 +209,9 @@ export default function AdminsPage() {
     try {
       const response = await fetch('/api/admin/auth/2fa/setup', {
         method: 'POST',
-        credentials: 'include'
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ targetAdminId: admin.id })
       });
 
       const data = await response.json();
@@ -234,12 +236,22 @@ export default function AdminsPage() {
     setSetup2FAError('');
     setIsSettingUp2FA(true);
 
+    if (!currentAdminFor2FA) {
+      setSetup2FAError('관리자 정보를 찾을 수 없습니다.');
+      setIsSettingUp2FA(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/admin/auth/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ secret, token: verifyCode })
+        body: JSON.stringify({
+          secret,
+          token: verifyCode,
+          targetAdminId: currentAdminFor2FA.id
+        })
       });
 
       const data = await response.json();
@@ -397,6 +409,7 @@ export default function AdminsPage() {
                     value={newUsername}
                     onChange={(e) => setNewUsername(e.target.value)}
                     placeholder="아이디를 입력하세요"
+                    autoComplete="off"
                     required
                   />
                 </div>
@@ -409,6 +422,7 @@ export default function AdminsPage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="비밀번호를 입력하세요"
+                      autoComplete="new-password"
                       required
                     />
                     <button
@@ -466,7 +480,14 @@ export default function AdminsPage() {
               </h2>
               <div className="flex-[4] md:flex-[2] flex justify-end">
                 <Button
-                  onClick={() => setShowCreateForm(!showCreateForm)}
+                  onClick={() => {
+                    if (!showCreateForm) {
+                      setNewUsername('');
+                      setNewPassword('');
+                      setCreateError('');
+                    }
+                    setShowCreateForm(!showCreateForm);
+                  }}
                   variant="primary"
                   className="h-10 px-8 whitespace-nowrap"
                 >
