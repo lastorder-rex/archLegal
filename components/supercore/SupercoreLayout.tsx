@@ -7,9 +7,10 @@ import { ReactNode, useState } from 'react';
 interface SupercoreLayoutProps {
   children: ReactNode;
   title?: string;
+  onLogout?: () => void;
 }
 
-export default function SupercoreLayout({ children, title }: SupercoreLayoutProps) {
+export default function SupercoreLayout({ children, title, onLogout }: SupercoreLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -20,9 +21,14 @@ export default function SupercoreLayout({ children, title }: SupercoreLayoutProp
         method: 'POST',
         credentials: 'include'
       });
-      router.push('/supercore');
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      onLogout?.();
+
+      // Always redirect to login page regardless of API response
+      router.push('/supercore');
+      router.refresh();
     }
   };
 

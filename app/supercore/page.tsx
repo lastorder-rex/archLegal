@@ -81,6 +81,12 @@ export default function SupercorePage() {
         }
       } else {
         setLoginError(data.error || '로그인에 실패했습니다.');
+        // Reset 2FA state on error
+        if (requires2FA) {
+          setRequires2FA(false);
+          setTwoFactorCode('');
+          setPassword('');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -90,20 +96,14 @@ export default function SupercorePage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/admin/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      setIsAuthenticated(false);
-      setAdmin(null);
-      setUsername('');
-      setPassword('');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+  const resetAuthState = () => {
+    setIsAuthenticated(false);
+    setAdmin(null);
+    setUsername('');
+    setPassword('');
+    setRequires2FA(false);
+    setTwoFactorCode('');
+    setLoginError('');
   };
 
   // Loading state
@@ -225,7 +225,7 @@ export default function SupercorePage() {
 
   // Dashboard
   return (
-    <SupercoreLayout title="관리자 대시보드">
+    <SupercoreLayout title="관리자 대시보드" onLogout={resetAuthState}>
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
         <h2 className="text-xl font-semibold text-slate-900 mb-4">대시보드</h2>
         <p className="text-slate-600 mb-6">
