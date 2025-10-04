@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 
 export async function GET(
   request: NextRequest,
@@ -28,7 +28,7 @@ export async function GET(
       adminId = adminCookie.value;
     }
 
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = getSupabaseAdminClient();
 
     // Verify admin user exists
     const { data: adminUser, error: adminError } = await supabase
