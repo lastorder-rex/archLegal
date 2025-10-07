@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'reac
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Menu } from 'lucide-react';
 import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
@@ -13,6 +14,8 @@ import { ConsultationModal } from './ConsultationModal';
 import { LoginModal } from './LoginModal';
 import { InfoCard } from './InfoCard';
 import { Timeline } from './Timeline';
+import { handleUserLogout } from '@/lib/auth/logout';
+import { AuthButton } from './AuthButton';
 
 const interestItems = [
   {
@@ -71,7 +74,7 @@ export function LandingPage() {
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isNavOpen, setNavOpen] = useState(false);
-  const supabase = useMemo(() => createClientComponentClient(), []);
+  const supabase = createClientComponentClient();
   const router = useRouter();
   const procedureGuideUrl = useMemo(() => encodeURI('/docu/양성화 절차 안내.pdf'), []);
 
@@ -109,15 +112,10 @@ export function LandingPage() {
   }, [supabase]);
 
   const handleLogout = useCallback(async () => {
-    try {
-      await supabase.auth.signOut();
-    } finally {
-      setSessionUser(null);
-      setLoginModalOpen(false);
-      router.refresh();
-      router.replace('/');
-    }
-  }, [router, supabase]);
+    setSessionUser(null);
+    setLoginModalOpen(false);
+    await handleUserLogout(router);
+  }, [router]);
 
   const handleDownloadGuide = useCallback(() => {
     const link = document.createElement('a');
@@ -140,39 +138,6 @@ export function LandingPage() {
     [setNavOpen]
   );
 
-  const renderAuthButton = useCallback(
-    (size: 'desktop' | 'mobile') => {
-      const sizeClasses =
-        size === 'desktop'
-          ? 'px-4 py-1.5 text-xs sm:text-sm'
-          : 'px-3 py-1 text-xs';
-      const baseClasses =
-        'rounded-full border border-white/50 font-semibold text-white transition hover:border-white hover:bg-white/10';
-
-      if (sessionUser) {
-        return (
-          <button
-            type="button"
-            onClick={handleLogout}
-            className={`${baseClasses} ${sizeClasses}`}
-          >
-            로그아웃
-          </button>
-        );
-      }
-
-      return (
-        <button
-          type="button"
-          onClick={() => setLoginModalOpen(true)}
-          className={`${baseClasses} ${sizeClasses}`}
-        >
-          로그인
-        </button>
-      );
-    },
-    [handleLogout, sessionUser, setLoginModalOpen]
-  );
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground transition-colors duration-200">
@@ -213,11 +178,26 @@ export function LandingPage() {
                     {label}
                   </a>
                 ))}
-                {renderAuthButton('desktop')}
+                {sessionUser ? (
+                  <Link href="/mypage" className="transition hover:text-white">
+                    마이페이지
+                  </Link>
+                ) : null}
+                <AuthButton
+                  sessionUser={sessionUser}
+                  size="desktop"
+                  onLogin={() => setLoginModalOpen(true)}
+                  onLogout={handleLogout}
+                />
                 <ThemeToggle />
               </nav>
               <div className="flex items-center gap-2 lg:hidden">
-                {renderAuthButton('mobile')}
+                <AuthButton
+                  sessionUser={sessionUser}
+                  size="mobile"
+                  onLogin={() => setLoginModalOpen(true)}
+                  onLogout={handleLogout}
+                />
                 <ThemeToggle />
                 <Sheet open={isNavOpen} onOpenChange={setNavOpen}>
                   <SheetTrigger asChild>
@@ -241,6 +221,15 @@ export function LandingPage() {
                           {label}
                         </a>
                       ))}
+                      {sessionUser ? (
+                        <Link
+                          href="/mypage"
+                          onClick={() => setNavOpen(false)}
+                          className="transition hover:text-primary"
+                        >
+                          마이페이지
+                        </Link>
+                      ) : null}
                     </nav>
                   </SheetContent>
                 </Sheet>

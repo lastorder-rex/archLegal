@@ -232,9 +232,9 @@ export function AddressSearchModal({ isOpen, onClose, onSelect }: AddressSearchM
             <div className="text-sm text-muted-foreground space-y-2">
               <h4 className="font-medium">검색 팁:</h4>
               <ul className="space-y-1 text-xs">
-                <li>• 도로명: '강남구 테헤란로'</li>
-                <li>• 건물명: '역삼빌딩'</li>
-                <li>• 동명: '역삼동'</li>
+                <li>• 도로명: &lsquo;강남구 테헤란로&rsquo;</li>
+                <li>• 건물명: &lsquo;역삼빌딩&rsquo;</li>
+                <li>• 동명: &lsquo;역삼동&rsquo;</li>
                 <li>• 최소 2글자 이상 입력해주세요</li>
               </ul>
             </div>

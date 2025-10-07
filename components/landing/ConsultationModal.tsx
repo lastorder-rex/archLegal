@@ -1,111 +1,86 @@
 'use client';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useCallback, useEffect, useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
-import { CTAButton } from '../ui/cta-button';
+import { Fragment, useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { User } from '@supabase/supabase-js';
+import { X } from 'lucide-react';
+import ConsultationForm from '@/components/consultation/ConsultationForm';
+import type { UserProfile } from '@/types/profile';
+import { Button } from '@/components/ui/button';
 
 interface ConsultationModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-type FormFields = {
-  name: string;
-  phone: string;
-  email: string;
-  message: string;
-};
-
-const emptyForm: FormFields = {
-  name: '',
-  phone: '',
-  email: '',
-  message: ''
-};
-
-const emptyErrors: FormFields = {
-  name: '',
-  phone: '',
-  email: '',
-  message: ''
-};
-
 export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
-  const [formValues, setFormValues] = useState<FormFields>(emptyForm);
-  const [errors, setErrors] = useState<FormFields>(emptyErrors);
-  const [formStatus, setFormStatus] = useState<string | null>(null);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-
-  const handleFieldChange = useCallback(
-    (field: keyof FormFields) =>
-      (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        let { value } = event.target;
-
-        if (field === 'phone') {
-          value = value.replace(/[^0-9-]/g, '');
-        } else if (field === 'email') {
-          value = value.replace(/[^A-Za-z0-9@._-]/g, '');
-        }
-
-        setFormValues((prev) => ({ ...prev, [field]: value }));
-        setErrors((prev) => ({ ...prev, [field]: '' }));
-        setFormStatus(null);
-      },
-    []
-  );
-
-  const handleSubmit = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-
-      const nextErrors: Partial<FormFields> = {};
-
-      if (!formValues.name.trim()) {
-        nextErrors.name = '성함을 입력해주세요.';
-      }
-
-      if (!formValues.phone.trim()) {
-        nextErrors.phone = '연락처를 입력해주세요.';
-      }
-
-      if (!formValues.email.trim()) {
-        nextErrors.email = '이메일 주소를 입력해주세요.';
-      }
-
-      if (!formValues.message.trim()) {
-        nextErrors.message = '상담 요청 사항을 입력해주세요.';
-      }
-
-      if (Object.keys(nextErrors).length > 0) {
-        setErrors({
-          name: nextErrors.name ?? '',
-          phone: nextErrors.phone ?? '',
-          email: nextErrors.email ?? '',
-          message: nextErrors.message ?? ''
-        });
-        setFormStatus('필수 항목을 모두 입력한 뒤 상담 요청을 보내주세요.');
-        return;
-      }
-
-      setErrors({ ...emptyErrors });
-      setFormStatus('요청이 접수되었습니다. 곧 연락드리겠습니다!');
-      setFormValues({ ...emptyForm });
-      setHasSubmitted(true);
-    },
-    [formValues]
-  );
-
-  const hasErrors = Boolean(errors.name || errors.phone || errors.email || errors.message);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [needsLogin, setNeedsLogin] = useState(false);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    if (open) {
-      setFormValues({ ...emptyForm });
-      setErrors({ ...emptyErrors });
-      setFormStatus(null);
-      setHasSubmitted(false);
-    }
-  }, [open]);
+    if (!open) return;
+
+    const loadUserData = async () => {
+      setIsLoading(true);
+      setNeedsLogin(false);
+
+      try {
+        // Get current session
+        const {
+          data: { user: sessionUser },
+          error: authError
+        } = await supabase.auth.getUser();
+
+        if (authError || !sessionUser) {
+          setNeedsLogin(true);
+          setIsLoading(false);
+          return;
+        }
+
+        setUser(sessionUser);
+
+        // Get user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('users')
+          .select(
+            'auth_id, full_name, email, phone, legal_name, contact_phone, profile_completed, profile_completed_at, consent_terms_at, consent_privacy_at, contact_phone_verified_at, birth_date'
+          )
+          .eq('auth_id', sessionUser.id)
+          .maybeSingle<UserProfile>();
+
+        if (profileError) {
+          console.error('Failed to load user profile', profileError);
+        }
+
+        if (!profileData || !profileData.profile_completed) {
+          setNeedsLogin(true);
+          setIsLoading(false);
+          return;
+        }
+
+        setProfile(profileData);
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        setNeedsLogin(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [open, supabase]);
+
+  const handleLoginRedirect = () => {
+    window.location.href = '/login?redirect=/';
+  };
+
+  const handleSignupRedirect = () => {
+    window.location.href = '/signup?next=/';
+  };
 
   return (
     <Transition appear show={open} as={Fragment}>
@@ -133,119 +108,121 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-3xl border border-border bg-background p-8 shadow-xl transition-all bg-opacity-95">
-                <Dialog.Title className="text-2xl font-semibold text-foreground">무료 상담 신청</Dialog.Title>
-                <Dialog.Description className="mt-2 text-sm text-muted-foreground">
-                  연락처와 상황을 남겨주시면 30년 경력의 전문가가 빠르게 도와드립니다.
-                </Dialog.Description>
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-3xl border border-border bg-background shadow-xl transition-all">
+                {/* Header */}
+                <div className="border-b border-border bg-card px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <Dialog.Title className="text-xl font-semibold text-foreground">
+                      상담 문의 등록
+                    </Dialog.Title>
+                    <Dialog.Description className="mt-1 text-sm text-muted-foreground">
+                    30년 경력의 전문가가 빠르게 도와드립니다.
+                    </Dialog.Description>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-full p-2 hover:bg-muted transition-colors"
+                    aria-label="닫기"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
 
-                <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-foreground" htmlFor="name">
-                        성함 <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="name"
-                        name="name"
-                        type="text"
-                        placeholder="홍길동"
-                        className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
-                        value={formValues.name}
-                        onChange={handleFieldChange('name')}
-                        aria-invalid={Boolean(errors.name)}
-                        aria-describedby={errors.name ? 'consult-name-error' : undefined}
-                        required
-                      />
-                      {errors.name ? (
-                        <p id="consult-name-error" className="mt-2 text-xs text-red-400">
-                          {errors.name}
-                        </p>
-                      ) : null}
+                {/* Content */}
+                <div className="px-6 py-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="text-center space-y-3">
+                        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+                        <p className="text-sm text-muted-foreground">로딩 중...</p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-foreground" htmlFor="phone">
-                        연락처 <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        inputMode="tel"
-                        placeholder="010-0000-0000"
-                        className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
-                        value={formValues.phone}
-                        onChange={handleFieldChange('phone')}
-                        aria-invalid={Boolean(errors.phone)}
-                        aria-describedby={errors.phone ? 'consult-phone-error' : undefined}
-                        required
-                      />
-                      {errors.phone ? (
-                        <p id="consult-phone-error" className="mt-2 text-xs text-red-400">
-                          {errors.phone}
+                  ) : needsLogin ? (
+                    <div className="text-center py-12 space-y-6">
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold">로그인이 필요합니다</h3>
+                        <p className="text-sm text-muted-foreground">
+                          상담 신청을 하시려면 먼저 로그인 또는 회원가입이 필요합니다.
                         </p>
-                      ) : null}
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
+                        <Button onClick={handleLoginRedirect} className="flex-1">
+                          로그인하기
+                        </Button>
+                        <Button onClick={handleSignupRedirect} variant="outline" className="flex-1">
+                          회원가입하기
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground" htmlFor="email">
-                      이메일
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      inputMode="email"
-                      placeholder="you@example.com"
-                      className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
-                      value={formValues.email}
-                      onChange={handleFieldChange('email')}
-                      aria-invalid={Boolean(errors.email)}
-                      aria-describedby={errors.email ? 'consult-email-error' : undefined}
-                      required
-                    />
-                    {errors.email ? (
-                      <p id="consult-email-error" className="mt-2 text-xs text-red-400">
-                        {errors.email}
+                  ) : user && profile ? (
+                    <div className="space-y-6">
+                      {/* User Info */}
+                      {/* <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">
+                              {user.user_metadata?.name?.[0] ||
+                               user.email?.[0]?.toUpperCase() || 'U'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {user.user_metadata?.name ||
+                               user.user_metadata?.full_name ||
+                               '사용자'}님 안녕하세요!
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              로그인 상태: 인증됨
+                            </p>
+                          </div>
+                        </div>
+                      </div> */}
+
+                      {/* Instructions - Collapsible */}
+                      {/* <div className="space-y-3">
+                        <details className="bg-muted/50 rounded-lg overflow-hidden">
+                          <summary className="cursor-pointer p-4 font-semibold hover:bg-muted/70 transition-colors text-sm">
+                            📋 상담 신청 절차 (클릭하여 보기)
+                          </summary>
+                          <div className="px-4 pb-4">
+                            <ol className="text-sm text-muted-foreground space-y-1">
+                              <li>1. 개인정보 입력 (실명, 연락처)</li>
+                              <li>2. 주소 검색 및 선택</li>
+                              <li>3. 건축물대장 정보 자동 조회</li>
+                              <li>4. 상담 내용 작성 및 제출</li>
+                            </ol>
+                          </div>
+                        </details>
+
+                        <details className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden dark:bg-blue-950/30 dark:border-blue-800">
+                          <summary className="cursor-pointer p-4 font-semibold text-blue-900 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-sm">
+                            💡 이용 안내 (클릭하여 보기)
+                          </summary>
+                          <div className="px-4 pb-4">
+                            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                              <li>• 주소는 도로명주소 기준으로 검색됩니다</li>
+                              <li>• 건축물 정보는 국토교통부 공식 데이터를 사용합니다</li>
+                              <li>• 상담 접수 후 전문가가 검토하여 연락드립니다</li>
+                              <li>• 개인정보는 상담 목적으로만 사용됩니다</li>
+                            </ul>
+                          </div>
+                        </details>
+                      </div> */}
+
+                      {/* Consultation Form */}
+                      <div className="bg-card border border-border rounded-lg p-6">
+                        <ConsultationForm user={user} profile={profile} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-sm text-muted-foreground">
+                        사용자 정보를 불러올 수 없습니다.
                       </p>
-                    ) : null}
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground" htmlFor="message">
-                      상담 요청 사항
-                    </label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      rows={4}
-                      placeholder="현재 건축물 상황과 상담을 원하는 내용을 입력해주세요."
-                      className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
-                      value={formValues.message}
-                      onChange={handleFieldChange('message')}
-                      aria-invalid={Boolean(errors.message)}
-                      aria-describedby={errors.message ? 'consult-message-error' : undefined}
-                      required
-                    />
-                    {errors.message ? (
-                      <p id="consult-message-error" className="mt-2 text-xs text-red-400">
-                        {errors.message}
-                      </p>
-                    ) : null}
-                  </div>
-                  {formStatus ? (
-                    <p className={`text-sm ${hasErrors ? 'text-red-400' : 'text-emerald-400'}`}>
-                      {formStatus}
-                    </p>
-                  ) : null}
-                  <div className="flex gap-3 pt-4">
-                    <CTAButton type="submit" className="w-full" disabled={hasSubmitted}>
-                      상담 요청 보내기
-                    </CTAButton>
-                    <CTAButton type="button" tone="secondary" className="w-full" onClick={onClose}>
-                      닫기
-                    </CTAButton>
-                  </div>
-                </form>
+                    </div>
+                  )}
+                </div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

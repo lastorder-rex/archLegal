@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -335,7 +336,7 @@ export default function AdminsPage() {
 
               {qrCode && (
                 <div className="mb-4 flex justify-center">
-                  <img src={qrCode} alt="QR Code" className="w-64 h-64" />
+                  <Image src={qrCode} alt="QR Code" width={256} height={256} />
                 </div>
               )}
 

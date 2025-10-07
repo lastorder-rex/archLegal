@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import SupabaseProvider from '../components/providers/SupabaseProvider';
 import { cn } from '../lib/utils';
+import { isUserSessionExpired } from '@/lib/auth/user-session';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -23,7 +24,7 @@ const themeInitializer = `(function() {
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.archlegal.co.kr'),
-  title: 'ArchLegal - 건축물 양성화 전문 플랫폼',
+  title: '건축물 양성화 전문 플랫폼',
   description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼',
   icons: {
     icon: [
@@ -52,10 +53,13 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies });
   const {
     data: { session }
   } = await supabase.auth.getSession();
+
+  const initialSession = isUserSessionExpired(cookieStore) ? null : session;
 
   return (
     <html lang="ko" className="theme" suppressHydrationWarning>
@@ -63,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: themeInitializer }} />
       </head>
       <body className={cn('min-h-screen bg-background text-foreground antialiased', inter.className)}>
-        <SupabaseProvider initialSession={session}>
+        <SupabaseProvider initialSession={initialSession}>
           {children}
         </SupabaseProvider>
       </body>

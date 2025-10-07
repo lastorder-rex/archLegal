@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ReactNode, useState } from 'react';
+import { handleAdminLogout } from '@/lib/auth/logout';
 
 interface SupercoreLayoutProps {
   children: ReactNode;
@@ -16,20 +17,7 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    try {
-      await fetch('/api/admin/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      onLogout?.();
-
-      // Always redirect to login page regardless of API response
-      router.push('/supercore');
-      router.refresh();
-    }
+    await handleAdminLogout(router, onLogout);
   };
 
   const isActive = (path: string) => {

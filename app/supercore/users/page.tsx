@@ -38,14 +38,14 @@ export default function UsersPage() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Get default dates (today and today-10days)
+  // Get default dates (today and today-30days)
   const getDefaultDates = () => {
     const today = new Date();
-    const tenDaysAgo = new Date(today);
-    tenDaysAgo.setDate(today.getDate() - 10);
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
 
     return {
-      dateFrom: tenDaysAgo.toISOString().split('T')[0],
+      dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0]
     };
   };

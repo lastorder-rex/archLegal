@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { sendConsultationNotification } from '@/lib/telegram';
+import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/user-session';
+import { isValidKoreanPhone, isValidEmail } from '@/lib/validations/user';
+import { getUserNickname } from '@/lib/auth/user-utils';
+import { createFallbackBuildingInfo } from '@/lib/utils/building-info';
 
 // Types for request validation
 interface ConsultationRequest {
@@ -32,30 +36,6 @@ interface ConsultationRequest {
     type: string;
     storagePath: string;
   }[];
-}
-
-function createFallbackBuildingInfo(address: string, addressCode: ConsultationRequest['addressCode']) {
-  return {
-    mainPurpsCdNm: '확인 필요',
-    totArea: null,
-    platArea: null,
-    groundFloorCnt: null,
-    rawData: { status: 'UNAVAILABLE' as const, address },
-    addressInfo: {
-      ...addressCode,
-      roadAddr: address,
-    }
-  };
-}
-
-// Korean phone number validation
-function isValidKoreanPhone(phone: string): boolean {
-  return /^010-[0-9]{4}-[0-9]{4}$/.test(phone);
-}
-
-// Email validation (basic)
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 // Input validation function
@@ -105,6 +85,12 @@ function validateConsultationData(data: any): { valid: boolean; errors: string[]
 
 export async function POST(request: NextRequest) {
   try {
+    const cookieStore = cookies();
+
+    if (isUserSessionExpired(cookieStore)) {
+      return createExpiredSessionResponse('세션이 만료되었습니다. 다시 로그인 후 상담을 등록해주세요.');
+    }
+
     // Parse request body
     const body: ConsultationRequest = await request.json();
 
@@ -139,10 +125,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user nickname from auth metadata
-    const nickname = session.user.user_metadata?.name ||
-                    session.user.user_metadata?.full_name ||
-                    session.user.email?.split('@')[0] ||
-                    '사용자';
+    const nickname = getUserNickname(session.user);
 
     const resolvedBuildingInfo = body.buildingInfo && body.buildingInfo.mainPurpsCdNm
       ? body.buildingInfo
@@ -246,6 +229,12 @@ export async function POST(request: NextRequest) {
 // GET method to retrieve user's consultations
 export async function GET(request: NextRequest) {
   try {
+    const cookieStore = cookies();
+
+    if (isUserSessionExpired(cookieStore)) {
+      return createExpiredSessionResponse('세션이 만료되었습니다. 다시 로그인해주세요.');
+    }
+
     const supabase = createRouteHandlerClient({ cookies });
 
     // Get authenticated user

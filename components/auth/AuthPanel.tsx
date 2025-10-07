@@ -2,17 +2,12 @@
 
 import type { User } from '@supabase/auth-helpers-nextjs';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import { Button } from '../ui/button';
 import type { UserProfile } from '../../types/profile';
-
-function resolveDisplayName(sessionUser: User | null, profile: UserProfile | null) {
-  if (profile?.full_name) return profile.full_name;
-  if (sessionUser?.user_metadata?.name) return sessionUser.user_metadata.name as string;
-  if (sessionUser?.user_metadata?.full_name) return sessionUser.user_metadata.full_name as string;
-  return sessionUser?.email ?? '사용자';
-}
+import { getUserDisplayName } from '@/lib/auth/user-utils';
+import { handleUserLogout } from '@/lib/auth/logout';
 
 type Props = {
   sessionUser: User | null;
@@ -20,41 +15,49 @@ type Props = {
 };
 
 export default function AuthPanel({ sessionUser, profile }: Props) {
-  const supabase = useMemo(() => createClientComponentClient(), []);
+  const supabase = createClientComponentClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
 
+  const desiredNextParam = searchParams.get('redirect');
   const handleSignIn = useCallback(async () => {
     setLoading(true);
     const origin =
       process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    const desiredNext = desiredNextParam && desiredNextParam.startsWith('/') ? desiredNextParam : '/';
+    const encodedNext = encodeURIComponent(desiredNext);
 
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
       options: {
-        redirectTo: `${cleanOrigin}/auth/callback`,
+        redirectTo: `${cleanOrigin}/auth/callback?next=${encodedNext}`,
         queryParams: {
           scope: 'account_email'
         }
       }
     });
-  }, [supabase]);
+  }, [desiredNextParam, supabase]);
 
   const handleSignOut = useCallback(async () => {
     setLoading(true);
+    await handleUserLogout(router);
+    setLoading(false);
+  }, [router]);
 
-    try {
-      await supabase.auth.signOut();
-    } finally {
-      setLoading(false);
-      router.refresh();
-      router.replace('/');
-    }
-  }, [router, supabase]);
+  const handleGoToMyPage = useCallback(() => {
+    router.push('/mypage');
+  }, [router]);
 
   if (sessionUser) {
-    const displayName = resolveDisplayName(sessionUser, profile);
+    const displayName = getUserDisplayName(sessionUser, profile);
+    const profileCompleted = profile?.profile_completed ?? false;
+
+    const signupTarget =
+      desiredNextParam && desiredNextParam.startsWith('/')
+        ? `/signup?next=${encodeURIComponent(desiredNextParam)}`
+        : '/signup';
 
     return (
       <div className="space-y-6 text-center">
@@ -63,11 +66,34 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
           {profile?.email || sessionUser.email ? (
             <p className="text-sm text-muted-foreground">{profile?.email ?? sessionUser.email}</p>
           ) : null}
-          {profile?.phone ? <p className="text-sm text-muted-foreground">연락처: {profile.phone}</p> : null}
+          {profile?.contact_phone || profile?.phone ? (
+            <p className="text-sm text-muted-foreground">
+              연락처: {profile?.contact_phone ?? profile?.phone}
+            </p>
+          ) : null}
+          {!profileCompleted ? (
+            <p className="text-sm text-amber-600">
+              상담 신청을 위해 회원정보를 먼저 완료해주세요.
+            </p>
+          ) : null}
         </div>
-        <Button onClick={handleSignOut} disabled={loading} variant="outline">
-          카카오 로그아웃
-        </Button>
+        <div className="flex flex-col gap-3">
+          {!profileCompleted ? (
+            <Button
+              onClick={() => router.push(signupTarget)}
+              disabled={loading}
+              className="w-full"
+            >
+              회원정보 입력하러 가기
+            </Button>
+          ) : null}
+          <Button onClick={handleGoToMyPage} disabled={loading}>
+            마이페이지로 이동
+          </Button>
+          <Button onClick={handleSignOut} disabled={loading} variant="outline">
+            카카오 로그아웃
+          </Button>
+        </div>
       </div>
     );
   }
