@@ -10,7 +10,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={clsx(
-          'flex min-h-[80px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm',
+          'flex min-h-[80px] w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm',
           'placeholder:text-muted-foreground',
           'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40',
           'disabled:cursor-not-allowed disabled:opacity-50',

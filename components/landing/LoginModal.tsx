@@ -8,9 +8,10 @@ import { CTAButton } from '../ui/cta-button';
 interface LoginModalProps {
   open: boolean;
   onClose: () => void;
+  nextPath?: string;
 }
 
-export function LoginModal({ open, onClose }: LoginModalProps) {
+export function LoginModal({ open, onClose, nextPath }: LoginModalProps) {
   const supabase = useMemo(() => createClientComponentClient(), []);
   const [loading, setLoading] = useState(false);
 
@@ -20,11 +21,18 @@ export function LoginModal({ open, onClose }: LoginModalProps) {
       process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
 
+    const desiredNext =
+      nextPath ??
+      (typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}` || '/'
+        : '/');
+    const encodedNext = encodeURIComponent(desiredNext);
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: `${cleanOrigin}/auth/callback`,
+          redirectTo: `${cleanOrigin}/auth/callback?next=${encodedNext}`,
           queryParams: {
             scope: 'account_email'
           }
@@ -37,7 +45,7 @@ export function LoginModal({ open, onClose }: LoginModalProps) {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [nextPath, supabase]);
 
   return (
     <Transition appear show={open} as={Fragment}>
@@ -66,7 +74,9 @@ export function LoginModal({ open, onClose }: LoginModalProps) {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl border border-border bg-background p-8 shadow-xl transition-all bg-opacity-95">
-                <Dialog.Title className="text-2xl font-semibold text-foreground">로그인</Dialog.Title>
+                <Dialog.Title className="text-2xl font-semibold text-foreground">
+                  로그인/회원가입
+                </Dialog.Title>
                 <Dialog.Description className="mt-2 text-sm text-muted-foreground">
                   카카오 계정으로 간편하게 로그인 또는 회원가입을 진행하세요.
                 </Dialog.Description>

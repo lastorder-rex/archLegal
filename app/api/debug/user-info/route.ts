@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/user-session';
 
 // 개발용: 현재 로그인한 사용자 정보 확인
 export async function GET(request: NextRequest) {
   try {
+    const cookieStore = cookies();
+
+    if (isUserSessionExpired(cookieStore)) {
+      return createExpiredSessionResponse();
+    }
+
     const supabase = createRouteHandlerClient({ cookies });
 
     const { data: { session }, error } = await supabase.auth.getSession();

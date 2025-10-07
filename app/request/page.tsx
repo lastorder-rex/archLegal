@@ -4,11 +4,19 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import ConsultationForm from '@/components/consultation/ConsultationForm';
 import { Button } from '@/components/ui/button';
+import type { UserProfile } from '@/types/profile';
+import { isUserSessionExpired } from '@/lib/auth/user-session';
 
 export const revalidate = 0;
 
 export default async function RequestPage() {
   // Initialize Supabase client
+  const cookieStore = cookies();
+
+  if (isUserSessionExpired(cookieStore)) {
+    redirect('/login?redirect=/request');
+  }
+
   const supabase = createServerComponentClient({ cookies });
 
   // Get current session
@@ -20,6 +28,22 @@ export default async function RequestPage() {
   // Redirect to login if not authenticated
   if (authError || !session?.user) {
     redirect('/login?redirect=/request');
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('users')
+    .select(
+      'auth_id, full_name, email, phone, legal_name, contact_phone, profile_completed, profile_completed_at, consent_terms_at, consent_privacy_at, contact_phone_verified_at, birth_date'
+    )
+    .eq('auth_id', session.user.id)
+    .maybeSingle<UserProfile>();
+
+  if (profileError) {
+    console.error('Failed to load user profile for request page', profileError);
+  }
+
+  if (!profile || !profile.profile_completed) {
+    redirect(`/signup?next=${encodeURIComponent('/request')}`);
   }
 
   return (
@@ -116,7 +140,7 @@ export default async function RequestPage() {
 
           {/* Consultation Form */}
           <div className="bg-card border border-border rounded-lg p-6">
-            <ConsultationForm user={session.user} />
+            <ConsultationForm user={session.user} profile={profile} />
           </div>
 
           {/* Footer */}

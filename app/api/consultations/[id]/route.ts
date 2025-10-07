@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/user-session';
 
 interface UpdateConsultationRequest {
   name?: string;
@@ -25,6 +26,12 @@ export async function PATCH(
     const body: UpdateConsultationRequest = await request.json();
 
     // Initialize Supabase client
+    const cookieStore = cookies();
+
+    if (isUserSessionExpired(cookieStore)) {
+      return createExpiredSessionResponse('세션이 만료되었습니다. 다시 로그인해주세요.');
+    }
+
     const supabase = createRouteHandlerClient({ cookies });
 
     // Get authenticated user
@@ -102,6 +109,12 @@ export async function DELETE(
     const consultationId = params.id;
 
     // Initialize Supabase client
+    const cookieStore = cookies();
+
+    if (isUserSessionExpired(cookieStore)) {
+      return createExpiredSessionResponse('세션이 만료되었습니다. 다시 로그인해주세요.');
+    }
+
     const supabase = createRouteHandlerClient({ cookies });
 
     // Get authenticated user

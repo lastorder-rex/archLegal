@@ -1,15 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { AddressSearchModal } from './AddressSearchModal';
-import { BuildingInfoDisplay } from './BuildingInfoDisplay';
-import FileUpload from './FileUpload';
 import {
   consultationFormSchema,
   type ConsultationForm,
@@ -18,27 +13,50 @@ import {
   validatePhoneInput,
 } from '@/lib/validations/consultation';
 import { AttachmentFile } from '@/lib/utils/file-upload';
+import type { UserProfile } from '@/types/profile';
+import { filterNameInput, filterPhoneInput, filterEmailInput } from '@/lib/validations/user';
+import { getUserNickname } from '@/lib/auth/user-utils';
+import { createFallbackBuildingInfo } from '@/lib/utils/building-info';
+import { UserInfoSection } from './sections/UserInfoSection';
+import { AddressSection } from './sections/AddressSection';
+import { BuildingInfoSection } from './sections/BuildingInfoSection';
+import { MessageSection } from './sections/MessageSection';
+import { AttachmentsSection } from './sections/AttachmentsSection';
+import { SubmitSection } from './sections/SubmitSection';
 
 interface ConsultationFormProps {
   user: User;
+  profile: UserProfile;
 }
 
 interface FormErrors {
   [key: string]: string;
 }
 
-export default function ConsultationForm({ user }: ConsultationFormProps) {
+export default function ConsultationForm({ user, profile }: ConsultationFormProps) {
   const supabase = createClientComponentClient();
 
   // Form state
-  const [formData, setFormData] = useState<Partial<ConsultationForm>>({
-    name: '',
-    phone: '',
-    email: user.email || '',
-    address: '',
-    addressDetail: '',
-    message: '',
-  });
+  const defaultFormState = useMemo<Partial<ConsultationForm>>(
+    () => ({
+      name: profile.legal_name ?? profile.full_name ?? '',
+      phone: profile.contact_phone ?? profile.phone ?? '',
+      email: profile.email ?? user.email ?? '',
+      address: '',
+      addressDetail: '',
+      message: '',
+    }),
+    [
+      profile.contact_phone,
+      profile.email,
+      profile.full_name,
+      profile.legal_name,
+      profile.phone,
+      user.email,
+    ]
+  );
+
+  const [formData, setFormData] = useState<Partial<ConsultationForm>>(defaultFormState);
 
   // UI state
   const [errors, setErrors] = useState<FormErrors>({});
@@ -53,39 +71,11 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
 
   // Handle attachments change with useCallback to prevent re-render issues
   const handleAttachmentsChange = useCallback((files: AttachmentFile[]) => {
-    console.log('🔄 FileUpload onFilesChange called with:', files);
-    console.log('🔄 Number of files:', files.length);
-    console.log('🔄 Files details:', files.map(f => ({
-      name: f.name,
-      status: f.uploadStatus,
-      hasPath: !!f.storagePath
-    })));
     setAttachments(files);
-    console.log('✅ setAttachments called');
   }, []);
 
-  const createFallbackBuildingInfo = useCallback((address: AddressSearchResult) => ({
-    mainPurpsCdNm: '확인 필요',
-    totArea: null,
-    platArea: null,
-    groundFloorCnt: null,
-    ugrndFloorCnt: null,
-    hhldCnt: null,
-    fmlyNum: null,
-    mainBldCnt: null,
-    atchBldCnt: null,
-    platPlc: null,
-    addressInfo: {
-      ...address.addressCode,
-    },
-    rawData: { status: 'UNAVAILABLE' as const },
-  }), []);
-
   // Get user nickname from auth metadata
-  const userNickname = user.user_metadata?.name ||
-                      user.user_metadata?.full_name ||
-                      user.email?.split('@')[0] ||
-                      '사용자';
+  const userNickname = getUserNickname(user);
 
   // Handle input changes with validation
   const handleInputChange = useCallback((field: keyof ConsultationForm, value: string) => {
@@ -96,15 +86,19 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
 
-    // Special handling for phone number - only allow numbers and hyphens
+    if (field === 'name') {
+      processedValue = filterNameInput(value);
+    }
+
     if (field === 'phone') {
-      // Remove any characters that are not digits or hyphens
-      const cleanValue = value.replace(/[^0-9-]/g, '');
+      const cleanValue = filterPhoneInput(value);
       const { formatted } = validatePhoneInput(cleanValue);
       processedValue = formatted;
     }
 
-    // Email field doesn't need special processing - validation is handled by Zod schema
+    if (field === 'email') {
+      processedValue = filterEmailInput(value);
+    }
 
     setFormData(prev => ({ ...prev, [field]: processedValue }));
   }, [errors]);
@@ -146,7 +140,7 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
           ...prev,
           building: errorData.error || '건축물 정보를 가져올 수 없습니다.'
         }));
-        setFormData(prev => ({ ...prev, buildingInfo: createFallbackBuildingInfo(address) }));
+        setFormData(prev => ({ ...prev, buildingInfo: createFallbackBuildingInfo(address.roadAddr, address.addressCode) }));
       }
     } catch (error) {
       console.error('Building info fetch error:', error);
@@ -154,11 +148,11 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
         ...prev,
         building: '건축물 정보 조회 중 오류가 발생했습니다.'
       }));
-      setFormData(prev => ({ ...prev, buildingInfo: createFallbackBuildingInfo(address) }));
+      setFormData(prev => ({ ...prev, buildingInfo: createFallbackBuildingInfo(address.roadAddr, address.addressCode) }));
     } finally {
       setIsBuildingLoading(false);
     }
-  }, [createFallbackBuildingInfo]);
+  }, []);
 
   const handleOpenRoadview = useCallback((provider: 'kakao' | 'naver') => {
     if (!selectedAddress) return;
@@ -188,8 +182,6 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
           formErrors[field] = err.message;
         });
       }
-      console.log('📋 Validation errors:', formErrors);
-      console.log('📋 Submitted data:', data);
       setErrors(formErrors);
       return false;
     }
@@ -198,9 +190,6 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
   // Handle form submission
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🚀 Submit button clicked!'); // 디버깅용 로그
-    console.log('🚀 Current attachments state at submit:', attachments);
-    console.log('🚀 Attachments length:', attachments.length);
 
     // 필수값 체크 (유효성 검증 전에 먼저 확인)
     const newErrors: FormErrors = {};
@@ -234,7 +223,7 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
 
     const resolvedBuilding = buildingInfo?.building
       ?? formData.buildingInfo
-      ?? createFallbackBuildingInfo({ roadAddr: formData.address, addressCode: formData.addressCode });
+      ?? createFallbackBuildingInfo(formData.address || '', formData.addressCode!);
 
     const submissionData: ConsultationForm = {
       name: formData.name || '',
@@ -248,23 +237,13 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
     };
 
     if (!validateForm(submissionData)) {
-      console.log('❌ Form validation failed');
       return;
     }
-    console.log('✅ Form validation passed');
 
     setIsSubmitting(true);
     setErrors({});
 
     // Process attachments for submission
-    console.log('📎 All attachments:', attachments);
-    console.log('📎 Attachment details:', attachments.map(f => ({
-      name: f.name,
-      status: f.uploadStatus,
-      hasStoragePath: !!f.storagePath,
-      storagePath: f.storagePath
-    })));
-
     const attachmentsData = attachments
       .filter(file => file.uploadStatus === 'completed' && file.storagePath)
       .map(file => ({
@@ -273,12 +252,6 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
         type: file.type,
         storagePath: file.storagePath
       }));
-    console.log('📎 Filtered attachments for submission:', attachmentsData);
-
-    if (attachments.length > 0 && attachmentsData.length === 0) {
-      console.warn('⚠️ WARNING: Files were selected but none are ready for submission!');
-      console.warn('⚠️ Make sure all files have uploadStatus="completed" and storagePath');
-    }
 
     const requestData = {
       name: submissionData.name,
@@ -292,8 +265,6 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
       attachments: attachmentsData,
     };
 
-    console.log('Submitting consultation data:', requestData);
-
     try {
       const response = await fetch('/api/consultations', {
         method: 'POST',
@@ -304,16 +275,9 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
 
       if (response.ok) {
         const responseData = await response.json();
-        setConsultationId(responseData.id); // Store consultation ID for file uploads
+        setConsultationId(responseData.id);
         setSubmitSuccess(true);
-        setFormData({
-          name: '',
-          phone: '',
-          email: user.email || '',
-          address: '',
-          addressDetail: '',
-          message: '',
-        });
+        setFormData(defaultFormState);
         setSelectedAddress(null);
         setBuildingInfo(null);
         setAttachments([]);
@@ -324,7 +288,6 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
 
         let errorMessage = errorData.error || '상담 요청 제출 중 오류가 발생했습니다.';
 
-        // 401 오류 시 더 명확한 메시지
         if (response.status === 401) {
           errorMessage = '로그인이 필요합니다. 페이지를 새로고침하고 다시 로그인해주세요.';
         }
@@ -343,7 +306,13 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, selectedAddress, buildingInfo, createFallbackBuildingInfo, validateForm, user.email, attachments]);
+  }, [
+    formData,
+    buildingInfo,
+    validateForm,
+    attachments,
+    defaultFormState,
+  ]);
 
   // Success message display
   if (submitSuccess) {
@@ -377,252 +346,51 @@ export default function ConsultationForm({ user }: ConsultationFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* User Info Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">사용자 정보</h3>
+      <UserInfoSection
+        userNickname={userNickname}
+        formData={formData}
+        errors={errors}
+        onInputChange={handleInputChange}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>카카오 닉네임</Label>
-            <Input value={userNickname} disabled />
-            <p className="text-xs text-muted-foreground">카카오 로그인 정보에서 자동 입력됩니다</p>
-          </div>
-        </div>
+      <AddressSection
+        formData={formData}
+        errors={errors}
+        selectedAddress={selectedAddress}
+        onInputChange={handleInputChange}
+        onOpenAddressModal={() => setIsAddressModalOpen(true)}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" required>실명</Label>
-            <Input
-              id="name"
-              value={formData.name || ''}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="실명을 입력해주세요"
-              error={!!errors.name}
-              className={!formData.name?.trim() ? 'border-amber-200 bg-amber-50' : ''}
-            />
-            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-          </div>
+      <BuildingInfoSection
+        selectedAddress={selectedAddress}
+        buildingInfo={buildingInfo}
+        isBuildingLoading={isBuildingLoading}
+        errors={errors}
+        onOpenRoadview={handleOpenRoadview}
+      />
 
-          <div className="space-y-2">
-            <Label htmlFor="phone" required>연락처</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone || ''}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="010-1234-5678"
-              inputMode="numeric"
-              maxLength={13}
-              error={!!errors.phone}
-              className={!formData.phone?.match(/^010-\d{4}-\d{4}$/) ? 'border-amber-200 bg-amber-50' : ''}
-            />
-            {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-          </div>
-        </div>
+      <MessageSection
+        formData={formData}
+        errors={errors}
+        onInputChange={handleInputChange}
+      />
 
-        <div className="space-y-2">
-          <Label htmlFor="email">이메일 (선택)</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email || ''}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            placeholder="example@email.com"
-            inputMode="email"
-            error={!!errors.email}
-          />
-          {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-        </div>
-      </div>
+      <AttachmentsSection
+        userId={user.id}
+        consultationId={consultationId}
+        attachments={attachments}
+        isSubmitting={isSubmitting}
+        onFilesChange={handleAttachmentsChange}
+      />
 
-      {/* Address Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">주소 정보</h3>
+      <SubmitSection
+        errors={errors}
+        isSubmitting={isSubmitting}
+        selectedAddress={selectedAddress}
+        attachments={attachments}
+        onClose={() => window.history.back()}
+      />
 
-        <div className="space-y-2">
-          <Label required>주소</Label>
-          <div className="flex gap-2">
-            <div className="flex-[8]">
-              <Input
-                value={formData.address || ''}
-                placeholder="주소 검색 버튼을 클릭해주세요"
-                readOnly
-                error={!!errors.address}
-                className={!selectedAddress ? 'border-amber-200 bg-amber-50' : ''}
-              />
-            </div>
-            <div className="flex-[2]">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddressModalOpen(true)}
-                className="w-full whitespace-nowrap !border-opacity-100 !bg-white hover:!bg-primary hover:!text-white"
-              >
-                주소 검색
-              </Button>
-            </div>
-          </div>
-          {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="addressDetail">상세 주소 (선택)</Label>
-          <Input
-            id="addressDetail"
-            value={formData.addressDetail || ''}
-            onChange={(e) => handleInputChange('addressDetail', e.target.value)}
-            placeholder="동/호수, 건물명 등 상세 주소를 입력해주세요"
-            error={!!errors.addressDetail}
-          />
-          {errors.addressDetail && <p className="text-sm text-destructive">{errors.addressDetail}</p>}
-        </div>
-
-        {selectedAddress && (
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p><strong>도로명:</strong> {selectedAddress.roadAddr}</p>
-            <p><strong>지번:</strong> {selectedAddress.jibunAddr}</p>
-            <p><strong>우편번호:</strong> {selectedAddress.zipNo}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Building Information Section */}
-      {selectedAddress && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">건축물 정보</h3>
-
-          {isBuildingLoading ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">건축물 정보를 조회하고 있습니다...</p>
-            </div>
-          ) : buildingInfo ? (
-            <BuildingInfoDisplay buildingInfo={buildingInfo} />
-          ) : errors.building ? (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-              {errors.building}
-            </div>
-          ) : null}
-
-          <div className="rounded-md border border-border bg-muted/30 p-4 space-y-3">
-            <div className="space-y-1">
-              <h4 className="text-sm font-medium">로드뷰 확인</h4>
-              <p className="text-xs text-muted-foreground">
-                카카오 지도에서 로드뷰를 열어 주변 현황을 확인할 수 있습니다.
-              </p>
-              {!buildingInfo && !isBuildingLoading && (
-                <p className="text-xs text-muted-foreground">
-                  건축물 정보를 불러오지 못해도 선택한 주소 기준으로 로드뷰가 열립니다.
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-              <Button
-                type="button"
-                variant="outline"
-                className="sm:w-auto"
-                onClick={() => handleOpenRoadview('kakao')}
-              >
-                카카오 로드뷰 열기
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="sm:w-auto"
-                onClick={() => handleOpenRoadview('naver')}
-              >
-                네이버 로드뷰 열기
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Message Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">상담 내용</h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="message">상담 요청사항 (선택)</Label>
-          <Textarea
-            id="message"
-            value={formData.message || ''}
-            onChange={(e) => handleInputChange('message', e.target.value)}
-            placeholder="상담 받고 싶은 내용을 자세히 적어주세요 (최대 1000글자)"
-            rows={4}
-            error={!!errors.message}
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{errors.message}</span>
-            <span>{(formData.message || '').length}/1000</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Attachments Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">첨부파일</h3>
-        <div className="rounded-md border border-border bg-muted/10 p-4">
-          <FileUpload
-            userId={user.id}
-            consultationId={consultationId}
-            onFilesChange={handleAttachmentsChange}
-            disabled={isSubmitting}
-          />
-          <div className="mt-3 text-xs text-muted-foreground">
-            <p>📋 <strong>권장 첨부파일:</strong> 위임장, 인감증명서</p>
-            <p>💡 <strong>안내:</strong> 첨부파일은 상담 완료 후에도 안전하게 보관됩니다</p>
-          </div>
-        </div>
-        {/* Debug info */}
-        {attachments.length > 0 && (
-          <div className="text-xs text-muted-foreground">
-            현재 첨부파일: {attachments.length}개
-            ({attachments.filter(f => f.uploadStatus === 'completed').length}개 업로드 완료)
-          </div>
-        )}
-      </div>
-
-      {/* Submit Section */}
-      <div className="space-y-4">
-        {errors.submit && (
-          <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-            {errors.submit}
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          <Button
-            type="submit"
-            disabled={
-              isSubmitting ||
-              !selectedAddress ||
-              attachments.some(f => f.uploadStatus === 'uploading' || f.uploadStatus === 'pending')
-            }
-            className="w-full"
-            onClick={() => console.log('🔘 Submit button clicked (before form submission)')}
-          >
-            {isSubmitting ? '제출 중...' :
-             attachments.some(f => f.uploadStatus === 'uploading' || f.uploadStatus === 'pending') ?
-             '파일 업로드 중...' :
-             '상담 요청 제출'}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full !border-opacity-100 !bg-white hover:!bg-primary hover:!text-white"
-            onClick={() => window.history.back()}
-          >
-            닫기
-          </Button>
-        </div>
-
-        <p className="text-xs text-muted-foreground text-center">
-          제출 시 개인정보 수집 및 이용에 동의한 것으로 간주됩니다.
-        </p>
-      </div>
-
-      {/* Address Search Modal */}
       <AddressSearchModal
         isOpen={isAddressModalOpen}
         onClose={() => setIsAddressModalOpen(false)}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useState, useRef } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { X, Upload, File, Download, Trash2 } from 'lucide-react';
@@ -342,10 +343,12 @@ export default function FileUpload({
               {/* File Icon/Preview */}
               <div className="flex-shrink-0">
                 {file.preview ? (
-                  <img
+                  <Image
                     src={file.preview}
                     alt={file.name}
-                    className="w-10 h-10 object-cover rounded"
+                    width={40}
+                    height={40}
+                    className="object-cover rounded"
                   />
                 ) : (
                   <div className="w-10 h-10 flex items-center justify-center bg-muted rounded">

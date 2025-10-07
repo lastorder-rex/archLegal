@@ -4,7 +4,7 @@
 
 :root {
   color-scheme: light;
-  --background: 204 12% 92%;
+  --background: 0 0% 100%;
   --foreground: 0 0% 20%;
   --card: 0 0% 100%;
   --card-foreground: 0 0% 15%;
@@ -46,11 +46,11 @@
   color-scheme: dark;
   --background: 222 40% 12%;
   --foreground: 210 40% 96%;
-  --card: 220 32% 16%;
+  --card: 222 21% 21%;
   --card-foreground: 210 32% 92%;
   --popover: 220 32% 16%;
   --popover-foreground: 210 32% 92%;
-  --primary: 222 73% 56%;
+  --primary: 14 73% 55%;
   --primary-foreground: 0 0% 100%;
   --secondary: 220 24% 20%;
   --secondary-foreground: 210 40% 94%;
@@ -62,7 +62,7 @@
   --destructive-foreground: 210 40% 96%;
   --border: 218 24% 28%;
   --input: 218 24% 28%;
-  --ring: 222 73% 56%;
+  --ring: 14 73% 55%;
   --chart-1: 222 73% 60%;
   --chart-2: 200 60% 60%;
   --chart-3: 40 90% 55%;
@@ -75,7 +75,7 @@
   --sidebar-accent: 216 38% 28%;
   --sidebar-accent-foreground: 210 40% 96%;
   --sidebar-border: 218 24% 28%;
-  --sidebar-ring: 222 73% 56%;
+  --sidebar-ring: 14 73% 55%;
 }
 
 @layer base {

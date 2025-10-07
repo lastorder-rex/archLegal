@@ -1,7 +1,11 @@
 import { z } from 'zod';
-
-// Korean phone number regex
-const koreanPhoneRegex = /^010-[0-9]{4}-[0-9]{4}$/;
+import {
+  nameSchema,
+  optionalEmailSchema,
+  phoneSchema,
+  formatPhoneNumber,
+  validatePhoneInput,
+} from './user';
 
 // Address code schema (from Juso API)
 export const addressCodeSchema = z.object({
@@ -37,22 +41,11 @@ export const buildingInfoSchema = z.object({
 // Main consultation form validation schema
 export const consultationFormSchema = z.object({
   // User information
-  name: z
-    .string()
-    .min(2, '이름은 2글자 이상 입력해주세요')
-    .max(50, '이름은 50글자 이하로 입력해주세요')
-    .trim(),
+  name: nameSchema,
 
-  phone: z
-    .string()
-    .regex(koreanPhoneRegex, '올바른 휴대폰 번호를 입력해주세요 (예: 010-1234-5678)'),
+  phone: phoneSchema,
 
-  email: z
-    .string()
-    .email('올바른 이메일 형식을 입력해주세요')
-    .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, '영문, 숫자, 특수문자만 사용 가능합니다')
-    .optional()
-    .or(z.literal('')),
+  email: optionalEmailSchema,
 
   // Address information
   address: z
@@ -114,22 +107,4 @@ export const buildingSearchResultSchema = z.object({
 
 export type BuildingSearchResult = z.infer<typeof buildingSearchResultSchema>;
 
-// Utility function to format phone number
-export function formatPhoneNumber(phone: string): string {
-  // Remove all non-digit characters
-  const digits = phone.replace(/\D/g, '');
-
-  // Format as 010-XXXX-XXXX if it's 11 digits and starts with 010
-  if (digits.length === 11 && digits.startsWith('010')) {
-    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
-  }
-
-  return phone; // Return original if format doesn't match
-}
-
-// Utility function to validate and format phone number input
-export function validatePhoneInput(phone: string): { formatted: string; valid: boolean } {
-  const formatted = formatPhoneNumber(phone);
-  const valid = koreanPhoneRegex.test(formatted);
-  return { formatted, valid };
-}
+export { formatPhoneNumber, validatePhoneInput };

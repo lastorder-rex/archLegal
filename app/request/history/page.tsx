@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -64,6 +64,8 @@ interface EditFormState {
 
 export default function ConsultationHistoryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedId = searchParams.get('id');
   const [records, setRecords] = useState<ConsultationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -276,6 +278,12 @@ export default function ConsultationHistoryPage() {
     [records]
   );
 
+  const recordsToDisplay = useMemo(() => {
+    if (!selectedId) return sortedRecords;
+    const match = sortedRecords.find(record => record.id === selectedId);
+    return match ? [match] : [];
+  }, [selectedId, sortedRecords]);
+
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto py-12">
@@ -296,13 +304,13 @@ export default function ConsultationHistoryPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-10 space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">나의 상담 내역</h1>
+    <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <header className="space-y-1">
+        <h2 className="text-xl font-semibold">상담 내역 상세</h2>
         <p className="text-sm text-muted-foreground">
           제출한 상담 요청을 확인하고 수정하거나 삭제할 수 있습니다.
         </p>
-      </div>
+      </header>
 
       {actionMessage && (
         <div className="text-sm text-center text-muted-foreground bg-muted/40 p-3 rounded-md">
@@ -310,20 +318,37 @@ export default function ConsultationHistoryPage() {
         </div>
       )}
 
+      {selectedId ? (
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={() => router.push('/request/history')}>
+            전체 목록 보기
+          </Button>
+        </div>
+      ) : null}
+
       {sortedRecords.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">
           아직 등록된 상담 요청이 없습니다. 먼저 상담 요청을 등록해 주세요.
         </div>
+      ) : recordsToDisplay.length === 0 ? (
+        <div className="py-12 space-y-4 text-center text-muted-foreground">
+          <p>선택한 상담 내역을 찾을 수 없습니다.</p>
+          <div className="flex justify-center">
+            <Button variant="outline" onClick={() => router.push('/request/history')}>
+              전체 목록 보기
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="space-y-4">
-          {sortedRecords.map(record => {
+          {recordsToDisplay.map(record => {
             const isEditing = editingId === record.id;
             const createdAt = new Date(record.created_at);
             const rawData = record.building_info?.rawData as { status?: string } | null;
             const isBuildingUnavailable = rawData && typeof rawData === 'object' && rawData.status === 'UNAVAILABLE';
 
             return (
-              <div key={record.id} className="border border-border rounded-lg p-5 space-y-4 bg-background">
+              <div key={record.id} className="border border-border rounded-lg p-5 space-y-4 bg-secondary transition hover:bg-accent">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div>
                     <p className="text-sm text-muted-foreground">
@@ -403,7 +428,7 @@ export default function ConsultationHistoryPage() {
 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">상담 요청 내용</p>
-                  <div className="rounded-md border border-border bg-muted/20 p-3 text-sm">
+                  <div className="rounded-md border border-border bg-muted/10 p-3 text-sm whitespace-pre-wrap">
                     {record.message ? record.message : '추가 요청사항이 없습니다.'}
                   </div>
                 </div>
@@ -448,7 +473,7 @@ export default function ConsultationHistoryPage() {
                       {/* Attachments Edit Section */}
                       <div className="space-y-2 md:col-span-2">
                         <Label>첨부파일 관리</Label>
-                        <div className="rounded-md border border-border bg-muted/10 p-4 space-y-3">
+                <div className="rounded-md border border-border bg-muted/5 p-4 space-y-3">
                           {/* Existing Attachments */}
                           {formState.attachments.length > 0 && (
                             <div className="space-y-2">
@@ -551,6 +576,6 @@ export default function ConsultationHistoryPage() {
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 }

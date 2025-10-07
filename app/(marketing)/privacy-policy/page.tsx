@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
           <p className="text-sm font-medium text-primary">시행일: {effectiveDate}</p>
           <h1 className="text-3xl font-bold text-foreground">개인정보 처리방침</h1>
           <p className="text-sm text-muted-foreground">
-            ArchLegal(이하 "회사")는 이용자의 개인정보를 소중히 여기며 안전하게 보호하기 위해 최선을 다하고 있습니다. 본 방침은
+            ArchLegal(이하 &ldquo;회사&rdquo;)는 이용자의 개인정보를 소중히 여기며 안전하게 보호하기 위해 최선을 다하고 있습니다. 본 방침은
             회사가 제공하는 상담 서비스와 카카오 로그인 연동 과정에서 수집·이용되는 개인정보 처리 기준을 설명합니다.
           </p>
         </header>
@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-foreground">1. 총칙</h2>
             <ul className="list-disc space-y-2 pl-5">
-              <li>회사명: www.archlegal.co.kr(이하 "회사")는 관련 개인정보 보호 법령과 감독기관 가이드라인을 준수합니다.</li>
+              <li>회사명: www.archlegal.co.kr(이하 &ldquo;회사&rdquo;)는 관련 개인정보 보호 법령과 감독기관 가이드라인을 준수합니다.</li>
               <li>회사는 본 방침을 홈페이지 하단 및 상담 게시판 화면에 상시 공개하며, 개정 시 시행 7일 전부터 공지합니다.</li>
             </ul>
           </section>
