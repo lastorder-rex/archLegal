@@ -22,7 +22,7 @@ export function AttachmentsSection({
       <div className="rounded-md border border-border bg-muted/10 p-4">
         <FileUpload
           userId={userId}
-          consultationId={consultationId}
+          consultationId={consultationId || undefined}
           onFilesChange={onFilesChange}
           disabled={isSubmitting}
         />

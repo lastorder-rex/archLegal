@@ -240,24 +240,24 @@ export function LandingPage() {
             </a>
             <div className="flex items-center gap-3">
               <nav className="hidden items-center gap-6 text-sm font-medium text-white/80 lg:flex">
-                {navigationItems.map(({ label, type, target }) =>
-                  type === 'modal' ? (
+                {navigationItems.map((item) =>
+                  item.type === 'modal' ? (
                     <button
-                      key={label}
+                      key={item.label}
                       type="button"
                       onClick={() => setAboutModalOpen(true)}
                       className="bg-transparent transition hover:text-white focus:outline-none"
                     >
-                      {label}
+                      {item.label}
                     </button>
                   ) : (
                     <a
-                      key={target}
-                      href={`#${target}`}
-                      onClick={(event) => handleSectionNavigate(event, target)}
+                      key={item.target}
+                      href={`#${item.target}`}
+                      onClick={(event) => handleSectionNavigate(event, item.target)}
                       className="transition hover:text-white"
                     >
-                      {label}
+                      {item.label}
                     </a>
                   )
                 )}
@@ -297,10 +297,10 @@ export function LandingPage() {
                       <SheetTitle>모바일 내비게이션</SheetTitle>
                     </SheetHeader>
                     <nav className="mt-10 flex flex-col gap-6 text-base font-medium">
-                      {navigationItems.map(({ label, type, target }) =>
-                        type === 'modal' ? (
+                      {navigationItems.map((item) =>
+                        item.type === 'modal' ? (
                           <button
-                            key={label}
+                            key={item.label}
                             type="button"
                             onClick={() => {
                               setAboutModalOpen(true);
@@ -308,16 +308,16 @@ export function LandingPage() {
                             }}
                             className="bg-transparent text-left transition hover:text-primary focus:outline-none"
                           >
-                            {label}
+                            {item.label}
                           </button>
                         ) : (
                           <a
-                            key={target}
-                            href={`#${target}`}
-                            onClick={(event) => handleSectionNavigate(event, target)}
+                            key={item.target}
+                            href={`#${item.target}`}
+                            onClick={(event) => handleSectionNavigate(event, item.target)}
                             className="transition hover:text-primary"
                           >
-                            {label}
+                            {item.label}
                           </a>
                         )
                       )}

@@ -38,7 +38,8 @@
       "Bash(python3:*)",
       "Bash(lsof:*)",
       "Bash(npx lighthouse:*)",
-      "Bash(open /Users/kbsc/rexDev/archLegal/lighthouse-report.report.html)"
+      "Bash(open /Users/kbsc/rexDev/archLegal/lighthouse-report.report.html)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
