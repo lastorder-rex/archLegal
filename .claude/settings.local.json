@@ -35,7 +35,10 @@
       "Bash(Get-Process node)",
       "Bash(Stop-Process -Force)",
       "Bash(netstat:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(lsof:*)",
+      "Bash(npx lighthouse:*)",
+      "Bash(open /Users/kbsc/rexDev/archLegal/lighthouse-report.report.html)"
     ],
     "deny": [],
     "ask": []

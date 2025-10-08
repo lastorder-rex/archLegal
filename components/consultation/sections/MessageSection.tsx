@@ -14,7 +14,9 @@ export function MessageSection({ formData, errors, onInputChange }: MessageSecti
       <h3 className="text-lg font-semibold">상담 내용</h3>
 
       <div className="space-y-2">
-        <Label htmlFor="message">상담 요청사항 (선택)</Label>
+        <Label htmlFor="message">
+          상담 요청사항 <span className="text-destructive">*</span>
+        </Label>
         <Textarea
           id="message"
           value={formData.message || ''}

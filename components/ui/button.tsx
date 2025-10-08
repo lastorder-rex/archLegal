@@ -1,16 +1,18 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import clsx from 'clsx';
+import { Slot } from '@radix-ui/react-slot';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'outline' | 'sidebar-primary';
   size?: 'sm' | 'default' | 'lg';
+  asChild?: boolean;
 };
 
 const baseClasses =
   'inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60';
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'default', ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'default', asChild = false, ...props }, ref) => {
     const variantClasses =
       variant === 'primary'
         ? 'bg-primary text-primary-foreground hover:opacity-85 focus-visible:ring-primary'
@@ -26,11 +28,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const baseClassesWithoutSize = baseClasses.replace('px-4 py-2', '');
 
+    const Component = asChild ? Slot : 'button';
+
+    const componentProps = asChild ? props : { type: 'button', ...props };
+
     return (
-      <button
-        ref={ref}
+      <Component
+        ref={ref as any}
         className={clsx(baseClassesWithoutSize, sizeClasses, variantClasses, className)}
-        {...props}
+        {...componentProps}
       />
     );
   }

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Download, FileText, X } from 'lucide-react';
 import { getFileUrl, getFileIcon, formatFileSize, AttachmentFile } from '@/lib/utils/file-upload';
 import FileUpload from '@/components/consultation/FileUpload';
+import { filterMessageInput } from '@/lib/validations/consultation';
 
 interface ConsultationRecord {
   id: string;
@@ -177,7 +178,14 @@ export default function ConsultationHistoryPage() {
   };
 
   const handleInputChange = (field: keyof EditFormState, value: string) => {
-    setFormState(prev => ({ ...prev, [field]: value }));
+    let processedValue = value;
+
+    // Apply filtering for message field to prevent SQL injection and XSS
+    if (field === 'message') {
+      processedValue = filterMessageInput(value);
+    }
+
+    setFormState(prev => ({ ...prev, [field]: processedValue }));
   };
 
   const handleAttachmentsChange = (attachments: AttachmentFile[]) => {
@@ -197,6 +205,13 @@ export default function ConsultationHistoryPage() {
   const handleUpdate = async (record: ConsultationRecord) => {
     setSubmitting(true);
     setActionMessage(null);
+
+    // Validate message is not empty
+    if (!formState.message || formState.message.trim().length === 0) {
+      setActionMessage('상담 요청사항을 입력해주세요.');
+      setSubmitting(false);
+      return;
+    }
 
     try {
       // 기존 첨부파일 + 새로 업로드된 파일을 합침
@@ -231,10 +246,12 @@ export default function ConsultationHistoryPage() {
       setActionMessage('상담 요청이 수정되었습니다.');
       resetEditing();
 
-      // 페이지 새로고침하여 최신 데이터 반영
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // 페이지 새로고침하여 최신 데이터 반영 (테스트 환경에서는 건너뜀)
+      if (process.env.NODE_ENV !== 'test') {
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
     } catch (err: any) {
       setActionMessage(err.message || '수정에 실패했습니다.');
     } finally {
@@ -458,7 +475,9 @@ export default function ConsultationHistoryPage() {
                     <h3 className="text-md font-semibold">상담 요청 수정</h3>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor={`edit-message-${record.id}`}>상담 요청 내용</Label>
+                        <Label htmlFor={`edit-message-${record.id}`}>
+                          상담 요청사항 <span className="text-destructive">*</span>
+                        </Label>
                         <Textarea
                           id={`edit-message-${record.id}`}
                           value={formState.message}

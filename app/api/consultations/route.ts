@@ -38,6 +38,20 @@ interface ConsultationRequest {
   }[];
 }
 
+/**
+ * 상세주소 입력 필터링 (서버 측) - SQL injection 및 XSS 방지
+ */
+function sanitizeAddressDetail(value: string): string {
+  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s\-,()]/g, '');
+}
+
+/**
+ * 상담 메시지 입력 필터링 (서버 측) - SQL injection 및 XSS 방지
+ */
+function sanitizeMessage(value: string): string {
+  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s.,!?()~\-]/g, '');
+}
+
 // Input validation function
 function validateConsultationData(data: any): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -66,6 +80,10 @@ function validateConsultationData(data: any): { valid: boolean; errors: string[]
       !data.addressCode.bun ||
       !data.addressCode.ji) {
     errors.push('주소 정보가 올바르지 않습니다. 주소를 다시 선택해주세요.');
+  }
+
+  if (!data.message || typeof data.message !== 'string' || data.message.trim().length === 0) {
+    errors.push('상담 요청사항을 입력해주세요.');
   }
 
   if (data.message && data.message.length > 1000) {
@@ -131,7 +149,7 @@ export async function POST(request: NextRequest) {
       ? body.buildingInfo
       : createFallbackBuildingInfo(body.address, body.addressCode);
 
-    // Prepare consultation data
+    // Prepare consultation data with sanitization
     const consultationData = {
       user_id: session.user.id,
       nickname: nickname,
@@ -139,7 +157,7 @@ export async function POST(request: NextRequest) {
       phone: body.phone,
       email: body.email?.trim() || null,
       address: body.address.trim(),
-      address_detail: body.addressDetail?.trim() || null,
+      address_detail: body.addressDetail ? sanitizeAddressDetail(body.addressDetail.trim()) : null,
       address_code: body.addressCode,
       building_info: {
         ...resolvedBuildingInfo,
@@ -149,7 +167,7 @@ export async function POST(request: NextRequest) {
       tot_area: resolvedBuildingInfo.totArea ?? null,
       plat_area: resolvedBuildingInfo.platArea ?? null,
       ground_floor_cnt: resolvedBuildingInfo.groundFloorCnt ?? null,
-      message: body.message?.trim() || null,
+      message: body.message ? sanitizeMessage(body.message.trim()) : null,
       attachments: body.attachments || [],
       is_del: 'N',
       deleted_at: null
