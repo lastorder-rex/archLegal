@@ -32,7 +32,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const Component = asChild ? Slot : 'button';
 
-    const componentProps = asChild ? props : { type: 'button', ...props };
+    const componentProps = asChild ? props : { type: 'button' as const, ...props };
 
     return (
       <Component

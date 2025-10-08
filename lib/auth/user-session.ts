@@ -25,7 +25,7 @@ export function isUserSessionExpired(cookieStore: CookieStore) {
 
 export function createExpiredSessionResponse(message = '세션이 만료되었습니다. 다시 로그인해주세요.') {
   const response = NextResponse.json({ error: message }, { status: 401 });
-  response.cookies.delete(USER_SESSION_COOKIE, { path: '/' });
+  response.cookies.delete(USER_SESSION_COOKIE);
   return response;
 }
 
@@ -41,5 +41,5 @@ export function setUserSessionCookie(response: NextResponse, issuedAt = Date.now
 }
 
 export function clearUserSessionCookie(response: NextResponse) {
-  response.cookies.delete(USER_SESSION_COOKIE, { path: '/' });
+  response.cookies.delete(USER_SESSION_COOKIE);
 }

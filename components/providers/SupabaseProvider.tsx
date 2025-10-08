@@ -16,7 +16,7 @@ type Props = {
 export default function SupabaseProvider({ children, initialSession }: Props) {
   const [supabase] = useState(() => createClientComponentClient());
   const logoutNotifiedRef = useRef(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -74,7 +74,7 @@ export default function SupabaseProvider({ children, initialSession }: Props) {
 
       timerRef.current = window.setTimeout(() => {
         void performSignOut();
-      }, remaining);
+      }, remaining) as unknown as NodeJS.Timeout;
     };
 
     const ensureTimerForSession = async (session: Session | null) => {
