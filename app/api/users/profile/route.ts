@@ -24,10 +24,10 @@ const updateProfileSchema = z.object({
     .or(z.literal('').transform(() => undefined))
     .or(z.null().transform(() => undefined)),
   consentTerms: z.literal(true, {
-    errorMap: () => ({ message: '이용약관에 동의해주세요.' })
+    invalid_type_error: '이용약관에 동의해주세요.'
   }),
   consentPrivacy: z.literal(true, {
-    errorMap: () => ({ message: '개인정보 처리방침에 동의해주세요.' })
+    invalid_type_error: '개인정보 처리방침에 동의해주세요.'
   })
 });
 
