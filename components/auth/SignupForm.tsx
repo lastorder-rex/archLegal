@@ -216,6 +216,7 @@ export function SignupForm({ profile, nextPath, fallbackEmail }: SignupFormProps
           </Label>
           <Input
             id="contactPhone"
+            type="tel"
             value={formState.contactPhone}
             onChange={event => handleInputChange('contactPhone', event.target.value)}
             onBlur={handlePhoneBlur}

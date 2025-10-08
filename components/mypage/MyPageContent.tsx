@@ -247,6 +247,7 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                     </Label>
                     <Input
                       id="contactPhone"
+                      type="tel"
                       value={formState.contactPhone}
                       onChange={event => handleChange('contactPhone', event.target.value)}
                       onBlur={handlePhoneBlur}

@@ -1,13 +1,13 @@
 'use client';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useState, useMemo, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { X } from 'lucide-react';
 import ConsultationForm from '@/components/consultation/ConsultationForm';
 import type { UserProfile } from '@/types/profile';
-import { Button } from '@/components/ui/button';
+import { CTAButton } from '@/components/ui/cta-button';
 
 interface ConsultationModalProps {
   open: boolean;
@@ -19,7 +19,8 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
-  const supabase = createClientComponentClient();
+  const [loading, setLoading] = useState(false);
+  const supabase = useMemo(() => createClientComponentClient(), []);
 
   useEffect(() => {
     if (!open) return;
@@ -74,13 +75,33 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
     loadUserData();
   }, [open, supabase]);
 
-  const handleLoginRedirect = () => {
-    window.location.href = '/login?redirect=/';
-  };
+  const handleLogin = useCallback(async () => {
+    setLoading(true);
+    const origin =
+      process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
 
-  const handleSignupRedirect = () => {
-    window.location.href = '/signup?next=/';
-  };
+    const desiredNext = '/';
+    const encodedNext = encodeURIComponent(desiredNext);
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: `${cleanOrigin}/auth/callback?next=${encodedNext}`,
+          queryParams: {
+            scope: 'account_email'
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Kakao sign-in failed', error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
 
   return (
     <Transition appear show={open} as={Fragment}>
@@ -108,7 +129,7 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-3xl border border-border bg-background shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-[660px] transform overflow-hidden rounded-3xl border border-border bg-background shadow-xl transition-all">
                 {/* Header */}
                 <div className="border-b border-border bg-card px-6 py-4 flex items-center justify-between">
                   <div>
@@ -146,13 +167,18 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
                           상담 신청을 하시려면 먼저 로그인 또는 회원가입이 필요합니다.
                         </p>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
-                        <Button onClick={handleLoginRedirect} className="flex-1">
-                          로그인하기
-                        </Button>
-                        <Button onClick={handleSignupRedirect} variant="outline" className="flex-1">
-                          회원가입하기
-                        </Button>
+                      <div className="flex flex-col gap-3 justify-center max-w-sm mx-auto">
+                        <CTAButton
+                          className="w-full bg-[#ffeb00] text-black hover:bg-[#f5dc00] hover:text-black focus-visible:ring-[#ffeb00]"
+                          onClick={handleLogin}
+                          type="button"
+                          disabled={loading}
+                        >
+                          {loading ? '카카오 로그인 준비중...' : '카카오톡 로그인/회원가입'}
+                        </CTAButton>
+                        <CTAButton type="button" tone="secondary" className="w-full" onClick={onClose}>
+                          닫기
+                        </CTAButton>
                       </div>
                     </div>
                   ) : user && profile ? (
@@ -212,7 +238,7 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
 
                       {/* Consultation Form */}
                       <div className="bg-card border border-border rounded-lg p-6">
-                        <ConsultationForm user={user} profile={profile} />
+                        <ConsultationForm user={user} profile={profile} onCancel={onClose} />
                       </div>
                     </div>
                   ) : (

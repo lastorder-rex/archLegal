@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/user-session';
 
 const updateProfileSchema = z.object({
-  legalName: z.string().trim().min(1, '실명을 입력해주세요.'),
+  legalName: z.string().trim().min(2, '이름은 2글자 이상 입력해주세요').max(50, '이름은 50글자 이하로 입력해주세요'),
   contactPhone: z
     .string()
     .trim()
@@ -13,6 +13,7 @@ const updateProfileSchema = z.object({
   email: z
     .string()
     .trim()
+    .max(100, '이메일은 100자 이하로 입력해주세요')
     .email('올바른 이메일 주소를 입력해주세요.')
     .optional()
     .or(z.literal('').transform(() => undefined)),

@@ -11,6 +11,8 @@ import {
   type AddressSearchResult,
   type BuildingSearchResult,
   validatePhoneInput,
+  filterAddressDetailInput,
+  filterMessageInput,
 } from '@/lib/validations/consultation';
 import { AttachmentFile } from '@/lib/utils/file-upload';
 import type { UserProfile } from '@/types/profile';
@@ -27,13 +29,14 @@ import { SubmitSection } from './sections/SubmitSection';
 interface ConsultationFormProps {
   user: User;
   profile: UserProfile;
+  onCancel?: () => void;
 }
 
 interface FormErrors {
   [key: string]: string;
 }
 
-export default function ConsultationForm({ user, profile }: ConsultationFormProps) {
+export default function ConsultationForm({ user, profile, onCancel }: ConsultationFormProps) {
   const supabase = createClientComponentClient();
 
   // Form state
@@ -98,6 +101,14 @@ export default function ConsultationForm({ user, profile }: ConsultationFormProp
 
     if (field === 'email') {
       processedValue = filterEmailInput(value);
+    }
+
+    if (field === 'addressDetail') {
+      processedValue = filterAddressDetailInput(value);
+    }
+
+    if (field === 'message') {
+      processedValue = filterMessageInput(value);
     }
 
     setFormData(prev => ({ ...prev, [field]: processedValue }));
@@ -204,6 +215,10 @@ export default function ConsultationForm({ user, profile }: ConsultationFormProp
 
     if (!formData.address || !formData.addressCode) {
       newErrors.address = '주소를 선택해주세요.';
+    }
+
+    if (!formData.message || formData.message.trim().length === 0) {
+      newErrors.message = '상담 요청사항을 입력해주세요.';
     }
 
     // 필수값 오류가 있으면 먼저 처리
@@ -388,7 +403,13 @@ export default function ConsultationForm({ user, profile }: ConsultationFormProp
         isSubmitting={isSubmitting}
         selectedAddress={selectedAddress}
         attachments={attachments}
-        onClose={() => window.history.back()}
+        onClose={() => {
+          if (onCancel) {
+            onCancel();
+          } else if (typeof window !== 'undefined') {
+            window.history.back();
+          }
+        }}
       />
 
       <AddressSearchModal

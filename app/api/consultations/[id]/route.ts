@@ -3,6 +3,13 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/user-session';
 
+/**
+ * 상담 메시지 입력 필터링 (서버 측) - SQL injection 및 XSS 방지
+ */
+function sanitizeMessage(value: string): string {
+  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s.,!?()~\-]/g, '');
+}
+
 interface UpdateConsultationRequest {
   name?: string;
   phone?: string;
@@ -44,13 +51,31 @@ export async function PATCH(
       );
     }
 
-    // Prepare update data
+    // Validate required fields
+    if (body.message !== undefined) {
+      if (!body.message || typeof body.message !== 'string' || body.message.trim().length === 0) {
+        return NextResponse.json(
+          { error: '상담 요청사항을 입력해주세요.' },
+          { status: 400 }
+        );
+      }
+      if (body.message.length > 1000) {
+        return NextResponse.json(
+          { error: '상담 내용은 1000글자 이하로 입력해주세요.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Prepare update data with sanitization
     const updateData: any = {};
 
     if (body.name !== undefined) updateData.name = body.name.trim();
     if (body.phone !== undefined) updateData.phone = body.phone;
     if (body.email !== undefined) updateData.email = body.email?.trim() || null;
-    if (body.message !== undefined) updateData.message = body.message?.trim() || null;
+    if (body.message !== undefined) {
+      updateData.message = sanitizeMessage(body.message.trim());
+    }
     if (body.attachments !== undefined) updateData.attachments = body.attachments;
 
     // Update consultation (only if user owns it)

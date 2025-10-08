@@ -15,6 +15,7 @@ export const phoneSchema = z
 export const optionalEmailSchema = z
   .string()
   .trim()
+  .max(100, '이메일은 100자 이하로 입력해주세요')
   .email('올바른 이메일 형식을 입력해주세요')
   .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, '영문, 숫자, 특수문자만 사용 가능합니다')
   .optional()

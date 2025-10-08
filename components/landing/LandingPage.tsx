@@ -9,19 +9,21 @@ import { Menu } from 'lucide-react';
 import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
 import { ThemeToggle } from '../ui/theme-toggle';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { ConsultationModal } from './ConsultationModal';
+import { AboutModal } from './AboutModal';
 import { LoginModal } from './LoginModal';
 import { InfoCard } from './InfoCard';
 import { Timeline } from './Timeline';
+import { FAQAccordion } from './FAQAccordion';
 import { handleUserLogout } from '@/lib/auth/logout';
 import { AuthButton } from './AuthButton';
 
 const interestItems = [
   {
     title: '시행 기간',
-    highlight: '2025.01.01 - 2025.12.31',
-    description: '특별법 시행은 1년 한정입니다. 기회를 놓치면 다시 진행하기 어렵습니다.'
+    highlight: '2026년 한시 시행 (예정)',
+    description: '정부 계획안에 따르면 1년 한시 시행이 추진됩니다. 기간 내 신청을 준비해야 합니다.'
   },
   {
     title: '소요 기간',
@@ -53,24 +55,93 @@ const desireItems = [
   }
 ];
 
-const timelineSteps = [
-  '무료상담',
-  '신고서 작성',
-  '현장조사',
-  '위원회 심의',
-  '건축물대장 등재',
-  '사용승인',
-  '재산가치 상승'
+const timelineItems = [
+  {
+    icon: '💬',
+    title: '무료상담',
+    description: '이행강제금 부과 이력과 위반 유형을 분석해 합법화 가능성을 진단합니다.'
+  },
+  {
+    icon: '🗂️',
+    title: '신고서 작성',
+    description: '건축물대장, 구조 검토, 감경자료를 한 번에 준비하여 접수 리드를 확보합니다.'
+  },
+  {
+    icon: '🔍',
+    title: '현장조사',
+    description: '발코니 확장·옥상 증축 등 위반 비중이 높은 부분을 중심으로 실측 및 사진 보고서를 작성합니다.'
+  },
+  {
+    icon: '🏛️',
+    title: '위원회 심의',
+    description: '지자체 TF와 협의해 4–8주 소요되는 건축위원회 심의를 통과하도록 전략을 수립합니다.'
+  },
+  {
+    icon: '📑',
+    title: '건축물대장 등재',
+    description: '특별조치법 특례를 적용해 서류 보완을 마무리하고 합법 건축물로 등록합니다.'
+  },
+  {
+    icon: '✅',
+    title: '사용승인',
+    description: '사용승인 취득 후 준공 직후 재위반 방지를 위한 관리 매뉴얼을 제공합니다.'
+  },
+  {
+    icon: '📈',
+    title: '재산가치 상승',
+    description: '금융 거래와 매매가 정상화되어 안정적인 수익 구조와 재산권을 확보합니다.'
+  }
 ];
 
-const navigationItems = [
-  { label: '법시행안내', target: 'attention-section' },
-  { label: '양성화절차', target: 'interest-section' },
-  { label: '상담안내', target: 'action-section' }
+const fullFaqs = [
+  {
+    question: '위반건축물이란 정확히 무엇인가요?',
+    answer:
+      '건축법에 따른 허가(또는 신고) 없이 건축·대수선·용도변경을 하거나 일조, 건축선, 구조, 피난, 방화, 조경 기준을 위반한 건축물을 말합니다. 베란다 확장, 옥상 불법 증축, 방 쪼개기, 근생 시설을 주택으로 바꾸는 행위 등이 대표 사례입니다.'
+  },
+  {
+    question: '위반건축물이 되면 어떤 불이익이 있나요?',
+    answer:
+      '지자체의 시정명령 및 원상복구 명령이 내려집니다. 평균 건당 141만 원 수준의 이행강제금이 반복 부과될 수 있으며, 매매·임대차 시 대출 제한이나 보증보험 가입 불가 등 거래 제한이 생기고 구조적 불안정, 화재 등 안전 위험도 커집니다.'
+  },
+  {
+    question: '이행강제금은 얼마나 내야 하나요?',
+    answer:
+      '2024년 기준 평균 건당 141만 원이며 매년 반복 부과될 수 있습니다. 소규모 위반 등 일부 조건에서는 최대 75%까지 감경할 수 있지만, 장기적으로는 원상복구 비용이 더 클 수 있어 선제적인 양성화가 필요합니다.'
+  },
+  {
+    question: '위반건축물을 사고팔 때 어떤 문제가 생기나요?',
+    answer:
+      '매도인이 불법시공을 했더라도 매수인이 적발되면 이행강제금을 납부해야 합니다. 위반 사실이 등재되지 않은 상태로 계약을 진행하면 대출이 막히거나 전세금 피해가 생길 수 있어 건축물대장 확인과 원상복구 책임 특약이 필수입니다.'
+  },
+  {
+    question: '정부에서 양성화 기회를 주나요?',
+    answer:
+      '2026년 시행 예정인 「특정건축물 정리 특별조치법」을 통해 일정 규모 이하 주거용 건축물은 한시적으로 합법 전환을 신청할 수 있습니다. 단독 165㎡, 다가구 330㎡, 다세대 세대당 85㎡ 이하 대상이며 구조 안전, 위생, 방화, 일조권 심사를 통과해야 합니다.'
+  },
+  {
+    question: '앞으로 단속은 더 강화되나요?',
+    answer:
+      '정부는 AI 기반 항공사진 분석으로 전국 건축물 변화를 자동 추적하고, 지자체 실태조사를 의무화할 계획입니다. 이행강제금도 반복·가중 부과가 강화돼 “적발되지 않을 것”이라는 기대가 점점 어려워지고 있습니다.'
+  },
+  {
+    question: '위반건축물을 소유한 저는 지금 무엇을 해야 하나요?',
+    answer:
+      '먼저 건축물대장을 확인해 위반 여부를 파악하고, 전문가 상담으로 구조 안전과 복구 가능성을 점검해야 합니다. 2026년 특별법 시행에 맞춰 합법화 신청을 준비하고, 매매·임대차 시 특약 삽입과 안전 점검으로 피해를 예방하세요.'
+  }
 ];
+
+const featuredFaqs = fullFaqs.slice(0, 4);
+
+type NavigationItem =
+  | { label: string; type: 'modal' }
+  | { label: string; type: 'anchor'; target: string };
+
+const navigationItems: NavigationItem[] = [{ label: '우리의 역할', type: 'modal' as const }];
 
 export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
+  const [isAboutModalOpen, setAboutModalOpen] = useState(false);
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isNavOpen, setNavOpen] = useState(false);
@@ -143,6 +214,7 @@ export function LandingPage() {
     <div className="flex min-h-screen flex-col bg-background text-foreground transition-colors duration-200">
       <ConsultationModal open={isModalOpen} onClose={() => setModalOpen(false)} />
       <LoginModal open={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <AboutModal open={isAboutModalOpen} onClose={() => setAboutModalOpen(false)} faqs={fullFaqs} />
 
       {/* Attention */}
       <section
@@ -153,7 +225,7 @@ export function LandingPage() {
           className="absolute inset-0 -z-10"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(24,24,27,0.15), rgba(24,24,27,0.15)), url('https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1600&q=80')",
+              "linear-gradient(rgba(24,24,27,0.15), rgba(24,24,27,0.15)), url('/hero.png')",
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
@@ -168,16 +240,27 @@ export function LandingPage() {
             </a>
             <div className="flex items-center gap-3">
               <nav className="hidden items-center gap-6 text-sm font-medium text-white/80 lg:flex">
-                {navigationItems.map(({ label, target }) => (
-                  <a
-                    key={target}
-                    href={`#${target}`}
-                    onClick={(event) => handleSectionNavigate(event, target)}
-                    className="transition hover:text-white"
-                  >
-                    {label}
-                  </a>
-                ))}
+                {navigationItems.map(({ label, type, target }) =>
+                  type === 'modal' ? (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setAboutModalOpen(true)}
+                      className="bg-transparent transition hover:text-white focus:outline-none"
+                    >
+                      {label}
+                    </button>
+                  ) : (
+                    <a
+                      key={target}
+                      href={`#${target}`}
+                      onClick={(event) => handleSectionNavigate(event, target)}
+                      className="transition hover:text-white"
+                    >
+                      {label}
+                    </a>
+                  )
+                )}
                 {sessionUser ? (
                   <Link href="/mypage" className="transition hover:text-white">
                     마이페이지
@@ -209,18 +292,35 @@ export function LandingPage() {
                       <Menu className="h-5 w-5" aria-hidden />
                     </button>
                   </SheetTrigger>
-                  <SheetContent className="flex flex-col bg-background text-foreground">
+                  <SheetContent aria-describedby={undefined} className="flex flex-col bg-background text-foreground">
+                    <SheetHeader className="sr-only">
+                      <SheetTitle>모바일 내비게이션</SheetTitle>
+                    </SheetHeader>
                     <nav className="mt-10 flex flex-col gap-6 text-base font-medium">
-                      {navigationItems.map(({ label, target }) => (
-                        <a
-                          key={target}
-                          href={`#${target}`}
-                          onClick={(event) => handleSectionNavigate(event, target)}
-                          className="transition hover:text-primary"
-                        >
-                          {label}
-                        </a>
-                      ))}
+                      {navigationItems.map(({ label, type, target }) =>
+                        type === 'modal' ? (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={() => {
+                              setAboutModalOpen(true);
+                              setNavOpen(false);
+                            }}
+                            className="bg-transparent text-left transition hover:text-primary focus:outline-none"
+                          >
+                            {label}
+                          </button>
+                        ) : (
+                          <a
+                            key={target}
+                            href={`#${target}`}
+                            onClick={(event) => handleSectionNavigate(event, target)}
+                            className="transition hover:text-primary"
+                          >
+                            {label}
+                          </a>
+                        )
+                      )}
                       {sessionUser ? (
                         <Link
                           href="/mypage"
@@ -240,15 +340,15 @@ export function LandingPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-24 sm:py-32 lg:flex-row lg:items-center lg:gap-16">
           <div className="flex-1 space-y-6">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground opacity-70">
-              Special Act 2025
+              Special Act 2026
             </p>
             <h1 id="attention-section" className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
               특정건축물 정리에 관한 특별법 안내
             </h1>
             <p className="text-lg text-primary-foreground opacity-80 sm:text-xl">
-              2025년 특정건축물 정리에 관한 특별 조치법 시행
-              단 1년의 기회! 지금 준비를 시작해야
-              안전하게 합법화할 수 있습니다.
+              2026년 특정건축물 정리 특별조치법이 1년 한시 시행을 목표로 준비되고 있습니다.
+              <br className="hidden sm:block" />
+              지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
               <CTAButton className="sm:w-auto" onClick={() => setModalOpen(true)}>
@@ -265,9 +365,9 @@ export function LandingPage() {
               <dl className="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-100 sm:grid-cols-2">
                 {interestItems.map((item) => (
                   <div key={item.title} className="rounded-2xl border border-white bg-white/10 p-4">
-                    <dt className="text-xs uppercase tracking-wide text-primary-foreground opacity-70 text-slate-200">{item.title}</dt>
-                    <dd className="mt-2 text-lg font-semibold text-white">{item.highlight}</dd>
-                    <p className="mt-2 text-xs font-medium text-white">{item.description}</p>
+                    <dt className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-100">{item.title}</dt>
+                    <dd className="mt-2 text-xl font-semibold text-white">{item.highlight}</dd>
+                    <p className="mt-2 text-sm text-white/90">{item.description}</p>
                   </div>
                 ))}
               </dl>
@@ -297,8 +397,8 @@ export function LandingPage() {
         aria-labelledby="interest-section"
       >
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/15 via-white to-transparent dark:from-primary/25 dark:via-slate-900/80 dark:to-slate-950" />
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-xl space-y-4">
+        <div className="mx-auto w-full max-w-6xl px-6">
+          <div className="max-w-3xl space-y-4">
             <h2 id="interest-section" className="text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl">
               법 시행 안내 & 소요 기간
             </h2>
@@ -307,25 +407,30 @@ export function LandingPage() {
               여유롭게 절차를 마칠 수 있습니다.
             </p>
           </div>
-          <div className="grid w-full gap-6 sm:grid-cols-2 lg:max-w-3xl">
-            <div className="rounded-2xl border border-border bg-card/90 p-6 shadow-sm shadow-primary/10">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-border bg-card/90 p-6 shadow-sm shadow-primary/10 lg:col-span-1">
               <h3 className="text-lg font-semibold text-foreground">건축위원회 심의</h3>
               <p className="mt-2 text-3xl font-bold text-primary">1~2개월</p>
               <p className="mt-3 text-sm text-muted-foreground">
                 제출 서류 검토와 현장 점검까지 평균 4–8주가 소요됩니다.
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-card/90 p-6 shadow-sm shadow-primary/10">
+            <div className="rounded-2xl border border-border bg-card/90 p-6 shadow-sm shadow-primary/10 lg:col-span-1">
               <h3 className="text-lg font-semibold text-foreground">전체 완료</h3>
               <p className="mt-2 text-3xl font-bold text-primary">2~3개월</p>
               <p className="mt-3 text-sm text-muted-foreground">
                 최종 사용 승인까지 고려하면 최소 8주 이상을 확보해야 안전합니다.
               </p>
             </div>
-            <div className="sm:col-span-2 rounded-2xl border border-primary/30 bg-accent p-6">
-              <p className="text-sm font-semibold text-accent-foreground">긴급 안내</p>
-              <p className="mt-2 text-base font-medium text-accent-foreground/90">
-                빠르게 준비해야 안전합니다. 초기 상담부터 문서 준비까지 전문가가 함께합니다.
+            <div className="rounded-2xl border border-primary/30 bg-accent p-6 lg:col-span-1">
+              <p className="text-sm font-semibold text-accent-foreground">전국 위반 현황 (2024.12)</p>
+              <ul className="mt-3 space-y-2 text-sm text-accent-foreground/90">
+                <li>• 총 147,726동 중 주거용이 56.5%, 연평균 5~6천 동씩 증가</li>
+                <li>• 서울 49,011동(33.2%), 경기 40,908동(27.7%)에 집중 발생</li>
+                <li>• 이행강제금은 건당 141만 원, 반복 부과 의무화 추진 중</li>
+              </ul>
+              <p className="mt-4 text-sm font-medium text-accent-foreground/90">
+                초기 진단과 서류 준비를 선제적으로 진행해야 비용과 시간을 줄일 수 있습니다.
               </p>
             </div>
           </div>
@@ -359,7 +464,41 @@ export function LandingPage() {
             <h3 className="text-center text-2xl font-semibold text-slate-900 dark:text-slate-100">
               양성화 절차 타임라인
             </h3>
-            <Timeline steps={timelineSteps} />
+            <Timeline steps={timelineItems} />
+            <p className="text-center text-sm text-slate-600 dark:text-slate-300">
+              최근 실태조사에서는 발코니·베란다 확장이 42.2%, 옥상 증축이 31.4%를 차지했습니다. 주요
+              위반 유형을 정확히 짚어 맞춤 전략을 세우는 것이 성공의 핵심입니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section
+        className="relative isolate overflow-hidden border-y border-primary/10 bg-muted/30 py-20 transition-colors duration-200 dark:border-primary/20 dark:bg-slate-900/60"
+        aria-labelledby="faq-section"
+      >
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/10 via-transparent to-transparent dark:from-primary/20" />
+        <div className="mx-auto w-full max-w-6xl px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 id="faq-section" className="text-3xl font-bold text-foreground sm:text-4xl">
+              자주 묻는 질문
+            </h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              위반건축물 양성화 과정에서 가장 많이 받는 질문과 답변을 먼저 확인하세요.
+            </p>
+          </div>
+          <div className="mt-10">
+            <FAQAccordion items={featuredFaqs} />
+          </div>
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => setAboutModalOpen(true)}
+              className="text-sm font-semibold text-primary underline-offset-4 transition hover:underline"
+            >
+              더 많은 질문 보기
+            </button>
           </div>
         </div>
       </section>
@@ -376,16 +515,11 @@ export function LandingPage() {
                 무허가·위반 건축물 양성화, 마지막 기회!
               </h2>
               <p className="text-lg text-primary-foreground opacity-80">
-                30년 전문가와 함께 안전하게 합법화 하세요. 빠른 대응이 합법화 성공을 결정합니다.
+                30년 전문가와 함께 안전하게 합법화 하세요. 이행강제금 반복 부과, 공인중개사 건축물대장
+                제시 의무화 등 강화되는 규제 속에서 선제적 대응이 합법화 성공을 좌우합니다.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <CTAButton
-                  tone="secondary"
-                  className="sm:w-auto hover:bg-[#ffeb00] hover:text-black focus-visible:ring-[#ffeb00]"
-                  onClick={() => setModalOpen(true)}
-                >
-                  카카오톡 문의하기
-                </CTAButton>
+                
                 <CTAButton
                   tone="secondary"
                   className="sm:w-auto hover:bg-[#ffeb00] hover:text-black focus-visible:ring-[#ffeb00]"

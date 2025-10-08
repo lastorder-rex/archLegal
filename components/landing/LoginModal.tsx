@@ -83,7 +83,7 @@ export function LoginModal({ open, onClose, nextPath }: LoginModalProps) {
 
                 <div className="mt-6 space-y-3">
                   <CTAButton
-                    className="w-full bg-[#ffeb00] text-black hover:bg-[#f5dc00] focus-visible:ring-[#ffeb00]"
+                    className="w-full bg-[#ffeb00] text-black hover:bg-[#f5dc00] hover:text-black focus-visible:ring-[#ffeb00]"
                     onClick={handleLogin}
                     type="button"
                     disabled={loading}

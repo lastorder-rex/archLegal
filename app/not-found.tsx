@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 export default function NotFoundPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-50 px-6 py-16 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-6 py-16 text-center">
       <div className="mx-auto max-w-2xl space-y-8">
         <div className="mx-auto w-full max-w-md overflow-hidden rounded-3xl border border-border bg-card shadow-lg">
           <Image
@@ -23,7 +23,7 @@ export default function NotFoundPage() {
           <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
             찾으시는 페이지가 보이지 않아요
           </h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
+          <p className="text-sm text-slate-600 dark:text-slate-300 sm:text-base">
             입력한 주소가 잘못되었거나 이동된 페이지일 수 있어요.
             <br className="hidden sm:block" />
             아래 버튼을 눌러 다시 홈으로 돌아가거나 상담을 시작해 보세요.

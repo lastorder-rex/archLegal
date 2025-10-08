@@ -67,9 +67,8 @@ export const consultationFormSchema = z.object({
   // Consultation message
   message: z
     .string()
-    .max(1000, '상담 내용은 1000글자 이하로 입력해주세요')
-    .optional()
-    .or(z.literal('')),
+    .min(1, '상담 요청사항을 입력해주세요')
+    .max(1000, '상담 내용은 1000글자 이하로 입력해주세요'),
 });
 
 // Types derived from schemas
@@ -106,5 +105,21 @@ export const buildingSearchResultSchema = z.object({
 });
 
 export type BuildingSearchResult = z.infer<typeof buildingSearchResultSchema>;
+
+/**
+ * 상세주소 입력 필터링 - SQL injection 및 XSS 방지
+ */
+export function filterAddressDetailInput(value: string) {
+  // 한글, 영문, 숫자, 공백, 하이픈, 쉼표, 괄호만 허용
+  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s\-,()]/g, '');
+}
+
+/**
+ * 상담 메시지 입력 필터링 - SQL injection 및 XSS 방지
+ */
+export function filterMessageInput(value: string) {
+  // 한글, 영문, 숫자, 공백, 기본 문장부호만 허용 (HTML 태그, SQL 특수문자 제거)
+  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s.,!?()~\-]/g, '');
+}
 
 export { formatPhoneNumber, validatePhoneInput };
