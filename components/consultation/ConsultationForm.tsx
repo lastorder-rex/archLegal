@@ -246,7 +246,7 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
       email: formData.email || '',
       address: formData.address || '',
       addressDetail: formData.addressDetail || '',
-      addressCode: formData.addressCode,
+      addressCode: formData.addressCode!,
       buildingInfo: resolvedBuilding,
       message: formData.message || '',
     };
