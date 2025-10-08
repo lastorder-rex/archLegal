@@ -141,7 +141,7 @@ export default function FileUpload({
 
       // Generate preview for images
       if (file.type.startsWith('image/')) {
-        attachmentFile.preview = await generateFilePreview(file);
+        attachmentFile.preview = (await generateFilePreview(file)) ?? undefined;
       }
 
       newFiles.push(attachmentFile);
