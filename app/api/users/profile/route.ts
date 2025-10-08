@@ -51,7 +51,7 @@ export async function PUT(request: Request) {
   const result = updateProfileSchema.safeParse(payload);
 
   if (!result.success) {
-    const message = result.error.errors?.[0]?.message ?? '입력값을 확인해주세요.';
+    const message = result.error.issues?.[0]?.message ?? '입력값을 확인해주세요.';
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
