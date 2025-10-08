@@ -23,12 +23,12 @@ const updateProfileSchema = z.object({
     .optional()
     .or(z.literal('').transform(() => undefined))
     .or(z.null().transform(() => undefined)),
-  consentTerms: z.literal(true, {
-    invalid_type_error: '이용약관에 동의해주세요.'
-  }),
-  consentPrivacy: z.literal(true, {
-    invalid_type_error: '개인정보 처리방침에 동의해주세요.'
-  })
+  consentTerms: z
+    .boolean()
+    .refine(value => value === true, { message: '이용약관에 동의해주세요.' }),
+  consentPrivacy: z
+    .boolean()
+    .refine(value => value === true, { message: '개인정보 처리방침에 동의해주세요.' })
 });
 
 export async function PUT(request: Request) {
