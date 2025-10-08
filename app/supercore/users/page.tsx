@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,43 +56,18 @@ export default function UsersPage() {
   });
   const itemsPerPage = 15;
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAdmin(data.admin);
-        setIsAuthenticated(true);
-        loadUsers();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadUsers = async (page = 1, filters = searchFilters) => {
+  const loadUsers = useCallback(async (page = 1, filters?: SearchFilters) => {
     setIsLoadingUsers(true);
     try {
+      const effectiveFilters = filters ?? searchFilters;
       const params = new URLSearchParams({
         page: page.toString(),
         limit: itemsPerPage.toString(),
       });
 
-      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-      if (filters.dateTo) params.append('dateTo', filters.dateTo);
-      if (filters.email) params.append('email', filters.email);
+      if (effectiveFilters.dateFrom) params.append('dateFrom', effectiveFilters.dateFrom);
+      if (effectiveFilters.dateTo) params.append('dateTo', effectiveFilters.dateTo);
+      if (effectiveFilters.email) params.append('email', effectiveFilters.email);
 
       const response = await fetch(`/api/admin/users?${params.toString()}`, {
         credentials: 'include'
@@ -111,7 +86,33 @@ export default function UsersPage() {
     } finally {
       setIsLoadingUsers(false);
     }
-  };
+  }, [itemsPerPage, searchFilters]);
+
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/auth/verify', {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAdmin(data.admin);
+        setIsAuthenticated(true);
+        await loadUsers();
+      } else {
+        router.push('/supercore');
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      router.push('/supercore');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadUsers, router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleSearch = () => {
     loadUsers(1, searchFilters);

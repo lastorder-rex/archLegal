@@ -38,11 +38,10 @@ export default function FileUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync files state with parent whenever it changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(() => {
     console.log('📡 Files state changed, notifying parent:', files);
     onFilesChange(files);
-  }, [files]); // onFilesChange는 의도적으로 제외 (무한 루프 방지)
+  }, [files, onFilesChange]);
 
   // Update parent when files change (now handled by useEffect)
   const updateFiles = useCallback((newFiles: AttachmentFile[]) => {
@@ -166,7 +165,7 @@ export default function FileUpload({
     if (currentFileCount + fileList.length > MAX_FILES) {
       alert(`최대 ${MAX_FILES}개 파일까지 업로드 가능합니다.`);
     }
-  }, [files, updateFiles, disabled]);
+  }, [files, updateFiles, disabled, uploadFileDirectly]);
 
   // File input change handler
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
