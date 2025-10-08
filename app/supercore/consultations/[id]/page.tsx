@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { getFileUrl } from '@/lib/utils/file-upload';
@@ -92,33 +92,7 @@ export default function ConsultationDetailPage() {
     }
   };
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAdmin(data.admin);
-        setIsAuthenticated(true);
-        loadConsultation();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadConsultation = async () => {
+  const loadConsultation = useCallback(async () => {
     setIsLoadingConsultation(true);
     try {
       const response = await fetch(`/api/admin/consultations/${consultationId}`, {
@@ -140,7 +114,33 @@ export default function ConsultationDetailPage() {
     } finally {
       setIsLoadingConsultation(false);
     }
-  };
+  }, [consultationId, router]);
+
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/auth/verify', {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAdmin(data.admin);
+        setIsAuthenticated(true);
+        await loadConsultation();
+      } else {
+        router.push('/supercore');
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      router.push('/supercore');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadConsultation, router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
 
   if (isLoading || isLoadingConsultation) {

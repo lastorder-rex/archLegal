@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -50,31 +50,7 @@ export default function AdminsPage() {
   const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
   const [currentAdminFor2FA, setCurrentAdminFor2FA] = useState<Admin | null>(null);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setIsAuthenticated(true);
-        loadAdmins();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadAdmins = async () => {
+  const loadAdmins = useCallback(async () => {
     setIsLoadingAdmins(true);
     try {
       const response = await fetch('/api/admin/admins', {
@@ -92,7 +68,31 @@ export default function AdminsPage() {
     } finally {
       setIsLoadingAdmins(false);
     }
-  };
+  }, []);
+
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/auth/verify', {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(true);
+        await loadAdmins();
+      } else {
+        router.push('/supercore');
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      router.push('/supercore');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadAdmins, router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +116,7 @@ export default function AdminsPage() {
         setShowCreateForm(false);
         setNewUsername('');
         setNewPassword('');
-        loadAdmins();
+        await loadAdmins();
       } else {
         setCreateError(data.error || '관리자 생성에 실패했습니다.');
       }
@@ -192,7 +192,7 @@ export default function AdminsPage() {
 
       if (response.ok) {
         alert('관리자가 삭제되었습니다.');
-        loadAdmins();
+        await loadAdmins();
       } else {
         alert(data.error || '관리자 삭제에 실패했습니다.');
       }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,45 +63,20 @@ export default function ConsultationsPage() {
   });
   const itemsPerPage = 15;
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAdmin(data.admin);
-        setIsAuthenticated(true);
-        loadConsultations();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadConsultations = async (page = 1, filters = searchFilters) => {
+  const loadConsultations = useCallback(async (page = 1, filters?: SearchFilters) => {
     setIsLoadingConsultations(true);
     try {
+      const effectiveFilters = filters ?? searchFilters;
       const params = new URLSearchParams({
         page: page.toString(),
         limit: itemsPerPage.toString(),
       });
 
-      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-      if (filters.dateTo) params.append('dateTo', filters.dateTo);
-      if (filters.name) params.append('name', filters.name);
-      if (filters.phone) params.append('phone', filters.phone);
-      if (filters.address) params.append('address', filters.address);
+      if (effectiveFilters.dateFrom) params.append('dateFrom', effectiveFilters.dateFrom);
+      if (effectiveFilters.dateTo) params.append('dateTo', effectiveFilters.dateTo);
+      if (effectiveFilters.name) params.append('name', effectiveFilters.name);
+      if (effectiveFilters.phone) params.append('phone', effectiveFilters.phone);
+      if (effectiveFilters.address) params.append('address', effectiveFilters.address);
 
       const response = await fetch(`/api/admin/consultations?${params.toString()}`, {
         credentials: 'include'
@@ -122,7 +97,33 @@ export default function ConsultationsPage() {
     } finally {
       setIsLoadingConsultations(false);
     }
-  };
+  }, [itemsPerPage, searchFilters]);
+
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/auth/verify', {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAdmin(data.admin);
+        setIsAuthenticated(true);
+        await loadConsultations();
+      } else {
+        router.push('/supercore');
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      router.push('/supercore');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadConsultations, router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleSearch = () => {
     loadConsultations(1, searchFilters);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
@@ -39,33 +39,7 @@ export default function UserConsultationsPage() {
 
   const itemsPerPage = 15;
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAdmin(data.admin);
-        setIsAuthenticated(true);
-        loadConsultations();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadConsultations = async (page = 1) => {
+  const loadConsultations = useCallback(async (page = 1) => {
     setIsLoadingConsultations(true);
     try {
       const params = new URLSearchParams({
@@ -83,7 +57,6 @@ export default function UserConsultationsPage() {
         setTotalCount(data.total || 0);
         setCurrentPage(page);
 
-        // Get user email from first consultation if available
         if (data.consultations && data.consultations.length > 0 && data.consultations[0].email) {
           setUserEmail(data.consultations[0].email);
         }
@@ -95,7 +68,33 @@ export default function UserConsultationsPage() {
     } finally {
       setIsLoadingConsultations(false);
     }
-  };
+  }, [itemsPerPage, userId]);
+
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/auth/verify', {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAdmin(data.admin);
+        setIsAuthenticated(true);
+        await loadConsultations();
+      } else {
+        router.push('/supercore');
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      router.push('/supercore');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadConsultations, router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);

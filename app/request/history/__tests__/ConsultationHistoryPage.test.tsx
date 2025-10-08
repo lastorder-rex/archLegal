@@ -50,9 +50,11 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-jest.mock('@/components/consultation/FileUpload', () => () => (
-  <div data-testid="file-upload-placeholder" />
-));
+jest.mock('@/components/consultation/FileUpload', () => {
+  const MockFileUpload = () => <div data-testid="file-upload-placeholder" />;
+  MockFileUpload.displayName = 'MockFileUpload';
+  return MockFileUpload;
+});
 
 jest.mock('@/lib/utils/file-upload', () => ({
   getFileUrl: jest.fn(async () => ({ url: 'https://example.com/file' })),
