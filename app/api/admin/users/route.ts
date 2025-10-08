@@ -99,11 +99,17 @@ export async function GET(request: NextRequest) {
     }));
 
     // Get total count
-    const { count: totalCount, error: totalError } = await supabaseAdmin.auth.admin.listUsers();
+    const totalUsersResponse = await supabaseAdmin.auth.admin.listUsers();
+
+    if (totalUsersResponse.error) {
+      console.error('Total users error:', totalUsersResponse.error);
+    }
+
+    const totalCount = totalUsersResponse.data?.users?.length ?? users.length;
 
     return NextResponse.json({
       users,
-      total: totalCount?.users.length || users.length,
+      total: totalCount,
       page,
       limit
     });
