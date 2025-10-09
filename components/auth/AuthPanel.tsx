@@ -23,8 +23,7 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
   const desiredNextParam = searchParams.get('redirect');
   const handleSignIn = useCallback(async () => {
     setLoading(true);
-    const origin =
-      process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
     const desiredNext = desiredNextParam && desiredNextParam.startsWith('/') ? desiredNextParam : '/';
     const encodedNext = encodeURIComponent(desiredNext);
