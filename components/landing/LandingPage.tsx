@@ -1,11 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Menu } from 'lucide-react';
+import { Menu, Phone, ShieldCheck, UserRoundCog } from 'lucide-react';
 import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
 import { ThemeToggle } from '../ui/theme-toggle';
@@ -134,10 +134,12 @@ const fullFaqs = [
 const featuredFaqs = fullFaqs.slice(0, 4);
 
 type NavigationItem =
-  | { label: string; type: 'modal' }
-  | { label: string; type: 'anchor'; target: string };
+  | { label: string; type: 'modal'; icon?: ReactNode }
+  | { label: string; type: 'anchor'; target: string; icon?: ReactNode };
 
-const navigationItems: NavigationItem[] = [{ label: '우리의 역할', type: 'modal' as const }];
+const navigationItems: NavigationItem[] = [
+  { label: '우리의 역할', type: 'modal' as const, icon: <ShieldCheck className="h-4 w-4" aria-hidden /> }
+];
 
 export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -240,32 +242,38 @@ export function LandingPage() {
             </a>
             <div className="flex items-center gap-3">
               <nav className="hidden items-center gap-6 text-sm font-medium text-white/80 lg:flex">
-                {navigationItems.map((item) =>
-                  item.type === 'modal' ? (
+                    {navigationItems.map((item) => {
+                      const icon = item.icon;
+                      return item.type === 'modal' ? (
                     <button
                       key={item.label}
                       type="button"
                       onClick={() => setAboutModalOpen(true)}
-                      className="bg-transparent transition hover:text-white focus:outline-none"
+                      className="flex items-center gap-2 bg-transparent transition hover:text-white focus:outline-none"
                     >
-                      {item.label}
+                      {icon}
+                      <span>{item.label}</span>
                     </button>
                   ) : (
                     <a
                       key={item.target}
                       href={`#${item.target}`}
                       onClick={(event) => handleSectionNavigate(event, item.target)}
-                      className="transition hover:text-white"
+                      className="flex items-center gap-2 transition hover:text-white"
                     >
-                      {item.label}
+                      {icon}
+                      <span>{item.label}</span>
                     </a>
-                  )
-                )}
-                {sessionUser ? (
-                  <Link href="/mypage" className="transition hover:text-white">
-                    마이페이지
-                  </Link>
-                ) : null}
+                  );
+                })}
+{sessionUser ? (
+  <Link href="/mypage" className="transition hover:text-white">
+    <span className="inline-flex items-center gap-2">
+      <UserRoundCog className="h-4 w-4" aria-hidden />
+      마이페이지
+    </span>
+  </Link>
+) : null}
                 <AuthButton
                   sessionUser={sessionUser}
                   size="desktop"
@@ -292,13 +300,17 @@ export function LandingPage() {
                       <Menu className="h-5 w-5" aria-hidden />
                     </button>
                   </SheetTrigger>
-                  <SheetContent aria-describedby={undefined} className="flex flex-col bg-background text-foreground">
+                  <SheetContent
+                    aria-describedby={undefined}
+                    className="flex h-auto max-h-[calc(100vh-200px)] flex-col bg-background text-foreground top-24 bottom-24 rounded-l-3xl"
+                  >
                     <SheetHeader className="sr-only">
                       <SheetTitle>모바일 내비게이션</SheetTitle>
                     </SheetHeader>
                     <nav className="mt-10 flex flex-col gap-6 text-base font-medium">
-                      {navigationItems.map((item) =>
-                        item.type === 'modal' ? (
+                      {navigationItems.map((item) => {
+                        const icon = item.icon;
+                        return item.type === 'modal' ? (
                           <button
                             key={item.label}
                             type="button"
@@ -306,30 +318,55 @@ export function LandingPage() {
                               setAboutModalOpen(true);
                               setNavOpen(false);
                             }}
-                            className="bg-transparent text-left transition hover:text-primary focus:outline-none"
+                            className="flex items-center gap-2 bg-transparent text-left transition hover:text-primary focus:outline-none"
                           >
-                            {item.label}
+                            {icon}
+                            <span>{item.label}</span>
                           </button>
                         ) : (
                           <a
                             key={item.target}
                             href={`#${item.target}`}
                             onClick={(event) => handleSectionNavigate(event, item.target)}
-                            className="transition hover:text-primary"
+                            className="flex items-center gap-2 transition hover:text-primary"
                           >
-                            {item.label}
+                            {icon}
+                            <span>{item.label}</span>
                           </a>
-                        )
-                      )}
-                      {sessionUser ? (
-                        <Link
-                          href="/mypage"
-                          onClick={() => setNavOpen(false)}
-                          className="transition hover:text-primary"
-                        >
-                          마이페이지
-                        </Link>
+                        );
+                      })}
+{sessionUser ? (
+  <Link
+    href="/mypage"
+    onClick={() => setNavOpen(false)}
+    className="flex items-center gap-2 transition hover:text-primary"
+  >
+    <UserRoundCog className="h-4 w-4" aria-hidden />
+    <span>마이페이지</span>
+  </Link>
                       ) : null}
+                      <div className="mt-8 space-y-4 border-t border-border pt-6">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalOpen(true);
+                            setNavOpen(false);
+                          }}
+                          className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
+                        >
+                          무료 상담 신청
+                        </button>
+                        <div className="flex items-start gap-3 rounded-2xl border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
+                          <Phone className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
+                          <div className="space-y-1">
+                            <p className="font-semibold text-foreground">추가 문의가 필요하신가요?</p>
+                            <a href="tel:0263481009" className="text-foreground text-base font-semibold">
+                              02-6348-1009
+                            </a>
+                            <p className="text-xs">평일 09:00-18:00 상담팀에서 신속히 도와드립니다.</p>
+                          </div>
+                        </div>
+                      </div>
                     </nav>
                   </SheetContent>
                 </Sheet>

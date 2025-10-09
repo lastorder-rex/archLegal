@@ -39,7 +39,9 @@
       "Bash(lsof:*)",
       "Bash(npx lighthouse:*)",
       "Bash(open /Users/kbsc/rexDev/archLegal/lighthouse-report.report.html)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
