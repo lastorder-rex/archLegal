@@ -17,8 +17,7 @@ export function LoginModal({ open, onClose, nextPath }: LoginModalProps) {
 
   const handleLogin = useCallback(async () => {
     setLoading(true);
-    const origin =
-      process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
 
     const desiredNext =
