@@ -41,7 +41,7 @@ const SheetContent = React.forwardRef<
     >
       {children}
       <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-        <X className="h-4 w-4" />
+        <X className="h-6 w-6" />
         <span className="sr-only">닫기</span>
       </SheetPrimitive.Close>
     </SheetPrimitive.Content>

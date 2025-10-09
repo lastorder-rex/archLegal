@@ -307,9 +307,8 @@ export function LandingPage() {
                     <SheetHeader className="sr-only">
                       <SheetTitle>모바일 내비게이션</SheetTitle>
                     </SheetHeader>
-                    <nav className="mt-10 flex flex-col gap-6 text-base font-medium">
+                    <nav className="mt-10 flex flex-col gap-6 text-lg font-medium">
                       {navigationItems.map((item) => {
-                        const icon = item.icon;
                         return item.type === 'modal' ? (
                           <button
                             key={item.label}
@@ -318,9 +317,9 @@ export function LandingPage() {
                               setAboutModalOpen(true);
                               setNavOpen(false);
                             }}
-                            className="flex items-center gap-2 bg-transparent text-left transition hover:text-primary focus:outline-none"
+                            className="flex items-center gap-3 bg-transparent text-left transition hover:text-primary focus:outline-none"
                           >
-                            {icon}
+                            <ShieldCheck className="h-6 w-6" aria-hidden />
                             <span>{item.label}</span>
                           </button>
                         ) : (
@@ -328,9 +327,9 @@ export function LandingPage() {
                             key={item.target}
                             href={`#${item.target}`}
                             onClick={(event) => handleSectionNavigate(event, item.target)}
-                            className="flex items-center gap-2 transition hover:text-primary"
+                            className="flex items-center gap-3 transition hover:text-primary"
                           >
-                            {icon}
+                            {item.icon}
                             <span>{item.label}</span>
                           </a>
                         );
@@ -339,9 +338,9 @@ export function LandingPage() {
   <Link
     href="/mypage"
     onClick={() => setNavOpen(false)}
-    className="flex items-center gap-2 transition hover:text-primary"
+    className="flex items-center gap-3 transition hover:text-primary"
   >
-    <UserRoundCog className="h-4 w-4" aria-hidden />
+    <UserRoundCog className="h-6 w-6" aria-hidden />
     <span>마이페이지</span>
   </Link>
                       ) : null}
