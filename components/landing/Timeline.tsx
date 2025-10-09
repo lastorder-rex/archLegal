@@ -19,7 +19,7 @@ export function Timeline({ steps }: TimelineProps) {
           >
             {icon}
           </div>
-          <div className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-md backdrop-blur transition hover:border-primary/60 hover:shadow-primary/20">
+          <div className="rounded-2xl border border-border/60 bg-card/95 p-5 shadow-md backdrop-blur transition hover:border-primary hover:ring-2 hover:ring-primary hover:ring-opacity-40">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary/80">Step {index + 1}</p>
             <h4 className="mt-1 text-lg font-semibold text-card-foreground">{title}</h4>
             <p className="mt-2 text-sm text-muted-foreground">{description}</p>
