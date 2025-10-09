@@ -365,20 +365,22 @@ export default function ConsultationHistoryPage() {
             const isBuildingUnavailable = rawData && typeof rawData === 'object' && rawData.status === 'UNAVAILABLE';
 
             return (
-              <div key={record.id} className="border border-border rounded-lg p-5 space-y-4 bg-secondary transition hover:bg-accent">
+              <div key={record.id} className="border border-border rounded-lg p-5 space-y-4 bg-card shadow-md">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div>
                     <p className="text-sm text-muted-foreground">
                       등록일 {createdAt.toLocaleDateString()} {createdAt.toLocaleTimeString()}
                     </p>
-                    <h2 className="text-lg font-semibold">
-                      {record.address}
+                    <div>
+                      <h2 className="text-lg font-semibold">
+                        {record.address}
+                      </h2>
                       {record.address_detail && (
-                        <span className="text-sm font-normal text-muted-foreground ml-2">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {record.address_detail}
-                        </span>
+                        </p>
                       )}
-                    </h2>
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       주용도: {record.main_purps || record.building_info.mainPurpsCdNm || '정보 없음'}
                     </p>
@@ -402,72 +404,76 @@ export default function ConsultationHistoryPage() {
                   </div>
                 </div>
 
-                {isBuildingUnavailable && (
-                  <div className="text-xs text-muted-foreground bg-muted/40 border border-dashed border-border/60 rounded-md p-3">
-                    건축물대장 API 장애로 상세 건축물 정보를 확인하지 못했습니다. 상담 시 추가 확인이 필요합니다.
-                  </div>
-                )}
+                {!isEditing && (
+                  <>
+                    {isBuildingUnavailable && (
+                      <div className="text-xs text-muted-foreground bg-muted/40 border border-dashed border-border/60 rounded-md p-3">
+                        건축물대장 API 장애로 상세 건축물 정보를 확인하지 못했습니다. 상담 시 추가 확인이 필요합니다.
+                      </div>
+                    )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground">이름</p>
-                    <p className="font-medium">{record.name}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground">연락처</p>
-                    <p className="font-medium">{record.phone}</p>
-                  </div>
-                  {record.email && (
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">이메일</p>
-                      <p className="font-medium">{record.email}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground">이름</p>
+                        <p className="font-medium">{record.name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground">연락처</p>
+                        <p className="font-medium">{record.phone}</p>
+                      </div>
+                      {record.email && (
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">이메일</p>
+                          <p className="font-medium">{record.email}</p>
+                        </div>
+                      )}
+                      {record.address_detail && (
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">상세 주소</p>
+                          <p className="font-medium">{record.address_detail}</p>
+                        </div>
+                      )}
+                      {record.tot_area !== null && (
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">연면적</p>
+                          <p className="font-medium">{record.tot_area.toLocaleString()}㎡</p>
+                        </div>
+                      )}
+                      {record.ground_floor_cnt !== null && (
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">지상층수</p>
+                          <p className="font-medium">{record.ground_floor_cnt}층</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {record.address_detail && (
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">상세 주소</p>
-                      <p className="font-medium">{record.address_detail}</p>
-                    </div>
-                  )}
-                  {record.tot_area !== null && (
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">연면적</p>
-                      <p className="font-medium">{record.tot_area.toLocaleString()}㎡</p>
-                    </div>
-                  )}
-                  {record.ground_floor_cnt !== null && (
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">지상층수</p>
-                      <p className="font-medium">{record.ground_floor_cnt}층</p>
-                    </div>
-                  )}
-                </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">상담 요청 내용</p>
-                  <div className="rounded-md border border-border bg-muted/10 p-3 text-sm whitespace-pre-wrap">
-                    {record.message ? record.message : '추가 요청사항이 없습니다.'}
-                  </div>
-                </div>
-
-                {/* Attachments Section */}
-                {(record.attachments || []).length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">첨부파일</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(record.attachments || []).map((attachment, index) => (
-                        <button
-                          key={index}
-                          onClick={() => downloadAttachment(attachment)}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
-                        >
-                          <span>{getFileIcon(attachment.type)}</span>
-                          <span className="truncate max-w-[120px]">{attachment.name}</span>
-                          <Download className="h-3 w-3 flex-shrink-0" />
-                        </button>
-                      ))}
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">상담 요청 내용</p>
+                      <div className="rounded-md border border-border bg-muted/10 p-3 text-sm whitespace-pre-wrap">
+                        {record.message ? record.message : '추가 요청사항이 없습니다.'}
+                      </div>
                     </div>
-                  </div>
+
+                    {/* Attachments Section */}
+                    {(record.attachments || []).length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">첨부파일</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(record.attachments || []).map((attachment, index) => (
+                            <button
+                              key={index}
+                              onClick={() => downloadAttachment(attachment)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
+                            >
+                              <span>{getFileIcon(attachment.type)}</span>
+                              <span className="truncate max-w-[120px]">{attachment.name}</span>
+                              <Download className="h-3 w-3 flex-shrink-0" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {isEditing && (

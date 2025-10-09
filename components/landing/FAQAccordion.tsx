@@ -26,7 +26,7 @@ export function FAQAccordion({ items }: FAQAccordionProps) {
         return (
           <div
             key={item.question}
-            className="rounded-2xl border border-border/70 bg-card/95 p-4 shadow-sm transition hover:border-primary/50"
+            className="rounded-2xl border border-border/70 bg-card/95 p-4 shadow-sm transition hover:border-primary hover:ring-2 hover:ring-primary hover:ring-opacity-40"
           >
             <button
               type="button"

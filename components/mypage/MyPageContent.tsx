@@ -388,7 +388,7 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                   {consultations.map(item => (
                     <article
                       key={item.id}
-                      className="rounded-xl border border-border bg-secondary p-4 shadow-sm transition hover:border-primary/60 hover:bg-accent"
+                      className="rounded-xl border border-border bg-card p-4 shadow-md transition hover:border-primary hover:ring-2 hover:ring-primary hover:ring-opacity-40"
                     >
                       <header
                         role="button"
@@ -402,10 +402,13 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                         }}
                         className="flex cursor-pointer flex-col gap-1 transition hover:text-primary sm:flex-row sm:items-center sm:justify-between"
                       >
-                        <h3 className="text-base font-semibold text-foreground">
-                          {item.address}
-                          {item.address_detail ? ` ${item.address_detail}` : ''}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-semibold text-foreground" style={{ pointerEvents: 'none' }}>
+                            {item.address}
+                            {item.address_detail ? ` ${item.address_detail}` : ''}
+                          </h3>
+                          <span className="text-primary" aria-label="상세보기">→</span>
+                        </div>
                         <time className="text-xs text-muted-foreground">
                           {new Date(item.created_at).toLocaleString('ko-KR')}
                         </time>
