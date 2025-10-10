@@ -34,10 +34,10 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-xl font-semibold text-foreground">2. 수집하는 개인정보 항목 및 방법</h2>
             <ul className="list-disc space-y-2 pl-5">
               <li>
-                필수 항목: 카카오 계정 고유번호(kakao_id), 카카오 프로필 닉네임, 상담 게시판 닉네임, 문의 내용, 문의 일시, 서비스 이용 기록,
+                필수 항목: 카카오 계정 고유번호(kakao_id), 전화번호, 문의 내용, 문의 일시, 서비스 이용 기록,
                 접속 로그, 접속 IP
               </li>
-              <li>선택 항목: 카카오 계정 이메일, 전화번호, 출생 연도, 성별(각 범위 동의 시), 추가 첨부 파일</li>
+              <li>선택 항목: 카카오 계정 이메일, 출생 연도, 생일, 성별(각 범위 동의 시), 추가 첨부 파일</li>
               <li>수집 방법: 카카오 로그인 연동을 통한 자동 수집, 상담 게시판 작성 시 이용자 입력, 고객센터 상담 및 서비스 이용 과정에서 자동 생성</li>
             </ul>
           </section>
