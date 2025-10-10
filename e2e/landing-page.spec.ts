@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CONTACTS } from '../lib/constants/contacts';
 
 test.describe('랜딩 페이지', () => {
   test.beforeEach(async ({ page }) => {
@@ -92,7 +93,7 @@ test.describe('랜딩 페이지', () => {
 
   test('연락처 정보가 표시되어야 한다', async ({ page }) => {
     // 연락처 확인
-    await expect(page.getByText(/010-7332-3815/)).toBeVisible();
-    await expect(page.getByText(/02-6348-1009/)).toBeVisible();
+    await expect(page.getByText(new RegExp(CONTACTS.mobile.replace(/-/g, '-')))).toBeVisible();
+    await expect(page.getByText(new RegExp(CONTACTS.office.replace(/-/g, '-')))).toBeVisible();
   });
 });

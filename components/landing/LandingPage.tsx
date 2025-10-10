@@ -18,120 +18,14 @@ import { Timeline } from './Timeline';
 import { FAQAccordion } from './FAQAccordion';
 import { handleUserLogout } from '@/lib/auth/logout';
 import { AuthButton } from './AuthButton';
-
-const interestItems = [
-  {
-    title: '시행 기간',
-    highlight: '2026년 한시 시행 (예정)',
-    description: '정부 계획안에 따르면 1년 한시 시행이 추진됩니다. 기간 내 신청을 준비해야 합니다.'
-  },
-  {
-    title: '소요 기간',
-    highlight: '총 2~3개월',
-    description: '준비부터 완료까지 평균 2~3개월. 건축위원회 심의는 1~2개월이 소요됩니다.'
-  }
-];
-
-const desireItems = [
-  {
-    icon: '💰',
-    title: '낮춘 비용 부담',
-    description: '합법화 절차를 통해 과태료·추가 공사 비용을 최소화합니다.'
-  },
-  {
-    icon: '📈',
-    title: '재산 가치 상승',
-    description: '건축물대장 등재 후 매매·임대 시 자산 가치가 상승합니다.'
-  },
-  {
-    icon: '🏦',
-    title: '금융거래 가능',
-    description: '담보 설정, 대출 등 금융거래가 가능해져 자금 조달이 수월합니다.'
-  },
-  {
-    icon: '🛡️',
-    title: '안전한 재산권 확보',
-    description: '법적 리스크 제거로 안심하고 건축물을 운영할 수 있습니다.'
-  }
-];
-
-const timelineItems = [
-  {
-    icon: '💬',
-    title: '무료상담',
-    description: '이행강제금 부과 이력과 위반 유형을 분석해 합법화 가능성을 진단합니다.'
-  },
-  {
-    icon: '🗂️',
-    title: '신고서 작성',
-    description: '건축물대장, 구조 검토, 감경자료를 한 번에 준비하여 접수 리드를 확보합니다.'
-  },
-  {
-    icon: '🔍',
-    title: '현장조사',
-    description: '발코니 확장·옥상 증축 등 위반 비중이 높은 부분을 중심으로 실측 및 사진 보고서를 작성합니다.'
-  },
-  {
-    icon: '🏛️',
-    title: '위원회 심의',
-    description: '지자체 TF와 협의해 4–8주 소요되는 건축위원회 심의를 통과하도록 전략을 수립합니다.'
-  },
-  {
-    icon: '📑',
-    title: '건축물대장 등재',
-    description: '특별조치법 특례를 적용해 서류 보완을 마무리하고 합법 건축물로 등록합니다.'
-  },
-  {
-    icon: '✅',
-    title: '사용승인',
-    description: '사용승인 취득 후 준공 직후 재위반 방지를 위한 관리 매뉴얼을 제공합니다.'
-  },
-  {
-    icon: '📈',
-    title: '재산가치 상승',
-    description: '금융 거래와 매매가 정상화되어 안정적인 수익 구조와 재산권을 확보합니다.'
-  }
-];
-
-const fullFaqs = [
-  {
-    question: '위반건축물이란 정확히 무엇인가요?',
-    answer:
-      '건축법에 따른 허가(또는 신고) 없이 건축·대수선·용도변경을 하거나 일조, 건축선, 구조, 피난, 방화, 조경 기준을 위반한 건축물을 말합니다. 베란다 확장, 옥상 불법 증축, 방 쪼개기, 근생 시설을 주택으로 바꾸는 행위 등이 대표 사례입니다.'
-  },
-  {
-    question: '위반건축물이 되면 어떤 불이익이 있나요?',
-    answer:
-      '지자체의 시정명령 및 원상복구 명령이 내려집니다. 평균 건당 141만 원 수준의 이행강제금이 반복 부과될 수 있으며, 매매·임대차 시 대출 제한이나 보증보험 가입 불가 등 거래 제한이 생기고 구조적 불안정, 화재 등 안전 위험도 커집니다.'
-  },
-  {
-    question: '이행강제금은 얼마나 내야 하나요?',
-    answer:
-      '2024년 기준 평균 건당 141만 원이며 매년 반복 부과될 수 있습니다. 소규모 위반 등 일부 조건에서는 최대 75%까지 감경할 수 있지만, 장기적으로는 원상복구 비용이 더 클 수 있어 선제적인 양성화가 필요합니다.'
-  },
-  {
-    question: '위반건축물을 사고팔 때 어떤 문제가 생기나요?',
-    answer:
-      '매도인이 불법시공을 했더라도 매수인이 적발되면 이행강제금을 납부해야 합니다. 위반 사실이 등재되지 않은 상태로 계약을 진행하면 대출이 막히거나 전세금 피해가 생길 수 있어 건축물대장 확인과 원상복구 책임 특약이 필수입니다.'
-  },
-  {
-    question: '정부에서 양성화 기회를 주나요?',
-    answer:
-      '2026년 시행 예정인 「특정건축물 정리 특별조치법」을 통해 일정 규모 이하 주거용 건축물은 한시적으로 합법 전환을 신청할 수 있습니다. 단독 165㎡, 다가구 330㎡, 다세대 세대당 85㎡ 이하 대상이며 구조 안전, 위생, 방화, 일조권 심사를 통과해야 합니다.'
-  },
-  {
-    question: '앞으로 단속은 더 강화되나요?',
-    answer:
-      '정부는 AI 기반 항공사진 분석으로 전국 건축물 변화를 자동 추적하고, 지자체 실태조사를 의무화할 계획입니다. 이행강제금도 반복·가중 부과가 강화돼 “적발되지 않을 것”이라는 기대가 점점 어려워지고 있습니다.'
-  },
-  {
-    question: '위반건축물을 소유한 저는 지금 무엇을 해야 하나요?',
-    answer:
-      '먼저 건축물대장을 확인해 위반 여부를 파악하고, 전문가 상담으로 구조 안전과 복구 가능성을 점검해야 합니다. 2026년 특별법 시행에 맞춰 합법화 신청을 준비하고, 매매·임대차 시 특약 삽입과 안전 점검으로 피해를 예방하세요.'
-  }
-];
-
-const featuredFaqs = fullFaqs.slice(0, 4);
+import { CONTACTS } from '@/lib/constants/contacts';
+import {
+  interestItems,
+  desireItems,
+  timelineItems,
+  fullFaqs,
+  featuredFaqs
+} from '@/lib/constants/landingPageData';
 
 type NavigationItem =
   | { label: string; type: 'modal'; icon?: ReactNode }
@@ -359,8 +253,8 @@ export function LandingPage() {
                           <Phone className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
                           <div className="space-y-1">
                             <p className="font-semibold text-foreground">추가 문의가 필요하신가요?</p>
-                            <a href="tel:0263481009" className="text-foreground text-base font-semibold">
-                              02-6348-1009
+                            <a href={`tel:${CONTACTS.officeRaw}`} className="text-foreground text-base font-semibold">
+                              {CONTACTS.office}
                             </a>
                             <p className="text-xs">평일 09:00-18:00 상담팀에서 신속히 도와드립니다.</p>
                           </div>
@@ -569,19 +463,19 @@ export function LandingPage() {
                 <div>
                   <p className="font-semibold uppercase tracking-wide opacity-70">Contact</p>
                   <p className="mt-1 text-base font-medium">
-                    ㈜인터월드엔지니어링 건축사사무소
+                    {CONTACTS.company}
                   </p>
                 </div>
                 <div className="space-y-2 opacity-80">
                   <p>문의전화: </p>
                   <p className="flex items-center gap-2">
                     <PhoneCall className="h-5 w-5 opacity-70" aria-hidden />
-                    <a href="tel:01073323815" className="font-semibold hover:underline">
-                      010-7332-3815
+                    <a href={`tel:${CONTACTS.mobileRaw}`} className="font-semibold hover:underline">
+                      {CONTACTS.mobile}
                     </a>
                     <span className="px-1">/</span>
-                    <a href="tel:0263481009" className="font-semibold hover:underline">
-                      02-6348-1009
+                    <a href={`tel:${CONTACTS.officeRaw}`} className="font-semibold hover:underline">
+                      {CONTACTS.office}
                     </a>
                   </p>
                 </div>

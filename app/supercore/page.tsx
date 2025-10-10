@@ -122,7 +122,7 @@ export default function SupercorePage() {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg shadow-2xl p-8">
             <div className="mb-8 text-center">
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">Supercore Admin</h1>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">건축물양성화 전문플랫폼</h1>
               <p className="text-slate-600">관리자 로그인</p>
             </div>
 
