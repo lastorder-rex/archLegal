@@ -10,7 +10,7 @@ export default function TermsOfServicePage() {
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">이용약관</h1>
           <p className="text-muted-foreground">
-            본 약관은 ArchLegal 서비스 이용에 필요한 기본 사항을 안내합니다. 실제 운영 정책에 맞게 내용을 업데이트해주세요.
+            본 약관은 ArchLegal 서비스 이용에 필요한 기본 사항을 안내합니다. 
           </p>
         </header>
 
@@ -90,9 +90,7 @@ export default function TermsOfServicePage() {
             </p>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            ※ 본 약관은 샘플 문구입니다. 실제 서비스 정책에 맞추어 내용을 검토하고 수정해주세요.
-          </p>
+          
         </section>
       </div>
     </main>

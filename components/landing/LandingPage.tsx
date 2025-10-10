@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Menu, Phone, ShieldCheck, UserRoundCog } from 'lucide-react';
+import { Menu, Phone, PhoneCall, ShieldCheck, UserRoundCog } from 'lucide-react';
 import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
 import { ThemeToggle } from '../ui/theme-toggle';
@@ -241,7 +241,7 @@ export function LandingPage() {
               Interworld
             </a>
             <div className="flex items-center gap-3">
-              <nav className="hidden items-center gap-6 text-sm font-medium text-white/80 lg:flex">
+              <nav className="hidden items-center gap-6 text-base font-medium text-white/80 lg:flex">
                     {navigationItems.map((item) => {
                       const icon = item.icon;
                       return item.type === 'modal' ? (
@@ -459,7 +459,7 @@ export function LandingPage() {
               </p>
             </div>
             <div className="rounded-2xl border border-primary/30 bg-accent p-6 lg:col-span-1">
-              <p className="text-sm font-semibold text-accent-foreground">전국 위반 현황 (2024.12)</p>
+              <p className="text-lg font-semibold text-accent-foreground">전국 위반 현황 (2024.12)</p>
               <ul className="mt-3 space-y-2 text-sm text-accent-foreground/90">
                 <li>• 총 147,726동 중 주거용이 56.5%, 연평균 5~6천 동씩 증가</li>
                 <li>• 서울 49,011동(33.2%), 경기 40,908동(27.7%)에 집중 발생</li>
@@ -574,7 +574,8 @@ export function LandingPage() {
                 </div>
                 <div className="space-y-2 opacity-80">
                   <p>문의전화: </p>
-                  <p>
+                  <p className="flex items-center gap-2">
+                    <PhoneCall className="h-5 w-5 opacity-70" aria-hidden />
                     <a href="tel:01073323815" className="font-semibold hover:underline">
                       010-7332-3815
                     </a>
