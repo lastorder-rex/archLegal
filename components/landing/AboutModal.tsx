@@ -134,7 +134,7 @@ export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
 
                   <section className="rounded-2xl border border-border bg-card p-6">
                     <h3 className="text-lg font-semibold text-foreground">왜 지금 시작해야 하나요?</h3>
-                    <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+                    <ul className="mt-4 space-y-3 text-base text-muted-foreground">
                       <li>
                         • 2026년 시행을 목표로 한 특정건축물 정리 특별조치법은 1년 한시로 적용될 예정이라, 기회를 놓치면 다시 합법화하기 어렵습니다.
                       </li>
