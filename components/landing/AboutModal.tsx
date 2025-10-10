@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { X } from 'lucide-react';
+import { X, Megaphone } from 'lucide-react';
 
 interface AboutModalProps {
   open: boolean;
@@ -40,10 +40,11 @@ export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
               <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-3xl border border-border bg-background shadow-xl transition-all">
                 <div className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
                   <div>
-                    <Dialog.Title className="text-xl font-semibold text-foreground">
+                    <Dialog.Title className="flex items-center gap-2 text-xl font-semibold text-foreground">
+                      <Megaphone className="h-6 w-6 text-primary" aria-hidden />
                       우리는 이런 문제를 해결합니다
                     </Dialog.Title>
-                    <Dialog.Description className="mt-1 text-sm text-muted-foreground">
+                    <Dialog.Description className="mt-1 text-base text-muted-foreground">
                       위반 건축물 양성화를 통해 법적 리스크와 재산 손실을 줄이고 안전한 시장 환경을 만듭니다.
                     </Dialog.Description>
                   </div>
@@ -65,7 +66,7 @@ export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
                     <h2 className="text-2xl font-bold text-foreground">
                       전국 147,726동의 위반 건축물, 지금이 합법화의 골든타임입니다.
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       국토교통부 2025 보고서에 따르면 위반 건축물은 최근 10년간 연평균 5~6천 동씩 증가했고,
                       시정명령을 이행하는 경우는 40~50%에 그칩니다. 반복되는 이행강제금, 금융거래 제한,
                       임차인 피해가 주요 문제로 지적되고 있습니다.
@@ -74,7 +75,7 @@ export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
 
                   <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
                     <h3 className="text-lg font-semibold text-foreground">자주 묻는 질문 전체 보기</h3>
-                    <div className="space-y-4 text-sm text-muted-foreground">
+                    <div className="space-y-4 text-base text-muted-foreground">
                       {faqs.map((faq) => (
                         <div key={faq.question} className="space-y-2">
                           <p className="font-semibold text-card-foreground">{faq.question}</p>
@@ -87,7 +88,7 @@ export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
                   <section className="grid gap-6 lg:grid-cols-2">
                     <div className="rounded-2xl border border-border bg-card p-6">
                       <h3 className="text-lg font-semibold text-foreground">우리가 해결하는 핵심 이슈</h3>
-                      <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+                      <ul className="mt-4 space-y-3 text-base text-muted-foreground">
                         <li>
                           • 반복 부과되는 이행강제금과 원상복구 비용 부담을 줄이고 합법적인 운영으로 전환합니다.
                         </li>
@@ -101,7 +102,7 @@ export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
                     </div>
                     <div className="rounded-2xl border border-border bg-card p-6">
                       <h3 className="text-lg font-semibold text-foreground">이 서비스를 위한 고객</h3>
-                      <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+                      <ul className="mt-4 space-y-3 text-base text-muted-foreground">
                         <li>• 상가·공장 등 자산을 보유한 건물주와 운영자</li>
                         <li>• 신규 개발 사업을 추진하는 시행사·건축사</li>
                         <li>• 위반 건축물 관리와 보고 체계를 책임지는 지자체 담당자</li>
@@ -112,7 +113,7 @@ export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
 
                   <section className="rounded-2xl border border-primary/40 bg-primary/5 p-6 dark:border-primary/30 dark:bg-primary/10">
                     <h3 className="text-lg font-semibold text-primary dark:text-primary-300">우리가 제공하는 전 과정 솔루션</h3>
-                    <ol className="mt-4 space-y-3 text-sm text-primary/80 dark:text-primary-100">
+                    <ol className="mt-4 space-y-3 text-base text-primary/80 dark:text-primary-100">
                       <li>
                         1. <span className="font-semibold">사전 진단</span> – 현장조사를 통해 위반 유형을 분류하고 합법화 가능성을 평가합니다.
                       </li>
