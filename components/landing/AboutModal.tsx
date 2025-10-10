@@ -7,7 +7,7 @@ import { X, Megaphone } from 'lucide-react';
 interface AboutModalProps {
   open: boolean;
   onClose: () => void;
-  faqs: Array<{ question: string; answer: string }>;
+  faqs: ReadonlyArray<{ question: string; answer: string }>;
 }
 
 export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
