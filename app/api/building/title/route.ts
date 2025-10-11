@@ -307,16 +307,14 @@ export async function POST(request: NextRequest) {
     // STEP 2: Fallback to local Seoul building registry database
     console.log('Attempting local database fallback...');
 
-    // Extract region names from codes if not provided
-    const sigunguCode = sigunguCd || '';
-    const beopjeongDongCode = bjdongCd || '';
-
+    // Use region NAMES (not codes) for local DB query
     let localData: SeoulBuildingRecord | null = null;
 
-    if (sigunguCode && beopjeongDongCode && bun && ji) {
+    if (sigunguName && bjdongName && bun && ji) {
+      console.log('Querying local DB with:', { sigunguName, bjdongName, bun, ji });
       localData = await queryLocalBuildingData({
-        sigunguCode,
-        beopjeongDongCode,
+        sigunguCode: sigunguName,  // Using NAME, not code!
+        beopjeongDongCode: bjdongName,  // Using NAME, not code!
         bon: bun,
         ji
       });
