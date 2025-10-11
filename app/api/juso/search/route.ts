@@ -11,6 +11,8 @@ interface JusoResultItem {
   mtYn?: string;         // 산 여부 (0:대지, 1:산)
   lnbrMnnm?: string;     // 번(본번)
   lnbrSlno?: string;     // 지(부번)
+  sggNm?: string;        // 시군구명
+  emdNm?: string;        // 읍면동명
 }
 
 interface JusoApiResponse {
@@ -69,6 +71,11 @@ export async function POST(request: NextRequest) {
 
     const data: JusoApiResponse = await response.json();
 
+    // Debug: Log first item to see available fields
+    if (data.results.juso && data.results.juso.length > 0) {
+      console.log('Juso API 응답 샘플:', JSON.stringify(data.results.juso[0], null, 2));
+    }
+
     // Handle API errors
     if (data.results.common.errorCode !== '0') {
       return NextResponse.json(
@@ -116,7 +123,9 @@ export async function POST(request: NextRequest) {
             bjdongCd,
             platGbCd,
             bun,
-            ji
+            ji,
+            sigunguName: item.sggNm || '',
+            bjdongName: item.emdNm || ''
           }
         };
       })

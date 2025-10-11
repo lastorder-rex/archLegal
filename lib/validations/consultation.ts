@@ -14,6 +14,8 @@ export const addressCodeSchema = z.object({
   platGbCd: z.string().min(1, '대지구분 코드가 필요합니다'),
   bun: z.string().min(1, '번지가 필요합니다'),
   ji: z.string().min(1, '지번이 필요합니다'),
+  sigunguName: z.string().optional(),
+  bjdongName: z.string().optional(),
 });
 
 // Building info schema (from Building Registry API)
@@ -28,6 +30,7 @@ export const buildingInfoSchema = z.object({
   mainBldCnt: z.number().nullable().optional(),
   atchBldCnt: z.number().nullable().optional(),
   platPlc: z.string().nullable().optional(),
+  source: z.enum(['national_api', 'local_db']).optional(),
   addressInfo: z.object({
     sigunguCd: z.string(),
     bjdongCd: z.string(),
