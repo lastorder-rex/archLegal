@@ -1,3 +1,4 @@
+import { Info, ThumbsUp } from 'lucide-react';
 import FileUpload from '../FileUpload';
 import type { AttachmentFile } from '@/lib/utils/file-upload';
 
@@ -26,12 +27,18 @@ export function AttachmentsSection({
           onFilesChange={onFilesChange}
           disabled={isSubmitting}
         />
-        <div className="mt-3 text-xs text-muted-foreground">
-          <p>
-            📋 <strong>권장 첨부파일:</strong> 위임장, 인감증명서
+        <div className="mt-3 space-y-2 text-xs text-muted-foreground">
+          <p className="flex items-center gap-2">
+            <ThumbsUp className="h-4 w-4" aria-hidden />
+            <span>
+              <strong>권장 첨부파일:</strong> 위임장, 인감증명서
+            </span>
           </p>
-          <p>
-            💡 <strong>안내:</strong> 첨부파일은 상담 완료 후에도 안전하게 보관됩니다
+          <p className="flex items-center gap-2">
+            <Info className="h-4 w-4" aria-hidden />
+            <span>
+              <strong>안내:</strong> 첨부파일은 상담 완료 후에도 안전하게 보관됩니다
+            </span>
           </p>
         </div>
       </div>

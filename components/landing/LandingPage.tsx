@@ -5,7 +5,22 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Menu, Phone, PhoneCall, ShieldCheck, UserRoundCog } from 'lucide-react';
+import {
+  ArrowBigDownDash,
+  ArrowBigUpDash,
+  BookUp,
+  CheckLine,
+  Handshake,
+  Landmark,
+  MessageCircleMore,
+  Menu,
+  PenLine,
+  Phone,
+  PhoneCall,
+  Search,
+  ShieldCheck,
+  UserRoundCog
+} from 'lucide-react';
 import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
 import { ThemeToggle } from '../ui/theme-toggle';
@@ -34,6 +49,45 @@ type NavigationItem =
 const navigationItems: NavigationItem[] = [
   { label: '우리의 역할', type: 'modal' as const, icon: <ShieldCheck className="h-4 w-4" aria-hidden /> }
 ];
+
+type DesireIconKey = (typeof desireItems)[number]['icon'];
+type TimelineIconKey = (typeof timelineItems)[number]['icon'];
+
+const renderDesireIcon = (type: DesireIconKey) => {
+  switch (type) {
+    case 'down':
+      return <ArrowBigDownDash className="h-8 w-8" aria-hidden />;
+    case 'up':
+      return <ArrowBigUpDash className="h-8 w-8" aria-hidden />;
+    case 'handshake':
+      return <Handshake className="h-8 w-8" aria-hidden />;
+    case 'shield':
+      return <ShieldCheck className="h-8 w-8" aria-hidden />;
+    default:
+      return <ArrowBigUpDash className="h-8 w-8" aria-hidden />;
+  }
+};
+
+const renderTimelineIcon = (type: TimelineIconKey) => {
+  switch (type) {
+    case 'message-circle-more':
+      return <MessageCircleMore className="h-6 w-6" aria-hidden />;
+    case 'pen-line':
+      return <PenLine className="h-6 w-6" aria-hidden />;
+    case 'search':
+      return <Search className="h-6 w-6" aria-hidden />;
+    case 'landmark':
+      return <Landmark className="h-6 w-6" aria-hidden />;
+    case 'book-up':
+      return <BookUp className="h-6 w-6" aria-hidden />;
+    case 'check-line':
+      return <CheckLine className="h-6 w-6" aria-hidden />;
+    case 'arrow-big-up-dash':
+      return <ArrowBigUpDash className="h-6 w-6" aria-hidden />;
+    default:
+      return <ArrowBigUpDash className="h-6 w-6" aria-hidden />;
+  }
+};
 
 export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -387,14 +441,24 @@ export function LandingPage() {
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {desireItems.map((item) => (
-              <InfoCard key={item.title} icon={<span>{item.icon}</span>} title={item.title} description={item.description} />
+              <InfoCard
+                key={item.title}
+                icon={renderDesireIcon(item.icon)}
+                title={item.title}
+                description={item.description}
+              />
             ))}
           </div>
           <div className="mt-16 space-y-6">
             <h3 className="text-center text-2xl font-semibold text-slate-900 dark:text-slate-100">
               양성화 절차 타임라인
             </h3>
-            <Timeline steps={timelineItems} />
+            <Timeline
+              steps={timelineItems.map((item) => ({
+                ...item,
+                icon: renderTimelineIcon(item.icon)
+              }))}
+            />
             <p className="text-center text-sm text-slate-600 dark:text-slate-300">
               최근 실태조사에서는 발코니·베란다 확장이 42.2%, 옥상 증축이 31.4%를 차지했습니다. 주요
               위반 유형을 정확히 짚어 맞춤 전략을 세우는 것이 성공의 핵심입니다.

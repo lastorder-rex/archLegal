@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { isUserSessionExpired } from '@/lib/auth/user-session';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { HouseHeart } from 'lucide-react';
 
 interface HistoryLayoutProps {
   children: ReactNode;
@@ -53,7 +54,12 @@ export default async function HistoryLayout({ children }: HistoryLayoutProps) {
               <p className="text-sm text-muted-foreground">필요한 메뉴를 선택해 정보를 확인하거나 수정하세요.</p>
             </div>
             <Link href="/">
-              <Button type="button" variant="outline" className="w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex w-auto items-center gap-2"
+              >
+                <HouseHeart className="h-4 w-4" aria-hidden />
                 홈으로 돌아가기
               </Button>
             </Link>

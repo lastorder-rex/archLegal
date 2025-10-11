@@ -28,9 +28,7 @@ export function SiteFooter() {
           >
             interworldarch@nate.com
           </a>
-          <a href="tel:01063531058" className="transition-colors hover:text-primary hover:underline">
-            010-6353-1058
-          </a>
+          
         </div>
       </div>
     </footer>
