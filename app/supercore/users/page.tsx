@@ -27,7 +27,7 @@ interface User {
 interface SearchFilters {
   dateFrom: string;
   dateTo: string;
-  email: string;
+  name: string;
 }
 
 export default function UsersPage() {
@@ -54,7 +54,7 @@ export default function UsersPage() {
 
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     ...getDefaultDates(),
-    email: ''
+    name: ''
   });
   const itemsPerPage = 15;
 
@@ -69,7 +69,7 @@ export default function UsersPage() {
 
       if (effectiveFilters.dateFrom) params.append('dateFrom', effectiveFilters.dateFrom);
       if (effectiveFilters.dateTo) params.append('dateTo', effectiveFilters.dateTo);
-      if (effectiveFilters.email) params.append('email', effectiveFilters.email);
+      if (effectiveFilters.name) params.append('name', effectiveFilters.name);
 
       const response = await fetch(`/api/admin/users?${params.toString()}`, {
         credentials: 'include'
@@ -192,13 +192,13 @@ export default function UsersPage() {
               />
             </div>
             <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="email" className="text-xs">이메일</Label>
+              <Label htmlFor="name" className="text-xs">이름</Label>
               <Input
-                id="email"
+                id="name"
                 type="text"
-                placeholder="이메일 검색"
-                value={searchFilters.email}
-                onChange={(e) => handleFilterChange('email', e.target.value)}
+                placeholder="이름 검색"
+                value={searchFilters.name}
+                onChange={(e) => handleFilterChange('name', e.target.value)}
                 className="text-xs"
               />
             </div>
