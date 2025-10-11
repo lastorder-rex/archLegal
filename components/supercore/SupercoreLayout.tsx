@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { handleAdminLogout } from '@/lib/auth/logout';
 import { Box, FileText, Users, CreditCard, UserCog, LogOut } from 'lucide-react';
 
@@ -16,6 +16,28 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const { documentElement, body } = document;
+    documentElement.classList.remove('dark');
+    body.dataset.admin = 'true';
+
+    try {
+      window.localStorage.setItem('ui-theme', 'light');
+    } catch (error) {
+      console.error('Failed to persist admin theme preference', error);
+    }
+
+    return () => {
+      if (body.dataset.admin === 'true') {
+        delete body.dataset.admin;
+      }
+    };
+  }, []);
 
   const handleLogout = async () => {
     await handleAdminLogout(router, onLogout);

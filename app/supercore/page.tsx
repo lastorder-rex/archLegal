@@ -27,6 +27,28 @@ export default function SupercorePage() {
   const [loginError, setLoginError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const { documentElement, body } = document;
+    documentElement.classList.remove('dark');
+    body.dataset.admin = 'true';
+
+    try {
+      window.localStorage.setItem('ui-theme', 'light');
+    } catch (error) {
+      console.error('Failed to persist admin theme preference', error);
+    }
+
+    return () => {
+      if (body.dataset.admin === 'true') {
+        delete body.dataset.admin;
+      }
+    };
+  }, []);
+
   // Check authentication on mount
   useEffect(() => {
     checkAuth();
