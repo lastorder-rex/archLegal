@@ -14,8 +14,10 @@ interface Admin {
 
 interface User {
   id: string;
+  legal_name: string;
   email: string;
   phone: string;
+  birth_date: string | null;
   created_at: string;
   last_sign_in_at: string;
   consultation_count: number;
@@ -144,6 +146,14 @@ export default function UsersPage() {
     return `${year}-${month}-${day} ${hours}:${minutes}`;
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear().toString().slice(-2);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   if (isLoading) {
@@ -231,7 +241,7 @@ export default function UsersPage() {
                         가입일시
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        이메일
+                        이름
                       </th>
                       <th className="hidden md:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
                         전화번호
@@ -239,13 +249,13 @@ export default function UsersPage() {
                       <th className="hidden lg:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
                         마지막 로그인
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         상담건수
                       </th>
-                      <th className="hidden lg:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="hidden lg:table-cell px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         결제건수
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         관리
                       </th>
                     </tr>
@@ -257,10 +267,11 @@ export default function UsersPage() {
                         className="hover:bg-slate-50"
                       >
                         <td className="px-4 py-3 text-sm text-slate-600">
-                          {formatDateTime(user.created_at)}
+                          <span className="hidden sm:inline">{formatDateTime(user.created_at)}</span>
+                          <span className="sm:hidden">{formatDate(user.created_at)}</span>
                         </td>
                         <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                          {user.email}
+                          {user.legal_name || '-'}
                         </td>
                         <td className="hidden md:table-cell px-4 py-3 text-sm text-slate-600">
                           {user.phone || '-'}
@@ -268,15 +279,15 @@ export default function UsersPage() {
                         <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600">
                           {user.last_sign_in_at ? formatDateTime(user.last_sign_in_at) : '-'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600">
+                        <td className="px-4 py-3 text-sm text-slate-600 text-center">
                           {user.consultation_count}건
                         </td>
-                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600">
+                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600 text-center">
                           {user.payment_count}건
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-3 text-sm text-center">
                           <Button
-                            onClick={() => router.push(`/supercore/users/${user.id}/consultations`)}
+                            onClick={() => router.push(`/supercore/users/${user.id}`)}
                             size="sm"
                             variant="primary"
                             className="w-20"

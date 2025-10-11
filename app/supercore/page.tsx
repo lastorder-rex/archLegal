@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import { FileText, Users, CreditCard } from 'lucide-react';
 
 interface Admin {
   id: string;
@@ -234,7 +235,10 @@ export default function SupercorePage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-900 mb-2">📋 상담 게시판</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="w-5 h-5 text-blue-900" />
+              <h3 className="font-semibold text-blue-900">상담 게시판</h3>
+            </div>
             <p className="text-sm text-blue-700">
               고객 상담 요청을 확인하고 관리합니다.
             </p>
@@ -248,7 +252,10 @@ export default function SupercorePage() {
           </div>
 
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="font-semibold text-green-900 mb-2">👥 회원 관리</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-5 h-5 text-green-900" />
+              <h3 className="font-semibold text-green-900">회원 관리</h3>
+            </div>
             <p className="text-sm text-green-700">
               회원 정보와 상담 내역을 관리합니다.
             </p>
@@ -262,7 +269,10 @@ export default function SupercorePage() {
           </div>
 
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-            <h3 className="font-semibold text-slate-400 mb-2">💳 결제 관리</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <CreditCard className="w-5 h-5 text-slate-400" />
+              <h3 className="font-semibold text-slate-400">결제 관리</h3>
+            </div>
             <p className="text-sm text-slate-400">
               준비 중입니다.
             </p>

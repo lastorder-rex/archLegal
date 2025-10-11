@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import clsx from 'clsx';
+import { HouseHeart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import {
   filterEmailInput,
   filterNameInput,
   filterPhoneInput,
+  filterBirthDateInput,
   sanitizeLegalContactInfo,
   validatePhoneInput
 } from '@/lib/validations/user';
@@ -38,9 +40,10 @@ type FormState = {
   legalName: string;
   contactPhone: string;
   email: string;
+  birthDate: string;
 };
 
-type FormErrors = Partial<Record<'legalName' | 'contactPhone' | 'email', string>>;
+type FormErrors = Partial<Record<'legalName' | 'contactPhone' | 'email' | 'birthDate', string>>;
 
 interface MyPageContentProps {
   profile: UserProfile;
@@ -61,9 +64,10 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
     () => ({
       legalName: profile.legal_name ?? profile.full_name ?? '',
       contactPhone: profile.contact_phone ?? profile.phone ?? '',
-      email: profile.email ?? fallbackEmail ?? ''
+      email: profile.email ?? '',
+      birthDate: profile.birth_date ?? ''
     }),
-    [fallbackEmail, profile.contact_phone, profile.email, profile.full_name, profile.legal_name, profile.phone]
+    [profile.contact_phone, profile.email, profile.full_name, profile.legal_name, profile.phone, profile.birth_date]
   );
 
   const [formState, setFormState] = useState<FormState>(initialFormState);
@@ -84,6 +88,8 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
         nextValue = filterPhoneInput(value);
       } else if (key === 'email') {
         nextValue = filterEmailInput(value);
+      } else if (key === 'birthDate') {
+        nextValue = filterBirthDateInput(value);
       }
 
       setFormState(prev => ({ ...prev, [key]: nextValue }));
@@ -111,7 +117,7 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
         legalName: formState.legalName,
         contactPhone: formState.contactPhone,
         email: formState.email,
-        birthDate: profile.birth_date ?? undefined
+        birthDate: formState.birthDate
       });
 
       if (!validation.success) {
@@ -136,8 +142,8 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
           consentPrivacy: true
         };
 
-        if (profile.birth_date) {
-          payload.birthDate = profile.birth_date;
+        if (validation.data.birthDate) {
+          payload.birthDate = validation.data.birthDate;
         }
 
         const response = await fetch('/api/users/profile', {
@@ -153,13 +159,14 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
         }
 
         setSuccessMessage('회원정보가 저장되었습니다.');
+        router.refresh();
       } catch (error: any) {
         setServerError(error.message || '회원정보 저장 중 오류가 발생했습니다.');
       } finally {
         setSubmitting(false);
       }
     },
-    [formState.contactPhone, formState.email, formState.legalName, profile.birth_date]
+    [formState.contactPhone, formState.email, formState.legalName, formState.birthDate, router]
   );
 
   const goHome = useCallback(() => {
@@ -190,7 +197,8 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
           <p className="text-sm text-muted-foreground">필요한 메뉴를 선택해 정보를 확인하거나 수정하세요.</p>
         </div>
         <Link href="/">
-          <Button type="button" variant="outline" className="w-auto">
+          <Button type="button" variant="outline" className="flex w-auto items-center gap-2">
+            <HouseHeart className="h-4 w-4" aria-hidden />
             홈으로 돌아가기
           </Button>
         </Link>
@@ -256,15 +264,32 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                     {errors.contactPhone ? <p className="text-sm text-destructive">{errors.contactPhone}</p> : null}
                   </div>
                 </div>
-                <div className="space-y-2 sm:w-1/2">
-                  <Label htmlFor="email">이메일 (선택)</Label>
-                  <Input
-                    id="email"
-                    value={formState.email}
-                    onChange={event => handleChange('email', event.target.value)}
-                    placeholder="이메일을 입력하세요"
-                  />
-                  {errors.email ? <p className="text-sm text-destructive">{errors.email}</p> : null}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="birthDate">생년월일 (선택)</Label>
+                    <Input
+                      id="birthDate"
+                      type="date"
+                      value={formState.birthDate}
+                      onChange={event => handleChange('birthDate', event.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                    {errors.birthDate ? (
+                      <p className="text-sm text-destructive">{errors.birthDate}</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">YYYY-MM-DD 형식으로 입력해주세요.</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">이메일 (선택)</Label>
+                    <Input
+                      id="email"
+                      value={formState.email}
+                      onChange={event => handleChange('email', event.target.value)}
+                      placeholder="이메일을 입력하세요"
+                    />
+                    {errors.email ? <p className="text-sm text-destructive">{errors.email}</p> : null}
+                  </div>
                 </div>
 
                 {serverError ? <p className="text-sm text-destructive">{serverError}</p> : null}
