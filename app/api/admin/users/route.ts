@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit;
 
-    // Use service role key to access auth.users
+    // Use service role key to access public.users
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
@@ -32,48 +32,63 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Get users from auth.users
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
-      page,
-      perPage: limit
-    });
+    // Build query for public.users
+    let query = supabaseAdmin
+      .from('users')
+      .select('auth_id, legal_name, full_name, email, contact_phone, phone, birth_date, created_at, updated_at', { count: 'exact' });
 
-    if (authError) {
-      console.error('Auth error:', authError);
-      return NextResponse.json({ error: '회원 조회 실패' }, { status: 500 });
-    }
-
-    // Filter users by email if provided
-    let filteredUsers = authData.users || [];
-
+    // Apply filters
     if (email) {
-      filteredUsers = filteredUsers.filter(user =>
-        user.email?.toLowerCase().includes(email.toLowerCase())
-      );
+      query = query.ilike('email', `%${email}%`);
     }
 
     if (dateFrom) {
-      const fromDate = new Date(dateFrom);
-      filteredUsers = filteredUsers.filter(user =>
-        new Date(user.created_at) >= fromDate
-      );
+      query = query.gte('created_at', dateFrom);
     }
 
     if (dateTo) {
       const toDate = new Date(dateTo);
       toDate.setHours(23, 59, 59, 999);
-      filteredUsers = filteredUsers.filter(user =>
-        new Date(user.created_at) <= toDate
-      );
+      query = query.lte('created_at', toDate.toISOString());
+    }
+
+    // Get paginated users
+    const { data: usersData, error: usersError, count: totalCount } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (usersError) {
+      console.error('Users query error:', usersError);
+      return NextResponse.json({ error: '회원 조회 실패' }, { status: 500 });
+    }
+
+    const publicUsers = usersData || [];
+
+    // Get auth.users data for last_sign_in_at
+    const authIds = publicUsers.map(u => u.auth_id);
+    const authUsersMap: Record<string, { last_sign_in_at: string | null }> = {};
+
+    if (authIds.length > 0) {
+      // Get auth users info (batch)
+      for (const authId of authIds) {
+        try {
+          const { data } = await supabaseAdmin.auth.admin.getUserById(authId);
+          if (data?.user) {
+            authUsersMap[authId] = {
+              last_sign_in_at: data.user.last_sign_in_at || null
+            };
+          }
+        } catch (err) {
+          console.error(`Failed to get auth user ${authId}:`, err);
+        }
+      }
     }
 
     // Get consultation counts for each user
-    const userIds = filteredUsers.map(user => user.id);
-
     const { data: consultationCounts, error: countError } = await supabaseAdmin
       .from('consultations')
       .select('user_id')
-      .in('user_id', userIds)
+      .in('user_id', authIds)
       .is('deleted_at', null);
 
     if (countError) {
@@ -88,24 +103,17 @@ export async function GET(request: NextRequest) {
     });
 
     // Format user data
-    const users = filteredUsers.map(user => ({
-      id: user.id,
+    const users = publicUsers.map(user => ({
+      id: user.auth_id,
+      legal_name: user.legal_name || user.full_name || '',
       email: user.email || '',
-      phone: user.phone || '',
+      phone: user.contact_phone || user.phone || '',
+      birth_date: user.birth_date || null,
       created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at,
-      consultation_count: consultationCountMap[user.id] || 0,
+      last_sign_in_at: authUsersMap[user.auth_id]?.last_sign_in_at || null,
+      consultation_count: consultationCountMap[user.auth_id] || 0,
       payment_count: 0 // TODO: Implement payment counting when payment feature is ready
     }));
-
-    // Get total count
-    const totalUsersResponse = await supabaseAdmin.auth.admin.listUsers();
-
-    if (totalUsersResponse.error) {
-      console.error('Total users error:', totalUsersResponse.error);
-    }
-
-    const totalCount = totalUsersResponse.data?.users?.length ?? users.length;
 
     return NextResponse.json({
       users,

@@ -63,18 +63,14 @@ export async function PUT(request: Request) {
     contact_phone: contactPhone,
     full_name: legalName,
     phone: contactPhone,
+    email: email ?? null,
+    birth_date: birthDate ?? null,
     profile_completed: true,
     profile_completed_at: now,
     consent_terms_at: consentTerms ? now : null,
     consent_privacy_at: consentPrivacy ? now : null,
     updated_at: now
   } as Record<string, unknown>;
-
-  if (email) {
-    updatePayload.email = email;
-  }
-
-  updatePayload.birth_date = birthDate ?? null;
 
   const { data, error } = await supabase
     .from('users')

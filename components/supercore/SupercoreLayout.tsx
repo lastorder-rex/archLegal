@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ReactNode, useState } from 'react';
 import { handleAdminLogout } from '@/lib/auth/logout';
+import { Box, FileText, Users, CreditCard, UserCog, LogOut } from 'lucide-react';
 
 interface SupercoreLayoutProps {
   children: ReactNode;
@@ -38,6 +39,16 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
             {title || '관리자 대시보드'}
           </h1>
           <div className="flex items-center gap-2">
+            {/* Logout Button */}
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="h-8 px-3 text-sm min-w-0 whitespace-nowrap flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">로그아웃</span>
+            </Button>
+
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
@@ -66,15 +77,6 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
                   />
                 )}
               </svg>
-            </Button>
-
-            {/* Logout Button */}
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="h-8 px-2 text-sm min-w-0 whitespace-nowrap"
-            >
-              로그아웃
             </Button>
           </div>
         </div>
@@ -110,124 +112,134 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
             <li>
               <button
                 onClick={() => handleMenuClick('/supercore')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                   pathname === '/supercore'
                     ? 'bg-primary text-white'
                     : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
                 }`}
               >
-                🏠 대시보드
+                <Box className="w-5 h-5" />
+                <span>대시보드</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => handleMenuClick('/supercore/consultations')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                   isActive('/supercore/consultations')
                     ? 'bg-primary text-white'
                     : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
                 }`}
               >
-                📋 상담 게시판
+                <FileText className="w-5 h-5" />
+                <span>상담 게시판</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => handleMenuClick('/supercore/users')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                   isActive('/supercore/users')
                     ? 'bg-primary text-white'
                     : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
                 }`}
               >
-                👥 회원 관리
+                <Users className="w-5 h-5" />
+                <span>회원 관리</span>
               </button>
             </li>
             <li>
               <button
                 disabled
-                className="w-full text-left px-4 py-2 rounded-md text-slate-400 cursor-not-allowed"
+                className="w-full text-left px-4 py-2 rounded-md text-slate-400 cursor-not-allowed flex items-center gap-3"
               >
-                💳 결제 관리 (준비중)
+                <CreditCard className="w-5 h-5" />
+                <span>결제 관리 (준비중)</span>
               </button>
             </li>
             <li>
               <button
                 onClick={() => handleMenuClick('/supercore/admins')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                   isActive('/supercore/admins')
                     ? 'bg-primary text-white'
                     : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
                 }`}
               >
-                👤 관리자 계정
+                <UserCog className="w-5 h-5" />
+                <span>관리자 계정</span>
               </button>
             </li>
           </ul>
         </div>
       </aside>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="container mx-auto px-2 md:px-4 lg:px-6 py-8 max-w-[1600px]">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6">
           {/* Desktop Sidebar Menu */}
-          <aside className="hidden md:block md:col-span-1">
-            <nav className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sticky top-8">
+          <aside className="hidden md:block md:col-span-3 lg:col-span-2">
+            <nav className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 sticky top-8">
               <h2 className="text-lg font-semibold text-slate-900 mb-4">메뉴</h2>
               <ul className="space-y-2">
                 <li>
                   <button
                     onClick={() => router.push('/supercore')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                       pathname === '/supercore'
                         ? 'bg-primary text-white'
                         : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
                     }`}
                   >
-                    🏠 대시보드
+                    <Box className="w-5 h-5" />
+                    <span>대시보드</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => router.push('/supercore/consultations')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                       isActive('/supercore/consultations')
                         ? 'bg-primary text-white'
                         : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
                     }`}
                   >
-                    📋 상담 게시판
+                    <FileText className="w-5 h-5" />
+                    <span>상담 게시판</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => router.push('/supercore/users')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                       isActive('/supercore/users')
                         ? 'bg-primary text-white'
                         : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
                     }`}
                   >
-                    👥 회원 관리
+                    <Users className="w-5 h-5" />
+                    <span>회원 관리</span>
                   </button>
                 </li>
                 <li>
                   <button
                     disabled
-                    className="w-full text-left px-4 py-2 rounded-md text-slate-400 cursor-not-allowed"
+                    className="w-full text-left px-4 py-2 rounded-md text-slate-400 cursor-not-allowed flex items-center gap-3"
                   >
-                    💳 결제 관리 (준비중)
+                    <CreditCard className="w-5 h-5" />
+                    <span>결제 관리 (준비중)</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => router.push('/supercore/admins')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                       isActive('/supercore/admins')
                         ? 'bg-primary text-white'
                         : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
                     }`}
                   >
-                    👤 관리자 계정
+                    <UserCog className="w-5 h-5" />
+                    <span>관리자 계정</span>
                   </button>
                 </li>
               </ul>
@@ -235,7 +247,7 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
           </aside>
 
           {/* Main Content */}
-          <main className="md:col-span-3">
+          <main className="md:col-span-9 lg:col-span-10">
             {children}
           </main>
         </div>
