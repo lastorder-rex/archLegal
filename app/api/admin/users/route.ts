@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '15');
-    const email = searchParams.get('email') || '';
+    const name = searchParams.get('name') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
 
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
       .select('auth_id, legal_name, full_name, email, contact_phone, phone, birth_date, created_at, updated_at', { count: 'exact' });
 
     // Apply filters
-    if (email) {
-      query = query.ilike('email', `%${email}%`);
+    if (name) {
+      query = query.or(`legal_name.ilike.%${name}%,full_name.ilike.%${name}%`);
     }
 
     if (dateFrom) {
