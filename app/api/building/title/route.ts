@@ -117,10 +117,10 @@ async function queryLocalBuildingData({
     });
 
     const { data, error } = await supabase
-      .from('seoul_building_registry')
+      .from('seoul_building_title_registry')
       .select('*')
-      .eq('sigungu', sigunguCode)
-      .eq('beopjeong_dong', beopjeongDongCode)
+      .eq('sigungu_code', sigunguCode)
+      .eq('beopjeong_dong_code', beopjeongDongCode)
       .eq('bun', bon)
       .eq('ji', ji)
       .limit(1)
@@ -307,14 +307,14 @@ export async function POST(request: NextRequest) {
     // STEP 2: Fallback to local Seoul building registry database
     console.log('Attempting local database fallback...');
 
-    // Use region NAMES (not codes) for local DB query
+    // Use region CODES for local DB query (seoul_building_title_registry uses codes!)
     let localData: SeoulBuildingRecord | null = null;
 
-    if (sigunguName && bjdongName && bun && ji) {
-      console.log('Querying local DB with:', { sigunguName, bjdongName, bun, ji });
+    if (sigunguCd && bjdongCd && bun && ji) {
+      console.log('Querying local DB with codes:', { sigunguCd, bjdongCd, bun, ji });
       localData = await queryLocalBuildingData({
-        sigunguCode: sigunguName,  // Using NAME, not code!
-        beopjeongDongCode: bjdongName,  // Using NAME, not code!
+        sigunguCode: sigunguCd,  // Using CODE!
+        beopjeongDongCode: bjdongCd,  // Using CODE!
         bon: bun,
         ji
       });
