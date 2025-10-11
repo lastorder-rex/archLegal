@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // Disable 2FA
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Verify admin authentication
     const adminCookie = cookieStore.get('admin_session');
@@ -31,9 +33,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Get admin password
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
     const { data: admin, error: fetchError } = await supabase
       .from('admin_users')
-      .select('password')
+      .select('password_hash')
       .eq('id', adminId)
       .single();
 
@@ -42,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
     if (!isPasswordValid) {
       return NextResponse.json({ error: '비밀번호가 올바르지 않습니다.' }, { status: 401 });
     }
