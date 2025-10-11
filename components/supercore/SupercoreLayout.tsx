@@ -56,7 +56,7 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="container mx-auto px-2 md:px-4 lg:px-6 py-3 flex items-center justify-between max-w-[1600px]">
           <h1 className="text-xl font-bold text-slate-900">
             {title || '관리자 대시보드'}
           </h1>
