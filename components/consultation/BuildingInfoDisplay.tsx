@@ -104,8 +104,10 @@ export function BuildingInfoDisplay({ buildingInfo }: BuildingInfoDisplayProps) 
       <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
         <p className="mb-1">📍 <strong>건축물대장 정보</strong></p>
         <p>
-          위 정보는 국토교통부 건축물대장에서 조회된 공식 데이터입니다.
-          실제 현황과 다를 수 있으니 정확한 정보는 현장 확인이 필요합니다.
+          {buildingInfo.building.source === 'local_db'
+            ? '위 정보는 서울시 건축물대장 데이터베이스에서 조회되었습니다. 국토교통부 API 서비스가 일시적으로 사용할 수 없어 로컬 데이터를 사용했습니다.'
+            : '위 정보는 국토교통부 건축물대장에서 조회된 공식 데이터입니다.'}
+          {' '}실제 현황과 다를 수 있으니 정확한 정보는 현장 확인이 필요합니다.
         </p>
       </div>
 

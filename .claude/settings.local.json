@@ -41,7 +41,13 @@
       "Bash(open /Users/kbsc/rexDev/archLegal/lighthouse-report.report.html)",
       "Bash(tee:*)",
       "Bash(git commit:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git log:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=\"sbp_9d87698d1b8b76f28e065dd7c50f4389df0c486b\" npx supabase db exec --query \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_name = ''seoul_building_registry'' ORDER BY ordinal_position LIMIT 10\")",
+      "Bash(awk:*)",
+      "Bash(pip3 install:*)",
+      "Bash(xargs kill:*)",
+      "Bash(export JUSO_API_KEY=\"U01TX0FVVEgyMDI1MDkyOTEwMDY1MjExNjI3NTA=\")"
     ],
     "deny": [],
     "ask": []

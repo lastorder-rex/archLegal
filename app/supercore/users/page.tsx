@@ -128,11 +128,11 @@ export default function UsersPage() {
     const defaultDates = getDefaultDates();
     setSearchFilters({
       ...defaultDates,
-      email: ''
+      name: ''
     });
     loadUsers(1, {
       ...defaultDates,
-      email: ''
+      name: ''
     });
   };
 
