@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import { Shield, ShieldOff } from 'lucide-react';
 
 interface Admin {
   id: string;
@@ -539,9 +540,10 @@ export default function AdminsPage() {
                           <td className="px-4 py-3 text-sm">
                             {admin.two_factor_enabled ? (
                               <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  활성화
-                                </span>
+                                <div className="flex items-center gap-1.5 text-green-700">
+                                  <Shield className="w-4 h-4" />
+                                  <span className="text-sm font-medium">활성화</span>
+                                </div>
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -553,9 +555,10 @@ export default function AdminsPage() {
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                                  비활성화
-                                </span>
+                                <div className="flex items-center gap-1.5 text-slate-500">
+                                  <ShieldOff className="w-4 h-4" />
+                                  <span className="text-sm font-medium">비활성화</span>
+                                </div>
                                 <Button
                                   size="sm"
                                   variant="ghost"
