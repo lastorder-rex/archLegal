@@ -24,22 +24,22 @@ export const interestItems = [
  */
 export const desireItems = [
   {
-    icon: '💰',
+    icon: 'down',
     title: '낮춘 비용 부담',
     description: '합법화 절차를 통해 과태료·추가 공사 비용을 최소화합니다.'
   },
   {
-    icon: '📈',
+    icon: 'up',
     title: '재산 가치 상승',
     description: '건축물대장 등재 후 매매·임대 시 자산 가치가 상승합니다.'
   },
   {
-    icon: '🏦',
+    icon: 'handshake',
     title: '금융거래 가능',
     description: '담보 설정, 대출 등 금융거래가 가능해져 자금 조달이 수월합니다.'
   },
   {
-    icon: '🛡️',
+    icon: 'shield',
     title: '안전한 재산권 확보',
     description: '법적 리스크 제거로 안심하고 건축물을 운영할 수 있습니다.'
   }
@@ -50,37 +50,37 @@ export const desireItems = [
  */
 export const timelineItems = [
   {
-    icon: '💬',
+    icon: 'message-circle-more',
     title: '무료상담',
     description: '이행강제금 부과 이력과 위반 유형을 분석해 합법화 가능성을 진단합니다.'
   },
   {
-    icon: '🗂️',
+    icon: 'pen-line',
     title: '신고서 작성',
     description: '건축물대장, 구조 검토, 감경자료를 한 번에 준비하여 접수 리드를 확보합니다.'
   },
   {
-    icon: '🔍',
+    icon: 'search',
     title: '현장조사',
     description: '발코니 확장·옥상 증축 등 위반 비중이 높은 부분을 중심으로 실측 및 사진 보고서를 작성합니다.'
   },
   {
-    icon: '🏛️',
+    icon: 'landmark',
     title: '위원회 심의',
     description: '지자체 TF와 협의해 4–8주 소요되는 건축위원회 심의를 통과하도록 전략을 수립합니다.'
   },
   {
-    icon: '📑',
+    icon: 'book-up',
     title: '건축물대장 등재',
     description: '특별조치법 특례를 적용해 서류 보완을 마무리하고 합법 건축물로 등록합니다.'
   },
   {
-    icon: '✅',
+    icon: 'check-line',
     title: '사용승인',
     description: '사용승인 취득 후 준공 직후 재위반 방지를 위한 관리 매뉴얼을 제공합니다.'
   },
   {
-    icon: '📈',
+    icon: 'arrow-big-up-dash',
     title: '재산가치 상승',
     description: '금융 거래와 매매가 정상화되어 안정적인 수익 구조와 재산권을 확보합니다.'
   }

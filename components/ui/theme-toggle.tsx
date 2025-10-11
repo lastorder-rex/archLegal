@@ -8,35 +8,24 @@ const storageKey = 'ui-theme';
 
 type Theme = 'light' | 'dark';
 
-function resolveInitialTheme(): Theme {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
-
-  const stored = window.localStorage.getItem(storageKey) as Theme | null;
-  if (stored === 'light' || stored === 'dark') {
-    return stored;
-  }
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const initial = resolveInitialTheme();
-    setTheme(initial);
-    document.documentElement.classList.toggle('dark', initial === 'dark');
-    setMounted(true);
+    if (typeof window === 'undefined') return;
+
+    const stored = window.localStorage.getItem(storageKey) as Theme | null;
+    const initialTheme: Theme = stored === 'dark' ? 'dark' : 'light';
+    setTheme(initialTheme);
+    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (typeof window === 'undefined') return;
+
     document.documentElement.classList.toggle('dark', theme === 'dark');
     window.localStorage.setItem(storageKey, theme);
-  }, [mounted, theme]);
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -53,9 +42,7 @@ export function ThemeToggle() {
       )}
     >
       <span className="sr-only">테마 전환</span>
-      {mounted ? (
-        theme === 'dark' ? <Sun className="h-5 w-5" aria-hidden /> : <Moon className="h-5 w-5" aria-hidden />
-      ) : null}
+      {theme === 'dark' ? <Sun className="h-5 w-5" aria-hidden /> : <Moon className="h-5 w-5" aria-hidden />}
     </button>
   );
 }

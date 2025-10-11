@@ -35,15 +35,17 @@ export function FAQAccordion({ items }: FAQAccordionProps) {
               aria-expanded={isOpen}
               aria-controls={`faq-panel-${index}`}
             >
-              <span className="text-base font-semibold text-card-foreground">{item.question}</span>
-              <span className="ml-4 text-xl text-primary" aria-hidden>
+              <span className="text-lg font-semibold text-card-foreground sm:text-xl">
+                {item.question}
+              </span>
+              <span className="ml-4 text-2xl text-primary" aria-hidden>
                 {isOpen ? '−' : '+'}
               </span>
             </button>
             <div
               id={`faq-panel-${index}`}
               hidden={!isOpen}
-              className="mt-3 text-sm text-muted-foreground"
+              className="mt-3 text-base text-muted-foreground leading-relaxed sm:text-lg"
             >
               {item.answer}
             </div>
