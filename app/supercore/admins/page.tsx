@@ -540,29 +540,29 @@ export default function AdminsPage() {
                           <td className="px-4 py-3 text-sm">
                             {admin.two_factor_enabled ? (
                               <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1.5 text-green-700">
-                                  <Shield className="w-4 h-4" />
-                                  <span className="text-sm font-medium">활성화</span>
+                                <div className="flex items-center gap-1.5 text-green-700 min-w-[80px]">
+                                  <Shield className="w-4 h-4 flex-shrink-0" />
+                                  <span className="text-sm font-medium whitespace-nowrap">활성화</span>
                                 </div>
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-6 px-2 text-xs text-red-600 hover:bg-red-50"
+                                  className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 whitespace-nowrap"
                                   onClick={() => handleDisable2FA(admin)}
                                 >
-                                  비활성화
+                                  해제
                                 </Button>
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1.5 text-slate-500">
-                                  <ShieldOff className="w-4 h-4" />
-                                  <span className="text-sm font-medium">비활성화</span>
+                                <div className="flex items-center gap-1.5 text-slate-500 min-w-[80px]">
+                                  <ShieldOff className="w-4 h-4 flex-shrink-0" />
+                                  <span className="text-sm font-medium whitespace-nowrap">비활성화</span>
                                 </div>
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-6 px-2 text-xs text-blue-600 hover:bg-blue-50"
+                                  className="h-6 px-2 text-xs text-blue-600 hover:bg-blue-50 whitespace-nowrap"
                                   onClick={() => handleSetup2FA(admin)}
                                 >
                                   설정
