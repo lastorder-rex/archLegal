@@ -516,7 +516,7 @@ export default function AdminsPage() {
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
                         아이디
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="hidden px-4 py-3 text-left text-sm font-semibold text-slate-900 sm:table-cell">
                         생성일시
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
@@ -534,7 +534,7 @@ export default function AdminsPage() {
                           <td className="px-4 py-3 text-sm font-medium text-slate-900">
                             {admin.username}
                           </td>
-                          <td className="px-4 py-3 text-sm text-slate-600">
+                          <td className="hidden px-4 py-3 text-sm text-slate-600 sm:table-cell">
                             {formatDateTime(admin.created_at)}
                           </td>
                           <td className="px-4 py-3 text-sm">
