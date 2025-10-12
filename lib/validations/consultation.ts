@@ -31,7 +31,7 @@ export const buildingInfoSchema = z.object({
   mainBldCnt: z.number().nullable().optional(),
   atchBldCnt: z.number().nullable().optional(),
   platPlc: z.string().nullable().optional(),
-  source: z.enum(['national_api', 'local_db']).optional(),
+  source: z.enum(['national_api', 'local_db', 'stored']).optional(),
   addressInfo: z.object({
     sigunguCd: z.string(),
     bjdongCd: z.string(),
@@ -40,7 +40,6 @@ export const buildingInfoSchema = z.object({
     ji: z.string(),
   }).optional(),
   rawData: z.any(), // Store full API response
-  source: z.string().optional(),
 });
 
 // Main consultation form validation schema
