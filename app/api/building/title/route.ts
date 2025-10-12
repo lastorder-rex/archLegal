@@ -146,9 +146,11 @@ async function queryLocalBuildingData({
  * Transform local DB record to API response format
  */
 function transformLocalBuildingData(record: SeoulBuildingRecord) {
+  const secondaryUse = record.secondary_use || null;
   return {
     building: {
       mainPurpsCdNm: record.primary_use_name || '정보없음',
+      secondaryUse,
       totArea: record.total_floor_area_m2,
       platArea: record.land_area_m2,
       groundFloorCnt: record.ground_floors,
@@ -175,6 +177,7 @@ function transformLocalBuildingData(record: SeoulBuildingRecord) {
     },
     summary: {
       mainPurpose: record.primary_use_name || '정보없음',
+      secondaryUse,
       totalArea: record.total_floor_area_m2,
       plotArea: record.land_area_m2,
       floors: {
@@ -242,6 +245,9 @@ export async function POST(request: NextRequest) {
             data.response.body.items.length > 0
           ) {
             const building = data.response.body.items[0];
+            const secondaryUseFromApi = (building as any)?.etcPurpsCdNm
+              || (building as any)?.etcPurps
+              || null;
 
             // Parse and validate numeric fields
             const parseNumeric = (value: string | undefined): number | null => {
@@ -259,6 +265,7 @@ export async function POST(request: NextRequest) {
             // Successfully got data from National API
             const buildingInfo = {
               mainPurpsCdNm: building.mainPurpsCdNm || '정보없음',
+              secondaryUse: secondaryUseFromApi,
               totArea: parseNumeric(building.totArea),
               platArea: parseNumeric(building.platArea),
               groundFloorCnt: parseInt32(building.groundFloorCnt),
@@ -283,6 +290,7 @@ export async function POST(request: NextRequest) {
               building: buildingInfo,
               summary: {
                 mainPurpose: building.mainPurpsCdNm || '정보없음',
+                secondaryUse: secondaryUseFromApi,
                 totalArea: parseNumeric(building.totArea),
                 plotArea: parseNumeric(building.platArea),
                 floors: {

@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Download, FileText, X } from 'lucide-react';
 import { getFileUrl, getFileIcon, formatFileSize, AttachmentFile } from '@/lib/utils/file-upload';
 import FileUpload from '@/components/consultation/FileUpload';
-import { filterMessageInput } from '@/lib/validations/consultation';
+import { BuildingInfoDisplay } from '@/components/consultation/BuildingInfoDisplay';
+import { BuildingSearchResult, filterMessageInput } from '@/lib/validations/consultation';
 
 interface ConsultationRecord {
   id: string;
@@ -27,6 +28,7 @@ interface ConsultationRecord {
   };
   building_info: {
     mainPurpsCdNm: string;
+    secondaryUse?: string | null;
     totArea: number | null;
     platArea: number | null;
     groundFloorCnt: number | null;
@@ -37,8 +39,9 @@ interface ConsultationRecord {
     atchBldCnt?: number | null;
     platPlc?: string | null;
     addressInfo?: Record<string, unknown> | null;
-    rawData: unknown;
-  };
+  rawData: unknown;
+  source?: string;
+};
   main_purps: string | null;
   tot_area: number | null;
   plat_area: number | null;
@@ -61,6 +64,83 @@ interface EditFormState {
   email: string;
   message: string;
   attachments: ConsultationRecord['attachments'];
+}
+
+function createBuildingDisplay(record: ConsultationRecord): BuildingSearchResult | null {
+  const info = record.building_info;
+  if (!info) {
+    return null;
+  }
+
+  const rawDataSecondary =
+    info && (info as any).rawData
+      ? (info as any).rawData.secondaryUse ?? (info as any).rawData.secondary_use ?? null
+      : null;
+
+  const secondaryUseValue =
+    (info as any).secondaryUse ??
+    (info as any).secondary_use ??
+    rawDataSecondary ??
+    null;
+
+  const mainPurpose = record.main_purps || info.mainPurpsCdNm || '정보없음';
+  const totalArea = info.totArea ?? record.tot_area ?? null;
+  const plotArea = info.platArea ?? record.plat_area ?? null;
+  const groundFloors = info.groundFloorCnt ?? record.ground_floor_cnt ?? null;
+  const undergroundFloors = info.ugrndFloorCnt ?? null;
+  const households = info.hhldCnt ?? null;
+
+  const addressInfo = info.addressInfo
+    ? {
+        sigunguCd: String((info.addressInfo as any)?.sigunguCd ?? record.address_code.sigunguCd),
+        bjdongCd: String((info.addressInfo as any)?.bjdongCd ?? record.address_code.bjdongCd),
+        platGbCd: String((info.addressInfo as any)?.platGbCd ?? record.address_code.platGbCd),
+        bun: String((info.addressInfo as any)?.bun ?? record.address_code.bun),
+        ji: String((info.addressInfo as any)?.ji ?? record.address_code.ji)
+      }
+    : {
+        sigunguCd: record.address_code.sigunguCd,
+        bjdongCd: record.address_code.bjdongCd,
+        platGbCd: record.address_code.platGbCd,
+        bun: record.address_code.bun,
+        ji: record.address_code.ji
+      };
+
+  const rawData = info.rawData
+    ? { ...info.rawData, source: (info as any).source || (info.rawData as any)?.source }
+    : { ...info, source: (info as any).source };
+
+  const source = (info as any).source || (rawData as any)?.source || undefined;
+
+  return {
+    building: {
+      mainPurpsCdNm: mainPurpose,
+      secondaryUse: secondaryUseValue,
+      totArea: totalArea,
+      platArea: plotArea,
+      groundFloorCnt: groundFloors,
+      ugrndFloorCnt: undergroundFloors,
+      hhldCnt: households,
+      fmlyNum: info.fmlyNum ?? null,
+      mainBldCnt: info.mainBldCnt ?? null,
+      atchBldCnt: info.atchBldCnt ?? null,
+      platPlc: info.platPlc ?? record.address,
+      addressInfo,
+      rawData,
+      source
+    },
+    summary: {
+      mainPurpose,
+      secondaryUse: secondaryUseValue,
+      totalArea,
+      plotArea,
+      floors: {
+        ground: groundFloors,
+        underground: undergroundFloors
+      },
+      households
+    }
+  };
 }
 
 export default function ConsultationHistoryPage() {
@@ -363,6 +443,7 @@ export default function ConsultationHistoryPage() {
             const createdAt = new Date(record.created_at);
             const rawData = record.building_info?.rawData as { status?: string } | null;
             const isBuildingUnavailable = rawData && typeof rawData === 'object' && rawData.status === 'UNAVAILABLE';
+            const buildingInfoForDisplay = createBuildingDisplay(record);
 
             return (
               <div key={record.id} className="border border-border rounded-lg p-5 space-y-4 bg-card shadow-md">
@@ -381,10 +462,8 @@ export default function ConsultationHistoryPage() {
                         </p>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      주용도: {record.main_purps || record.building_info.mainPurpsCdNm || '정보 없음'}
-                    </p>
                   </div>
+                  
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Button
                       variant="outline"
@@ -403,6 +482,16 @@ export default function ConsultationHistoryPage() {
                     </Button>
                   </div>
                 </div>
+
+                {buildingInfoForDisplay ? (
+                  <div className="rounded-lg border border-border bg-muted/20 p-4">
+                    <BuildingInfoDisplay buildingInfo={buildingInfoForDisplay} />
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground bg-muted/40 p-3 rounded-md">
+                    저장된 건축물 표제부 정보를 찾지 못했습니다. 상담 등록 당시 주소를 다시 조회해 보세요.
+                  </div>
+                )}
 
                 {!isEditing && (
                   <>

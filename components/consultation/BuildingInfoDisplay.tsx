@@ -27,27 +27,31 @@ export function BuildingInfoDisplay({ buildingInfo }: BuildingInfoDisplayProps) 
     return `${count}세대`;
   };
 
+  const displayPurpose = summary.secondaryUse || summary.mainPurpose;
+
   return (
     <div className="space-y-4">
       {/* Main Building Summary */}
       <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
         <h4 className="font-semibold text-primary mb-3">건축물 기본 정보</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">주용도:</span>
-            <span className="font-medium">{summary.mainPurpose}</span>
+        <div className="space-y-3 text-sm">
+          <div className="flex flex-col gap-1">
+            <span className="text-muted-foreground">주용도</span>
+            <span className="font-medium leading-relaxed break-words">{displayPurpose}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">연면적:</span>
-            <span className="font-medium">{formatArea(summary.totalArea)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">대지면적:</span>
-            <span className="font-medium">{formatArea(summary.plotArea)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">지상층수:</span>
-            <span className="font-medium">{formatFloors(summary.floors.ground)}</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">연면적:</span>
+              <span className="font-medium">{formatArea(summary.totalArea)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">대지면적:</span>
+              <span className="font-medium">{formatArea(summary.plotArea)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">지상층수:</span>
+              <span className="font-medium">{formatFloors(summary.floors.ground)}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -92,23 +96,6 @@ export function BuildingInfoDisplay({ buildingInfo }: BuildingInfoDisplayProps) 
           )}
         </div>
 
-        {building.platPlc && (
-          <div className="text-sm">
-            <span className="text-muted-foreground">대지위치: </span>
-            <span>{building.platPlc}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Additional Context */}
-      <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
-        <p className="mb-1">📍 <strong>건축물대장 정보</strong></p>
-        <p>
-          {buildingInfo.building.source === 'local_db'
-            ? '위 정보는 서울시 건축물대장 데이터베이스에서 조회되었습니다. 국토교통부 API 서비스가 일시적으로 사용할 수 없어 로컬 데이터를 사용했습니다.'
-            : '위 정보는 국토교통부 건축물대장에서 조회된 공식 데이터입니다.'}
-          {' '}실제 현황과 다를 수 있으니 정확한 정보는 현장 확인이 필요합니다.
-        </p>
       </div>
 
       {/* Building Code Information (for debugging) */}

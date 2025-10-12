@@ -13,6 +13,7 @@ export function createFallbackBuildingInfo(
 ): BuildingInfo {
   return {
     mainPurpsCdNm: '확인 필요',
+    secondaryUse: null,
     totArea: null,
     platArea: null,
     groundFloorCnt: null,

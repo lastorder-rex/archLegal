@@ -21,6 +21,7 @@ export const addressCodeSchema = z.object({
 // Building info schema (from Building Registry API)
 export const buildingInfoSchema = z.object({
   mainPurpsCdNm: z.string().min(1, '건물 주용도가 필요합니다'),
+  secondaryUse: z.string().nullable().optional(),
   totArea: z.number().nullable().optional(),
   platArea: z.number().nullable().optional(),
   groundFloorCnt: z.number().nullable().optional(),
@@ -39,6 +40,7 @@ export const buildingInfoSchema = z.object({
     ji: z.string(),
   }).optional(),
   rawData: z.any(), // Store full API response
+  source: z.string().optional(),
 });
 
 // Main consultation form validation schema
@@ -97,6 +99,7 @@ export const buildingSearchResultSchema = z.object({
   building: buildingInfoSchema,
   summary: z.object({
     mainPurpose: z.string(),
+    secondaryUse: z.string().nullable().optional(),
     totalArea: z.number().nullable(),
     plotArea: z.number().nullable(),
     floors: z.object({
