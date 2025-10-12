@@ -118,15 +118,15 @@ export function AddressSearchModal({ isOpen, onClose, onSelect }: AddressSearchM
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md">
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-md flex flex-col h-full max-h-[100dvh]">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle>주소 검색</SheetTitle>
           <SheetDescription>
             건물명, 도로명, 지번으로 검색할 수 있습니다.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-4 mt-6">
+        <div className="space-y-4 mt-6 flex-1 overflow-y-auto min-h-0">
           {/* Search Form */}
           <form onSubmit={handleSearch} className="space-y-3">
             <div className="space-y-2">
@@ -158,8 +158,8 @@ export function AddressSearchModal({ isOpen, onClose, onSelect }: AddressSearchM
 
           {/* Search Results */}
           {addresses.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-3 flex flex-col min-h-0">
+              <div className="flex items-center justify-between flex-shrink-0">
                 <h4 className="text-sm font-medium">
                   검색 결과 ({pagination?.totalCount || 0}건)
                 </h4>
@@ -170,7 +170,7 @@ export function AddressSearchModal({ isOpen, onClose, onSelect }: AddressSearchM
                 )}
               </div>
 
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className="space-y-2 overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(100vh - 24rem)' }}>
                 {addresses.map((address) => (
                   <button
                     key={address.id}
@@ -198,18 +198,19 @@ export function AddressSearchModal({ isOpen, onClose, onSelect }: AddressSearchM
 
               {/* Pagination */}
               {pagination && totalPages > 1 && (
-                <div className="flex justify-center gap-2">
+                <div className="flex justify-center items-center gap-2 flex-shrink-0 pt-3 border-t">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     disabled={currentPage === 1 || isSearching}
                     onClick={() => handlePageChange(currentPage - 1)}
+                    className="!w-auto px-3 flex-shrink-0"
                   >
                     이전
                   </Button>
 
-                  <span className="flex items-center px-3 text-sm text-muted-foreground">
+                  <span className="flex items-center justify-center text-sm text-muted-foreground whitespace-nowrap min-w-[60px]">
                     {currentPage} / {totalPages}
                   </span>
 
@@ -219,6 +220,7 @@ export function AddressSearchModal({ isOpen, onClose, onSelect }: AddressSearchM
                     size="sm"
                     disabled={currentPage === totalPages || isSearching}
                     onClick={() => handlePageChange(currentPage + 1)}
+                    className="!w-auto px-3 flex-shrink-0"
                   >
                     다음
                   </Button>
