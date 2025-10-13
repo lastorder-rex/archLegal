@@ -574,7 +574,7 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                         </p>
                         <Button
                           type="button"
-                          variant={isDisabled ? 'outline' : 'default'}
+                          variant={isDisabled ? 'outline' : 'primary'}
                           disabled={isDisabled}
                           onClick={() => handlePaymentNavigate(stage.id)}
                         >
