@@ -125,7 +125,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-xl font-semibold text-foreground">11. 개인정보 보호책임자</h2>
             <ul className="list-disc space-y-2 pl-5">
               <li>개인정보 보호책임자: 이형훈 본부장</li>
-              <li>연락처: 010-6353-1058, interworldarch@nate.com</li>
+              <li>연락처: 010-8742-1008, interworldarch@nate.com</li>
               <li>이용자는 문의 및 신고 시 지체 없이 답변·처리를 받을 수 있습니다.</li>
             </ul>
           </section>

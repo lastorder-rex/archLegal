@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { X, Megaphone } from 'lucide-react';
+import { X, Megaphone, MessageCircleQuestionMark } from 'lucide-react';
 
 interface AboutModalProps {
   open: boolean;
@@ -74,7 +74,10 @@ export function AboutModal({ open, onClose, faqs }: AboutModalProps) {
                   </section>
 
                   <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-                    <h3 className="text-lg font-semibold text-foreground">자주 묻는 질문 전체 보기</h3>
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                      <MessageCircleQuestionMark className="h-6 w-6 text-primary" aria-hidden />
+                      자주 묻는 질문 전체 보기
+                    </h3>
                     <div className="space-y-4 text-base text-muted-foreground">
                       {faqs.map((faq) => (
                         <div key={faq.question} className="space-y-2">

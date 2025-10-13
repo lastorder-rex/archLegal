@@ -386,7 +386,7 @@ export function LandingPage() {
             <h2 id="interest-section" className="text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl">
               법 시행 안내 & 소요 기간
             </h2>
-            <p className="text-base text-slate-700 dark:text-slate-200">
+            <p className="text-base text-slate-700 dark:text-slate-200 md:whitespace-nowrap">
               특별법 시행 기간은 단 1년입니다. 건축위원회 심의 일정까지 고려하면 지금 바로 준비해야
               여유롭게 절차를 마칠 수 있습니다.
             </p>
