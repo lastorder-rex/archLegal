@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import clsx from 'clsx';
-import { HouseHeart } from 'lucide-react';
+import { HouseHeart, Expand } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +49,19 @@ interface MyPageContentProps {
   profile: UserProfile;
   fallbackEmail: string | null;
   consultations: ConsultationSummary[];
+}
+
+type PaymentStageStatus = 'locked' | 'requested' | 'awaiting' | 'paid';
+
+interface PaymentStageCard {
+  id: string;
+  title: string;
+  description: string;
+  amount?: number;
+  status: PaymentStageStatus;
+  updatedAt?: string;
+  nextActionLabel?: string;
+  disabled?: boolean;
 }
 
 const tabs = [
@@ -105,6 +118,10 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
     const { formatted } = validatePhoneInput(formState.contactPhone);
     setFormState(prev => ({ ...prev, contactPhone: formatted }));
   }, [formState.contactPhone]);
+
+  const handleConsultationNavigate = useCallback((id: string) => {
+    router.push(`/request/history?id=${id}`);
+  }, [router]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -177,6 +194,11 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
     router.push('/request/history');
   }, [router]);
 
+  const handlePaymentNavigate = useCallback((stageId: string) => {
+    // TODO: 결제 단계별 라우팅 연동 예정
+    console.info('Navigate to payment stage:', stageId);
+  }, []);
+
   const handleTabSelect = useCallback((tabId: TabId) => {
     setActiveTab(tabId);
     if (tabId !== 'consultations') {
@@ -188,6 +210,40 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
     () => consultations.find(item => item.id === selectedConsultationId) ?? null,
     [consultations, selectedConsultationId]
   );
+
+  const paymentStages = useMemo<PaymentStageCard[]>(() => {
+    const latestConsultation = consultations[0] ?? null;
+
+    return [
+      {
+        id: 'stage-site-survey',
+        title: '1단계 · 현장 답사 및 상담 비용',
+        description:
+          '현장 답사를 위한 기본 상담 수수료를 결제해주세요. 결제가 완료되어야 일정 조율이 진행됩니다.',
+        amount: 88000,
+        status: 'awaiting',
+        updatedAt: latestConsultation?.created_at ?? undefined,
+        nextActionLabel: '결제 진행',
+      },
+      {
+        id: 'stage-legalization',
+        title: '2단계 · 양성화 대행 서비스',
+        description:
+          '양성화 대행 계약이 확정되면 관리자가 결제를 활성화합니다. 활성화 전까지는 준비 상태로 표시됩니다.',
+        amount: undefined,
+        status: 'locked',
+        nextActionLabel: '관리자 승인 대기',
+        disabled: true,
+      },
+    ];
+  }, [consultations]);
+
+  const paymentStatusLabel: Record<PaymentStageStatus, { text: string; className: string }> = {
+    locked: { text: '활성화 대기', className: 'bg-slate-200 text-slate-700' },
+    requested: { text: '결제 요청됨', className: 'bg-blue-50 text-blue-700 border border-blue-200' },
+    awaiting: { text: '결제 대기', className: 'bg-amber-50 text-amber-700 border border-amber-200' },
+    paid: { text: '결제 완료', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  };
 
   return (
     <div className="space-y-8">
@@ -418,11 +474,11 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                       <header
                         role="button"
                         tabIndex={0}
-                        onClick={() => router.push(`/request/history?id=${item.id}`)}
+                        onClick={() => handleConsultationNavigate(item.id)}
                         onKeyDown={event => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
-                            router.push(`/request/history?id=${item.id}`);
+                            handleConsultationNavigate(item.id);
                           }
                         }}
                         className="flex cursor-pointer flex-col gap-1 transition hover:text-primary sm:flex-row sm:items-center sm:justify-between"
@@ -432,14 +488,19 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                             {item.address}
                             {item.address_detail ? ` ${item.address_detail}` : ''}
                           </h3>
-                          <span className="text-primary" aria-label="상세보기">→</span>
+                          <Expand className="h-4 w-4 text-primary" aria-hidden />
                         </div>
                         <time className="text-xs text-muted-foreground">
                           {new Date(item.created_at).toLocaleString('ko-KR')}
                         </time>
                       </header>
                       {item.message ? (
-                        <p className="mt-3 text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">{item.message}</p>
+                        <p
+                          className="mt-3 cursor-pointer text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap"
+                          onClick={() => handleConsultationNavigate(item.id)}
+                        >
+                          {item.message}
+                        </p>
                       ) : (
                         <p className="mt-3 text-sm text-muted-foreground">작성된 상담 내용이 없습니다.</p>
                       )}
@@ -452,14 +513,77 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
 
           {activeTab === 'payments' ? (
             <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <header className="space-y-1">
+              <header className="space-y-2">
                 <h2 className="text-xl font-semibold">결제 내역</h2>
                 <p className="text-sm text-muted-foreground">
-                  추후 상담 서비스 결제가 준비되면 이곳에서 영수증과 결제 상태를 확인할 수 있습니다.
+                  단계별 결제를 통해 양성화 서비스를 진행합니다. 결제 요청이 활성화되면 알림과 함께 카드가 열립니다.
                 </p>
               </header>
-              <div className="rounded-lg border border-dashed border-border bg-muted/40 p-6 text-sm text-muted-foreground">
-                결제 내역이 아직 없습니다. 서비스 결제가 시작되면 자동으로 기록이 표시됩니다.
+
+              <div className="grid gap-4">
+                {paymentStages.map(stage => {
+                  const statusMeta = paymentStatusLabel[stage.status];
+                  const isDisabled = stage.disabled || stage.status === 'locked';
+
+                  return (
+                    <article
+                      key={stage.id}
+                      className={clsx(
+                        'space-y-4 rounded-xl border border-border bg-secondary/40 p-5 shadow-sm transition',
+                        !isDisabled && 'hover:border-primary hover:shadow-md'
+                      )}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h3 className="text-lg font-semibold text-foreground">{stage.title}</h3>
+                            <span
+                              className={clsx(
+                                'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium',
+                                statusMeta.className
+                              )}
+                            >
+                              {statusMeta.text}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground whitespace-pre-line">{stage.description}</p>
+                        </div>
+                        <div className="text-right">
+                          {stage.amount ? (
+                            <p className="text-lg font-semibold text-foreground">
+                              {stage.amount.toLocaleString()}원
+                            </p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground"></p>
+                          )}
+                          {stage.updatedAt ? (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              업데이트: {new Date(stage.updatedAt).toLocaleString('ko-KR')}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">
+                          {stage.status === 'paid'
+                            ? '결제가 완료되었습니다. 추가 안내는 담당자가 별도로 연락드립니다.'
+                            : stage.status === 'locked'
+                              ? '관리자가 결제를 활성화하면 웹 알림과 함께 진행 가능해집니다.'
+                              : '결제를 진행하면 서비스가 다음 단계로 이동합니다.'}
+                        </p>
+                        <Button
+                          type="button"
+                          variant={isDisabled ? 'outline' : 'default'}
+                          disabled={isDisabled}
+                          onClick={() => handlePaymentNavigate(stage.id)}
+                        >
+                          {stage.nextActionLabel ?? '상세보기'}
+                        </Button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </section>
           ) : null}
