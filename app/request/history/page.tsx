@@ -516,24 +516,7 @@ export default function ConsultationHistoryPage() {
                           <p className="font-medium">{record.email}</p>
                         </div>
                       )}
-                      {record.address_detail && (
-                        <div className="space-y-1">
-                          <p className="text-muted-foreground">상세 주소</p>
-                          <p className="font-medium">{record.address_detail}</p>
-                        </div>
-                      )}
-                      {record.tot_area !== null && (
-                        <div className="space-y-1">
-                          <p className="text-muted-foreground">연면적</p>
-                          <p className="font-medium">{record.tot_area.toLocaleString()}㎡</p>
-                        </div>
-                      )}
-                      {record.ground_floor_cnt !== null && (
-                        <div className="space-y-1">
-                          <p className="text-muted-foreground">지상층수</p>
-                          <p className="font-medium">{record.ground_floor_cnt}층</p>
-                        </div>
-                      )}
+                      
                     </div>
 
                     <div className="space-y-2">
