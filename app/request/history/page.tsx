@@ -359,7 +359,12 @@ export default function ConsultationHistoryPage() {
       }
 
       setRecords(prev => prev.filter(item => item.id !== record.id));
+      setEditingId(prev => (prev === record.id ? null : prev));
       setActionMessage('상담 요청이 삭제되었습니다.');
+
+      if (selectedId) {
+        router.push('/request/history');
+      }
     } catch (err: any) {
       setActionMessage(err.message || '삭제에 실패했습니다.');
     } finally {
