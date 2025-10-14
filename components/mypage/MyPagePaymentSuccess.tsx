@@ -70,6 +70,7 @@ export function MyPagePaymentSuccess({ orderId, paymentKey, amount }: PaymentSuc
       }
     }
 
+    
     confirmPayment();
 
     return () => {
