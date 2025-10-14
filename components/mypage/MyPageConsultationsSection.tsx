@@ -137,7 +137,7 @@ export function MyPageConsultationsSection() {
                     {item.address}
                     {item.address_detail ? ` ${item.address_detail}` : ''}
                   </h3>
-                  <Expand className="h-4 w-4 text-primary" aria-hidden />
+                 
                 </div>
                 <time className="text-xs text-muted-foreground">
                   {new Date(item.created_at).toLocaleString('ko-KR')}
