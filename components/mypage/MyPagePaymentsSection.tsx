@@ -86,17 +86,23 @@ export function MyPagePaymentsSection() {
     paid: { text: '결제 완료', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' }
   };
 
-  const resetPaymentWidget = useCallback((stageId?: string) => {
+  const resetPaymentWidget = useCallback((stageId?: string, options?: { preserveActive?: boolean; preserveError?: boolean }) => {
     const targetId = stageId ?? activePaymentStageRef.current ?? null;
-    setActivePaymentStageId(prev => {
-      if (!targetId) return null;
-      return prev === targetId ? null : prev;
-    });
-    if (!targetId || activePaymentStageRef.current === targetId) {
-      activePaymentStageRef.current = null;
+
+    if (!options?.preserveActive) {
+      setActivePaymentStageId(prev => {
+        if (!targetId) return null;
+        return prev === targetId ? null : prev;
+      });
+      if (!targetId || activePaymentStageRef.current === targetId) {
+        activePaymentStageRef.current = null;
+      }
     }
+
     setPaymentWidgetOrder(null);
-    setPaymentWidgetError(null);
+    if (!options?.preserveError) {
+      setPaymentWidgetError(null);
+    }
     setPaymentWidgetLoading(false);
     paymentWidgetRef.current = null;
 
@@ -178,8 +184,9 @@ export function MyPagePaymentsSection() {
             ? (error as any).message
             : '결제 위젯 초기화에 실패했습니다.');
         const code = (error as any)?.code;
+        setPaymentWidgetOrder(null);
         setPaymentWidgetError(code ? `${message} (코드: ${code})` : message);
-        resetPaymentWidget(stage.id);
+        resetPaymentWidget(stage.id, { preserveActive: true, preserveError: true });
       } finally {
         setPaymentWidgetLoading(false);
       }
