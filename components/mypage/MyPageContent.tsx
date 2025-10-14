@@ -90,6 +90,7 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
   const [serverError, setServerError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('info');
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
+  const [paymentAgreements, setPaymentAgreements] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
   const handleChange = useCallback(
@@ -197,6 +198,10 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
   const handlePaymentNavigate = useCallback((stageId: string) => {
     // TODO: 결제 단계별 라우팅 연동 예정
     console.info('Navigate to payment stage:', stageId);
+  }, []);
+
+  const handlePaymentAgreementToggle = useCallback((stageId: string, checked: boolean) => {
+    setPaymentAgreements(prev => ({ ...prev, [stageId]: checked }));
   }, []);
 
   const handleTabSelect = useCallback((tabId: TabId) => {
@@ -524,6 +529,17 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                 {paymentStages.map(stage => {
                   const statusMeta = paymentStatusLabel[stage.status];
                   const isDisabled = stage.disabled || stage.status === 'locked';
+                  const requiresAgreement = stage.status === 'awaiting' || stage.status === 'requested';
+                  const isAgreed = paymentAgreements[stage.id] ?? false;
+                  const isButtonDisabled = isDisabled || (requiresAgreement && !isAgreed);
+                  const agreementContent = (
+                    <>
+                      본 결제는 양성화 관련 전문 용역의 단계별 비용 결제임을 이해하고, 제공 범위·금액·환불 규정을 확인했습니다.{' '}
+                      <Link href="/refund-policy" className="text-primary underline underline-offset-2">
+                        환불 정책 보기
+                      </Link>
+                    </>
+                  );
 
                   return (
                     <article
@@ -565,17 +581,37 @@ export function MyPageContent({ profile, fallbackEmail, consultations }: MyPageC
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-xs text-muted-foreground">
-                          {stage.status === 'paid'
-                            ? '결제가 완료되었습니다. 추가 안내는 담당자가 별도로 연락드립니다.'
-                            : stage.status === 'locked'
-                              ? '관리자가 결제를 활성화하면 웹 알림과 함께 진행 가능해집니다.'
-                              : '결제를 진행하면 서비스가 다음 단계로 이동합니다.'}
-                        </p>
+                        <div className="flex flex-1 flex-col gap-2 text-xs text-muted-foreground">
+                          <p>
+                            {stage.status === 'paid'
+                              ? '결제가 완료되었습니다. 추가 안내는 담당자가 별도로 연락드립니다.'
+                              : stage.status === 'locked'
+                                ? '관리자가 결제를 활성화하면 웹 알림과 함께 진행 가능해집니다.'
+                                : '결제를 진행하면 서비스가 다음 단계로 이동합니다.'}
+                          </p>
+                          {requiresAgreement ? (
+                            <label className={clsx('flex items-start gap-2 text-xs', isDisabled ? 'opacity-60' : undefined)}>
+                              <input
+                                type="checkbox"
+                                className="mt-0.5 h-4 w-4 rounded border border-border accent-[hsl(var(--border))] focus-visible:outline-none focus-visible:ring-0"
+                                checked={isAgreed}
+                                onChange={event => handlePaymentAgreementToggle(stage.id, event.target.checked)}
+                                disabled={isDisabled}
+                              />
+                              <span className="leading-snug">
+                                {agreementContent}
+                              </span>
+                            </label>
+                          ) : stage.status !== 'paid' ? (
+                            <p className={clsx('text-xs leading-snug text-muted-foreground', isDisabled ? 'opacity-60' : undefined)}>
+                              {agreementContent}
+                            </p>
+                          ) : null}
+                        </div>
                         <Button
                           type="button"
                           variant={isDisabled ? 'outline' : 'primary'}
-                          disabled={isDisabled}
+                          disabled={isButtonDisabled}
                           onClick={() => handlePaymentNavigate(stage.id)}
                         >
                           {stage.nextActionLabel ?? '상세보기'}
