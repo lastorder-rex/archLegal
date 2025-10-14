@@ -209,9 +209,11 @@ export function MyPagePaymentsSection() {
       await paymentWidgetRef.current.requestPayment({
         orderId: paymentWidgetOrder.orderId,
         orderName: paymentWidgetOrder.orderName,
-        amount: paymentWidgetOrder.amount,
         successUrl,
-        failUrl
+        failUrl,
+        metadata: {
+          amount: paymentWidgetOrder.amount
+        }
       });
     } catch (_error) {
       const error = _error as { message?: string; code?: string } | Error;
