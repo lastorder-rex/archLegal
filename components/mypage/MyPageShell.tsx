@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { HouseHeart } from 'lucide-react';
 import type { UserProfile } from '@/types/profile';
@@ -26,6 +26,7 @@ type MyPageShellProps = {
 
 export function MyPageShell({ profile, fallbackEmail, consultations, children }: MyPageShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const activeTab: TabId =
     tabs.find(tab => pathname === tab.href || pathname.startsWith(`${tab.href}/`))?.id ?? 'info';
@@ -52,9 +53,10 @@ export function MyPageShell({ profile, fallbackEmail, consultations, children }:
               {tabs.map(tab => {
                 const active = activeTab === tab.id;
                 return (
-                  <Link
+                  <button
                     key={tab.id}
-                    href={tab.href}
+                    type="button"
+                    onClick={() => router.push(tab.href)}
                     className={clsx(
                       'flex-1 rounded-xl border px-4 py-2 text-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex-none',
                       active
@@ -64,7 +66,7 @@ export function MyPageShell({ profile, fallbackEmail, consultations, children }:
                     aria-current={active ? 'page' : undefined}
                   >
                     {tab.label}
-                  </Link>
+                  </button>
                 );
               })}
             </nav>

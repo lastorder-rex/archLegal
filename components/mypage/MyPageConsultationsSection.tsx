@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Expand } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,65 @@ import { useMyPageContext } from '@/components/mypage/MyPageContext';
 
 export function MyPageConsultationsSection() {
   const router = useRouter();
-  const { consultations } = useMyPageContext();
+  const { consultations: initialConsultations } = useMyPageContext();
+  const [consultations, setConsultations] = useState(initialConsultations);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setConsultations(initialConsultations);
+  }, [initialConsultations]);
+
+  const refreshConsultations = useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      const response = await fetch('/api/consultations', { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error('상담 내역을 갱신하지 못했습니다.');
+      }
+      const data = await response.json();
+      if (Array.isArray(data.consultations)) {
+        const nextConsultations = data.consultations as typeof initialConsultations;
+        setConsultations(nextConsultations);
+        if (
+          selectedConsultationId &&
+          !nextConsultations.some((item: typeof nextConsultations[number]) => item.id === selectedConsultationId)
+        ) {
+          setSelectedConsultationId(null);
+        }
+      }
+    } catch (error) {
+      console.error('[mypage] consultations refresh failed', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [selectedConsultationId]);
+
+  useEffect(() => {
+    let mounted = true;
+    refreshConsultations()
+      .catch(() => undefined)
+      .finally(() => {
+        if (mounted) {
+          setIsRefreshing(false);
+        }
+      });
+
+    const handler = () => {
+      refreshConsultations();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('consultation-list-updated', handler);
+    }
+
+    return () => {
+      mounted = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('consultation-list-updated', handler);
+      }
+    };
+  }, [refreshConsultations]);
 
   const handleConsultationNavigate = useCallback(
     (id: string) => {
@@ -27,7 +84,12 @@ export function MyPageConsultationsSection() {
     <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold">상담 내역</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">상담 내역</h2>
+            {isRefreshing ? (
+              <span className="text-xs text-muted-foreground">업데이트 중...</span>
+            ) : null}
+          </div>
           <p className="text-sm text-muted-foreground">최근 상담 요청을 확인하고 필요한 상담을 선택해 상세 내용을 볼 수 있습니다.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
