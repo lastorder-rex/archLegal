@@ -3,11 +3,14 @@
 import type { User } from '@supabase/auth-helpers-nextjs';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import type { UserProfile } from '../../types/profile';
 import { getUserDisplayName } from '@/lib/auth/user-utils';
 import { handleUserLogout } from '@/lib/auth/logout';
+import { Input } from '@/components/ui/input';
+import { sanitizeRedirectPath } from '@/lib/utils/navigation';
+import { usePasswordLogin } from '@/components/auth/hooks/usePasswordLogin';
 
 type Props = {
   sessionUser: User | null;
@@ -19,14 +22,30 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
-
-  const desiredNextParam = searchParams.get('redirect');
+  const enableTestLogin = useMemo(
+    () => (process.env.NEXT_PUBLIC_ENABLE_TEST_LOGIN || '').toString() === 'true',
+    []
+  );
+  const redirectParam = searchParams.get('redirect');
+  const redirectPath = useMemo(
+    () => sanitizeRedirectPath(redirectParam, '/mypage'),
+    [redirectParam]
+  );
+  const {
+    email,
+    password,
+    loading: pwdLoading,
+    error: pwdError,
+    setEmail,
+    setPassword,
+    signIn: handlePasswordSignIn,
+    canSubmit,
+  } = usePasswordLogin({ redirectPath });
   const handleSignIn = useCallback(async () => {
     setLoading(true);
     const origin = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-    const desiredNext = desiredNextParam && desiredNextParam.startsWith('/') ? desiredNextParam : '/';
-    const encodedNext = encodeURIComponent(desiredNext);
+    const encodedNext = encodeURIComponent(redirectPath);
 
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
@@ -37,7 +56,7 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
         }
       }
     });
-  }, [desiredNextParam, supabase]);
+  }, [redirectPath, supabase]);
 
   const handleSignOut = useCallback(async () => {
     setLoading(true);
@@ -53,10 +72,9 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
     const displayName = getUserDisplayName(sessionUser, profile);
     const profileCompleted = profile?.profile_completed ?? false;
 
-    const signupTarget =
-      desiredNextParam && desiredNextParam.startsWith('/')
-        ? `/signup?next=${encodeURIComponent(desiredNextParam)}`
-        : '/signup';
+    const signupTarget = redirectParam
+      ? `/signup?next=${encodeURIComponent(redirectPath)}`
+      : '/signup';
 
     return (
       <div className="space-y-6 text-center">
@@ -110,6 +128,33 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
         <li>• 최초 로그인 시 회원정보가 자동으로 저장됩니다.</li>
         <li>• 로그인 후 로그아웃을 통해 세션을 종료할 수 있습니다.</li>
       </ul>
+
+      {enableTestLogin ? (
+        <div className="mt-6 space-y-3 border-t border-border pt-6">
+          <h2 className="text-center text-sm font-semibold text-foreground">테스트 전용 로그인</h2>
+          <div className="space-y-2">
+            <Input
+              type="email"
+              placeholder="이메일"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="username"
+            />
+            <Input
+              type="password"
+              placeholder="비밀번호"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
+          {pwdError ? <p className="text-xs text-destructive">{pwdError}</p> : null}
+          <Button onClick={handlePasswordSignIn} disabled={!canSubmit} variant="outline">
+            {pwdLoading ? '로그인 중...' : '이메일/비밀번호로 로그인'}
+          </Button>
+          <p className="text-center text-[11px] text-muted-foreground">스테이징/심사용 전용. 운영에서는 노출되지 않습니다.</p>
+        </div>
+      ) : null}
     </div>
   );
 }

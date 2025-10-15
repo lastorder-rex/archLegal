@@ -362,6 +362,14 @@ export default function ConsultationHistoryPage() {
       setEditingId(prev => (prev === record.id ? null : prev));
       setActionMessage('상담 요청이 삭제되었습니다.');
 
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('consultation-list-updated', {
+            detail: { action: 'deleted', id: record.id }
+          })
+        );
+      }
+
       if (selectedId) {
         router.push('/request/history');
       }

@@ -4,22 +4,13 @@ import { redirect } from 'next/navigation';
 import { SignupForm } from '@/components/auth/SignupForm';
 import type { UserProfile } from '@/types/profile';
 import { isUserSessionExpired } from '@/lib/auth/user-session';
+import { sanitizeRedirectPath } from '@/lib/utils/navigation';
 
 export const revalidate = 0;
 
 type SignupPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
-
-function sanitizeNextParam(value: string | undefined): string {
-  if (!value) return '/';
-  try {
-    const decoded = decodeURIComponent(value);
-    return decoded.startsWith('/') ? decoded : '/';
-  } catch (error) {
-    return '/';
-  }
-}
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const cookieStore = cookies();
@@ -40,7 +31,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   const nextParam = Array.isArray(searchParams?.next)
     ? searchParams?.next?.[0]
     : searchParams?.next;
-  const nextPath = sanitizeNextParam(nextParam);
+  const nextPath = sanitizeRedirectPath(nextParam);
 
   const { data: profileRow } = await supabase
     .from('users')
