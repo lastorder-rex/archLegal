@@ -101,6 +101,13 @@ jest.mock('@/components/consultation/sections/UserInfoSection', () => ({
         value={formData.phone ?? ''}
         onChange={e => onInputChange('phone', e.target.value)}
       />
+      <input
+        id="email"
+        data-testid="email-input"
+        value={formData.email ?? ''}
+        onChange={e => onInputChange('email', e.target.value)}
+      />
+      {errors.email && <span data-testid="email-error">{errors.email}</span>}
     </div>
   ),
 }));
@@ -176,6 +183,32 @@ describe('ConsultationForm', () => {
       // @ts-expect-error cleanup fetch polyfill
       delete globalThis.fetch;
     }
+  });
+
+  it('shows validation error when email exceeds 100 characters', async () => {
+    render(<ConsultationForm user={baseUser} profile={baseProfile} />);
+
+    const emailInput = screen.getByTestId('email-input');
+    const longEmail = `${'a'.repeat(90)}@example.com`;
+
+    fireEvent.change(emailInput, { target: { value: longEmail } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('email-error')).toHaveTextContent('이메일은 100자 이하로 입력해주세요');
+    });
+  });
+
+  it('shows validation error when message exceeds 1000 characters', async () => {
+    render(<ConsultationForm user={baseUser} profile={baseProfile} />);
+
+    const messageInput = screen.getByTestId('message-input');
+    const longMessage = '가'.repeat(1001);
+
+    fireEvent.change(messageInput, { target: { value: longMessage } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('message-error')).toHaveTextContent('상담 내용은 1000글자 이하로 입력해주세요');
+    });
   });
 
   it('submits a consultation successfully and shows success state', async () => {

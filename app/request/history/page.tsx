@@ -10,60 +10,23 @@ import { Download, FileText, X } from 'lucide-react';
 import { getFileUrl, getFileIcon, formatFileSize, AttachmentFile } from '@/lib/utils/file-upload';
 import FileUpload from '@/components/consultation/FileUpload';
 import { BuildingInfoDisplay } from '@/components/consultation/BuildingInfoDisplay';
-import { BuildingSearchResult, filterMessageInput } from '@/lib/validations/consultation';
+import type { ConsultationRecord as ConsultationRecordType } from '@/lib/validations/consultation';
+import {
+  BuildingSearchResult,
+  consultationRecordSchema,
+  filterMessageInput
+} from '@/lib/validations/consultation';
+import { useConsultationList } from '@/hooks/useConsultationList';
 
-interface ConsultationRecord {
-  id: string;
-  name: string;
-  phone: string;
-  email: string | null;
-  address: string;
-  address_detail: string | null;
-  address_code: {
-    sigunguCd: string;
-    bjdongCd: string;
-    platGbCd: string;
-    bun: string;
-    ji: string;
-  };
-  building_info: {
-    mainPurpsCdNm: string;
-    secondaryUse?: string | null;
-    totArea: number | null;
-    platArea: number | null;
-    groundFloorCnt: number | null;
-    ugrndFloorCnt?: number | null;
-    hhldCnt?: number | null;
-    fmlyNum?: number | null;
-    mainBldCnt?: number | null;
-    atchBldCnt?: number | null;
-    platPlc?: string | null;
-    addressInfo?: Record<string, unknown> | null;
-  rawData: unknown;
-  source?: string;
-};
-  main_purps: string | null;
-  tot_area: number | null;
-  plat_area: number | null;
-  ground_floor_cnt: number | null;
-  message: string | null;
-  attachments: {
-    name: string;
-    size: number;
-    type: string;
-    storagePath: string;
-  }[];
-  created_at: string;
-  is_del: 'Y' | 'N';
-  deleted_at?: string | null;
-}
+type ConsultationRecord = ConsultationRecordType;
+type ConsultationAttachment = NonNullable<ConsultationRecord['attachments']>[number];
 
 interface EditFormState {
   name: string;
   phone: string;
   email: string;
   message: string;
-  attachments: ConsultationRecord['attachments'];
+  attachments: ConsultationAttachment[];
 }
 
 function createBuildingDisplay(record: ConsultationRecord): BuildingSearchResult | null {
@@ -147,9 +110,23 @@ export default function ConsultationHistoryPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get('id');
-  const [records, setRecords] = useState<ConsultationRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: records,
+    setData: setRecords,
+    loading: consultationsLoading,
+    error: consultationsError,
+    refresh: refreshConsultations,
+    setError: setConsultationsError
+  } = useConsultationList<ConsultationRecord>({
+    schema: consultationRecordSchema.array(),
+    queryKey: ['consultations', 'history'],
+    onUnauthorized: () => {
+      setConsultationsError('로그인이 필요합니다.');
+      router.push('/login?redirect=/request/history');
+    }
+  });
+  const [initializing, setInitializing] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [formState, setFormState] = useState<EditFormState>({
@@ -157,14 +134,14 @@ export default function ConsultationHistoryPage() {
     phone: '',
     email: '',
     message: '',
-    attachments: [],
+    attachments: [] as ConsultationAttachment[],
   });
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [newUploadedFiles, setNewUploadedFiles] = useState<ConsultationRecord['attachments']>([]);
+  const [newUploadedFiles, setNewUploadedFiles] = useState<ConsultationAttachment[]>([]);
 
   // Download attachment file
-  const downloadAttachment = async (attachment: ConsultationRecord['attachments'][0]) => {
+  const downloadAttachment = async (attachment: ConsultationAttachment) => {
     try {
       const result = await getFileUrl(attachment.storagePath);
       if (result.url) {
@@ -199,60 +176,75 @@ export default function ConsultationHistoryPage() {
   };
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    let cancelled = false;
+
+    const initialize = async () => {
       try {
-        // Get user info first
+        setPageError(null);
+        setConsultationsError(null);
+
         const userResponse = await fetch('/api/debug/user-info', {
-          credentials: 'include',
+          credentials: 'include'
         });
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUser({ id: userData.user_id });
-        }
-
-        const response = await fetch('/api/consultations', {
-          credentials: 'include',
-        });
-
-        if (response.status === 401) {
-          setError('로그인이 필요합니다.');
-          router.push('/login?redirect=/request/history');
+        if (userResponse.status === 401) {
+          if (!cancelled) {
+            setPageError('로그인이 필요합니다.');
+            router.push('/login?redirect=/request/history');
+          }
           return;
         }
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || '상담 내역을 가져오지 못했습니다.');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          if (!cancelled) {
+            setUser({ id: userData.user_id });
+          }
         }
 
-        const data = await response.json();
-        setRecords(data.consultations ?? []);
-      } catch (err: any) {
-        setError(err.message || '상담 내역을 가져오지 못했습니다.');
+        await refreshConsultations();
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error ? err.message : '상담 내역을 가져오지 못했습니다.';
+          setPageError(message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setInitializing(false);
+        }
       }
     };
 
-    fetchHistory();
-  }, [router]);
+    initialize().catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshConsultations, router, setConsultationsError]);
+
+  useEffect(() => {
+    if (consultationsError) {
+      setPageError(consultationsError);
+    }
+  }, [consultationsError]);
 
   const handleStartEdit = (record: ConsultationRecord) => {
+    const existingAttachments = (record.attachments ?? []) as ConsultationAttachment[];
     setEditingId(record.id);
     setFormState({
       name: record.name,
       phone: record.phone,
       email: record.email ?? '',
       message: record.message ?? '',
-      attachments: record.attachments || [],
+      attachments: existingAttachments,
     });
     setActionMessage(null);
   };
 
   const resetEditing = () => {
     setEditingId(null);
-    setFormState({ name: '', phone: '', email: '', message: '', attachments: [] });
+    setFormState({ name: '', phone: '', email: '', message: '', attachments: [] as ConsultationAttachment[] });
     setNewUploadedFiles([]);
     setSubmitting(false);
   };
@@ -295,7 +287,8 @@ export default function ConsultationHistoryPage() {
 
     try {
       // 기존 첨부파일 + 새로 업로드된 파일을 합침
-      const allAttachments = [...formState.attachments, ...newUploadedFiles];
+      const existingAttachments = formState.attachments ?? [];
+      const allAttachments = [...existingAttachments, ...newUploadedFiles];
 
       const response = await fetch(`/api/consultations/${record.id}`, {
         method: 'PATCH',
@@ -325,13 +318,14 @@ export default function ConsultationHistoryPage() {
       );
       setActionMessage('상담 요청이 수정되었습니다.');
       resetEditing();
-
-      // 페이지 새로고침하여 최신 데이터 반영 (테스트 환경에서는 건너뜀)
-      if (process.env.NODE_ENV !== 'test') {
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('consultation-list-updated', {
+            detail: { action: 'updated', id: record.id }
+          })
+        );
       }
+      refreshConsultations().catch(() => undefined);
     } catch (err: any) {
       setActionMessage(err.message || '수정에 실패했습니다.');
     } finally {
@@ -370,6 +364,8 @@ export default function ConsultationHistoryPage() {
         );
       }
 
+      refreshConsultations().catch(() => undefined);
+
       if (selectedId) {
         router.push('/request/history');
       }
@@ -394,7 +390,10 @@ export default function ConsultationHistoryPage() {
     return match ? [match] : [];
   }, [selectedId, sortedRecords]);
 
-  if (loading) {
+  const isLoading = initializing || consultationsLoading;
+  const errorMessage = pageError ?? consultationsError;
+
+  if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto py-12">
         <p className="text-center text-muted-foreground">상담 내역을 불러오는 중입니다...</p>
@@ -402,16 +401,18 @@ export default function ConsultationHistoryPage() {
     );
   }
 
-  if (error) {
+  if (errorMessage) {
     return (
       <div className="max-w-3xl mx-auto py-12 space-y-4">
-        <p className="text-center text-destructive">{error}</p>
+        <p className="text-center text-destructive">{errorMessage}</p>
         <div className="flex justify-center">
           <Button onClick={() => router.refresh()}>다시 시도</Button>
         </div>
       </div>
     );
   }
+
+  const currentAttachments = formState.attachments ?? [];
 
   return (
     <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -540,17 +541,17 @@ export default function ConsultationHistoryPage() {
                     </div>
 
                     {/* Attachments Section */}
-                    {(record.attachments || []).length > 0 && (
+                    {((record.attachments ?? []) as ConsultationAttachment[]).length > 0 && (
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">첨부파일</p>
                         <div className="flex flex-wrap gap-2">
-                          {(record.attachments || []).map((attachment, index) => (
+                          {((record.attachments ?? []) as ConsultationAttachment[]).map((attachment, index) => (
                             <button
                               key={index}
                               onClick={() => downloadAttachment(attachment)}
                               className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
                             >
-                              <span>{getFileIcon(attachment.type)}</span>
+                              <span>{getFileIcon(attachment.type ?? '')}</span>
                               <span className="truncate max-w-[120px]">{attachment.name}</span>
                               <Download className="h-3 w-3 flex-shrink-0" />
                             </button>
@@ -596,13 +597,13 @@ export default function ConsultationHistoryPage() {
                                   >
                                     {/* File Icon/Preview */}
                                     <div className="flex-shrink-0">
-                                      {attachment.type.startsWith('image/') ? (
+                                      {(attachment.type ?? '').startsWith('image/') ? (
                                         <div className="w-10 h-10 flex items-center justify-center bg-muted rounded">
-                                          <span className="text-lg">{getFileIcon(attachment.type)}</span>
+                                      <span className="text-lg">{getFileIcon(attachment.type ?? '')}</span>
                                         </div>
                                       ) : (
                                         <div className="w-10 h-10 flex items-center justify-center bg-muted rounded">
-                                          <span className="text-lg">{getFileIcon(attachment.type)}</span>
+                                          <span className="text-lg">{getFileIcon(attachment.type ?? '')}</span>
                                         </div>
                                       )}
                                     </div>
@@ -611,7 +612,7 @@ export default function ConsultationHistoryPage() {
                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-medium truncate">{attachment.name}</p>
                                       <p className="text-xs text-muted-foreground">
-                                        {formatFileSize(attachment.size)}
+                                        {formatFileSize(attachment.size ?? 0)}
                                       </p>
                                     </div>
 
@@ -622,7 +623,7 @@ export default function ConsultationHistoryPage() {
                                         size="sm"
                                         variant="outline"
                                         onClick={() => {
-                                          const newAttachments = formState.attachments.filter((_, i) => i !== index);
+                                          const newAttachments = currentAttachments.filter((_, i) => i !== index);
                                           setFormState(prev => ({ ...prev, attachments: newAttachments }));
                                         }}
                                         disabled={submitting}
@@ -637,7 +638,7 @@ export default function ConsultationHistoryPage() {
                           )}
 
                           {/* Add New Files */}
-                          {formState.attachments.length < 3 && (
+                          {currentAttachments.length < 3 && (
                             <div className="space-y-2">
                               <p className="text-sm font-medium">새 파일 추가</p>
                               <FileUpload
@@ -663,7 +664,7 @@ export default function ConsultationHistoryPage() {
                             </div>
                           )}
 
-                          {formState.attachments.length >= 3 && (
+                          {currentAttachments.length >= 3 && (
                             <p className="text-sm text-muted-foreground">
                               최대 3개 파일까지 첨부 가능합니다. 새 파일을 추가하려면 기존 파일을 삭제해주세요.
                             </p>

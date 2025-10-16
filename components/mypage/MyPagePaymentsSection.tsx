@@ -1,24 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import clsx from 'clsx';
 import { loadPaymentWidget } from '@tosspayments/payment-widget-sdk';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useMyPageContext } from '@/components/mypage/MyPageContext';
-
-type PaymentStageStatus = 'locked' | 'requested' | 'awaiting' | 'paid';
-
-interface PaymentStageCard {
-  id: string;
-  title: string;
-  description: string;
-  amount?: number;
-  status: PaymentStageStatus;
-  updatedAt?: string;
-  nextActionLabel?: string;
-  disabled?: boolean;
-}
+import { paymentStagesResponseSchema, type PaymentStage } from '@/lib/validations/payment';
 
 type TossPaymentWidget = Awaited<ReturnType<typeof loadPaymentWidget>>;
 
@@ -40,7 +29,8 @@ function createOrderId(stageId: string) {
 }
 
 export function MyPagePaymentsSection() {
-  const { profile, fallbackEmail, consultations } = useMyPageContext();
+  const { profile, fallbackEmail } = useMyPageContext();
+  const queryClient = useQueryClient();
   const [paymentAgreements, setPaymentAgreements] = useState<Record<string, boolean>>({});
   const [activePaymentStageId, setActivePaymentStageId] = useState<string | null>(null);
   const [paymentWidgetLoading, setPaymentWidgetLoading] = useState(false);
@@ -53,33 +43,41 @@ export function MyPagePaymentsSection() {
     activePaymentStageRef.current = activePaymentStageId;
   }, [activePaymentStageId]);
 
-  const paymentStages = useMemo<PaymentStageCard[]>(() => {
-    const latestConsultation = consultations[0] ?? null;
-
-    return [
-      {
-        id: 'stage-site-survey',
-        title: '1단계 · 현장 답사 및 상담 비용',
-        description: '현장 답사를 위한 기본 상담 수수료를 결제해주세요. 결제가 완료되어야 일정 조율이 진행됩니다.',
-        amount: 88000,
-        status: 'awaiting',
-        updatedAt: latestConsultation?.created_at ?? undefined,
-        nextActionLabel: '결제 진행'
-      },
-      {
-        id: 'stage-legalization',
-        title: '2단계 · 양성화 대행 서비스',
-        description:
-          '양성화 대행 계약이 확정되면 관리자가 결제를 활성화합니다. 활성화 전까지는 준비 상태로 표시됩니다.',
-        amount: undefined,
-        status: 'locked',
-        nextActionLabel: '관리자 승인 대기',
-        disabled: true
+  const {
+    data: paymentStages = [],
+    refetch: refetchPaymentStages,
+    isLoading: paymentStagesLoading,
+    isFetching: paymentStagesFetching,
+    error: paymentStagesError
+  } = useQuery<PaymentStage[]>({
+    queryKey: ['payment-stages'],
+    queryFn: async () => {
+      const response = await fetch('/api/payments/stages', { credentials: 'include' });
+      if (!response.ok) {
+        const json = await response.json().catch(() => ({}));
+        throw new Error(json?.error || '결제 단계 정보를 불러오지 못했습니다.');
       }
-    ];
-  }, [consultations]);
+      const json = await response.json();
+      const parsed = paymentStagesResponseSchema.parse(json);
+      return parsed.stages;
+    },
+    staleTime: 1000 * 30
+  });
 
-  const paymentStatusLabel: Record<PaymentStageStatus, { text: string; className: string }> = {
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const handler = () => {
+      refetchPaymentStages().catch(() => undefined);
+    };
+
+    window.addEventListener('consultation-list-updated', handler);
+    return () => {
+      window.removeEventListener('consultation-list-updated', handler);
+    };
+  }, [refetchPaymentStages]);
+
+  const paymentStatusLabel: Record<PaymentStage['status'], { text: string; className: string }> = {
     locked: { text: '활성화 대기', className: 'bg-slate-200 text-slate-700' },
     requested: { text: '결제 요청됨', className: 'bg-blue-50 text-blue-700 border border-blue-200' },
     awaiting: { text: '결제 대기', className: 'bg-amber-50 text-amber-700 border border-amber-200' },
@@ -126,7 +124,7 @@ export function MyPagePaymentsSection() {
   }, []);
 
   const handlePaymentStart = useCallback(
-    async (stage: PaymentStageCard) => {
+    async (stage: PaymentStage) => {
       if (stage.disabled || stage.status === 'locked') {
         return;
       }
@@ -222,6 +220,7 @@ export function MyPagePaymentsSection() {
           amount: paymentWidgetOrder.amount
         }
       });
+      queryClient.invalidateQueries({ queryKey: ['payment-stages'] }).catch(() => undefined);
     } catch (_error) {
       const error = _error as { message?: string; code?: string } | Error;
       console.error('[payment] requestPayment failed', error);
@@ -233,7 +232,7 @@ export function MyPagePaymentsSection() {
       setPaymentWidgetError(code ? `${message} (코드: ${code})` : message);
       setPaymentWidgetLoading(false);
     }
-  }, [paymentWidgetOrder]);
+  }, [paymentWidgetOrder, queryClient]);
 
   const handlePaymentWidgetClose = useCallback(
     (stageId?: string) => {
@@ -247,6 +246,40 @@ export function MyPagePaymentsSection() {
       resetPaymentWidget();
     };
   }, [resetPaymentWidget]);
+
+  const stagesLoading = paymentStagesLoading || paymentStagesFetching;
+  const stagesErrorMessage = paymentStagesError instanceof Error ? paymentStagesError.message : null;
+
+  if (stagesLoading) {
+    return (
+      <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <header className="space-y-2">
+          <h2 className="text-xl font-semibold">결제 내역</h2>
+          <p className="text-sm text-muted-foreground">결제 단계를 불러오는 중입니다...</p>
+        </header>
+        <p className="text-sm text-muted-foreground">잠시만 기다려주세요.</p>
+      </section>
+    );
+  }
+
+  if (stagesErrorMessage) {
+    return (
+      <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <header className="space-y-2">
+          <h2 className="text-xl font-semibold">결제 내역</h2>
+          <p className="text-sm text-destructive">{stagesErrorMessage}</p>
+        </header>
+        <Button
+          type="button"
+          onClick={() => {
+            refetchPaymentStages().catch(() => undefined);
+          }}
+        >
+          다시 불러오기
+        </Button>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">

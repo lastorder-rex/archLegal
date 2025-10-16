@@ -3,68 +3,53 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Expand } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useMyPageContext } from '@/components/mypage/MyPageContext';
+import { useConsultationList } from '@/hooks/useConsultationList';
+import { consultationSummarySchema } from '@/lib/validations/consultation';
 
 export function MyPageConsultationsSection() {
   const router = useRouter();
   const { consultations: initialConsultations } = useMyPageContext();
-  const [consultations, setConsultations] = useState(initialConsultations);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
+  const {
+    data: consultations,
+    refresh,
+    loading: isRefreshing
+  } = useConsultationList({
+    initialData: initialConsultations,
+    schema: consultationSummarySchema.array(),
+    queryKey: ['consultations', 'mypage']
+  });
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setConsultations(initialConsultations);
-  }, [initialConsultations]);
-
   const refreshConsultations = useCallback(async () => {
-    try {
-      setIsRefreshing(true);
-      const response = await fetch('/api/consultations', { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error('상담 내역을 갱신하지 못했습니다.');
-      }
-      const data = await response.json();
-      if (Array.isArray(data.consultations)) {
-        const nextConsultations = data.consultations as typeof initialConsultations;
-        setConsultations(nextConsultations);
-        if (
-          selectedConsultationId &&
-          !nextConsultations.some((item: typeof nextConsultations[number]) => item.id === selectedConsultationId)
-        ) {
-          setSelectedConsultationId(null);
-        }
-      }
-    } catch (error) {
-      console.error('[mypage] consultations refresh failed', error);
-    } finally {
-      setIsRefreshing(false);
+    const updated = await refresh();
+    if (
+      selectedConsultationId &&
+      updated &&
+      !updated.some(item => item.id === selectedConsultationId)
+    ) {
+      setSelectedConsultationId(null);
     }
-  }, [selectedConsultationId]);
+    queryClient.invalidateQueries({ queryKey: ['payment-stages'] }).catch(() => undefined);
+  }, [refresh, selectedConsultationId, queryClient]);
 
   useEffect(() => {
-    let mounted = true;
-    refreshConsultations()
-      .catch(() => undefined)
-      .finally(() => {
-        if (mounted) {
-          setIsRefreshing(false);
-        }
-      });
+    refreshConsultations().catch(() => undefined);
+  }, [refreshConsultations]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
 
     const handler = () => {
-      refreshConsultations();
+      refreshConsultations().catch(() => undefined);
     };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('consultation-list-updated', handler);
-    }
-
+    window.addEventListener('consultation-list-updated', handler);
     return () => {
-      mounted = false;
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('consultation-list-updated', handler);
-      }
+      window.removeEventListener('consultation-list-updated', handler);
     };
   }, [refreshConsultations]);
 

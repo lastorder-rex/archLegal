@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import SupabaseProvider from '../components/providers/SupabaseProvider';
+import QueryProvider from '../components/providers/QueryProvider';
 import { CopyProtection } from '../components/CopyProtection';
 import { cn } from '../lib/utils';
 import { isUserSessionExpired } from '@/lib/auth/user-session';
@@ -70,7 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={cn('min-h-screen bg-background text-foreground antialiased select-none', inter.className)}>
         <CopyProtection />
         <SupabaseProvider initialSession={initialSession}>
-          {children}
+          <QueryProvider>{children}</QueryProvider>
         </SupabaseProvider>
       </body>
     </html>
