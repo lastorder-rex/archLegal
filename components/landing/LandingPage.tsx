@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode
+} from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
@@ -26,6 +34,7 @@ import { CTAButton } from '../ui/cta-button';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { ConsultationModal } from './ConsultationModal';
+import { AccessCodeModal } from './AccessCodeModal';
 import { AboutModal } from './AboutModal';
 import { LoginModal } from './LoginModal';
 import { InfoCard } from './InfoCard';
@@ -52,6 +61,10 @@ const navigationItems: NavigationItem[] = [
 
 type DesireIconKey = (typeof desireItems)[number]['icon'];
 type TimelineIconKey = (typeof timelineItems)[number]['icon'];
+
+// TODO(temporary-review-gate): Remove access gating once external review is complete.
+const ACCESS_PASSWORD = 'superCool!@#';
+const ACCESS_STORAGE_KEY = 'archlegal:access-granted';
 
 const renderDesireIcon = (type: DesireIconKey) => {
   switch (type) {
@@ -93,8 +106,11 @@ export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isAboutModalOpen, setAboutModalOpen] = useState(false);
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [isAccessModalOpen, setAccessModalOpen] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isNavOpen, setNavOpen] = useState(false);
+  const pendingActionRef = useRef<(() => void) | null>(null);
   const supabase = createClientComponentClient();
   const router = useRouter();
   const procedureGuideUrl = useMemo(() => encodeURI('/docu/양성화 절차 안내.pdf'), []);
@@ -132,11 +148,52 @@ export function LandingPage() {
     };
   }, [supabase]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const stored = window.localStorage.getItem(ACCESS_STORAGE_KEY);
+    if (stored === 'true') {
+      setHasAccess(true);
+    }
+  }, []);
+
   const handleLogout = useCallback(async () => {
     setSessionUser(null);
     setLoginModalOpen(false);
     await handleUserLogout(router);
   }, [router]);
+
+  const requestAccess = useCallback(
+    (action: () => void) => {
+      if (hasAccess) {
+        action();
+        return;
+      }
+
+      pendingActionRef.current = action;
+      setAccessModalOpen(true);
+    },
+    [hasAccess]
+  );
+
+  const handleAccessSuccess = useCallback(() => {
+    setHasAccess(true);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(ACCESS_STORAGE_KEY, 'true');
+    }
+    setAccessModalOpen(false);
+    pendingActionRef.current?.();
+    pendingActionRef.current = null;
+  }, []);
+
+  const handleAccessModalClose = useCallback(() => {
+    setAccessModalOpen(false);
+    pendingActionRef.current = null;
+  }, []);
+
+  const validateAccessCode = useCallback((code: string) => code === ACCESS_PASSWORD, []);
 
   const handleDownloadGuide = useCallback(() => {
     const link = document.createElement('a');
@@ -165,6 +222,12 @@ export function LandingPage() {
       <ConsultationModal open={isModalOpen} onClose={() => setModalOpen(false)} />
       <LoginModal open={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
       <AboutModal open={isAboutModalOpen} onClose={() => setAboutModalOpen(false)} faqs={fullFaqs} />
+      <AccessCodeModal
+        open={isAccessModalOpen}
+        onClose={handleAccessModalClose}
+        onSuccess={handleAccessSuccess}
+        validateCode={validateAccessCode}
+      />
 
       {/* Attention */}
       <section
@@ -225,7 +288,7 @@ export function LandingPage() {
                 <AuthButton
                   sessionUser={sessionUser}
                   size="desktop"
-                  onLogin={() => setLoginModalOpen(true)}
+                  onLogin={() => requestAccess(() => setLoginModalOpen(true))}
                   onLogout={handleLogout}
                 />
                 <ThemeToggle />
@@ -234,7 +297,7 @@ export function LandingPage() {
                 <AuthButton
                   sessionUser={sessionUser}
                   size="mobile"
-                  onLogin={() => setLoginModalOpen(true)}
+                  onLogin={() => requestAccess(() => setLoginModalOpen(true))}
                   onLogout={handleLogout}
                 />
                 <ThemeToggle />
@@ -295,10 +358,12 @@ export function LandingPage() {
                       <div className="mt-8 space-y-4 border-t border-border pt-6">
                         <button
                           type="button"
-                          onClick={() => {
-                            setModalOpen(true);
-                            setNavOpen(false);
-                          }}
+                          onClick={() =>
+                            requestAccess(() => {
+                              setModalOpen(true);
+                              setNavOpen(false);
+                            })
+                          }
                           className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
                         >
                           무료 상담 신청
@@ -335,7 +400,7 @@ export function LandingPage() {
               지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
-              <CTAButton className="sm:w-auto" onClick={() => setModalOpen(true)}>
+              <CTAButton className="sm:w-auto" onClick={() => requestAccess(() => setModalOpen(true))}>
                 무료 상담 신청
               </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" onClick={handleDownloadGuide}>
@@ -517,7 +582,7 @@ export function LandingPage() {
                 <CTAButton
                   tone="secondary"
                   className="sm:w-auto hover:bg-[#ffeb00] hover:text-black focus-visible:ring-[#ffeb00]"
-                  onClick={() => setModalOpen(true)}
+                  onClick={() => requestAccess(() => setModalOpen(true))}
                 >
                   문의 남기기
                 </CTAButton>
