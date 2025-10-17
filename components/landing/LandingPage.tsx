@@ -65,6 +65,15 @@ type TimelineIconKey = (typeof timelineItems)[number]['icon'];
 // TODO(temporary-review-gate): Remove access gating once external review is complete.
 const ACCESS_PASSWORD = 'welcome2025!';
 const ACCESS_STORAGE_KEY = 'archlegal:access-granted';
+// TODO(daily-notice): Remove once service notice popup is no longer needed.
+const DAILY_NOTICE_STORAGE_KEY = 'archlegal:daily-notice-dismissed-date';
+
+const getTodayKey = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+};
 
 const renderDesireIcon = (type: DesireIconKey) => {
   switch (type) {
@@ -108,12 +117,16 @@ export function LandingPage() {
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
   const [isAccessModalOpen, setAccessModalOpen] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
+  // TODO(daily-notice): Remove once service notice popup is no longer needed.
+  const [isNoticeOpen, setNoticeOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isNavOpen, setNavOpen] = useState(false);
   const pendingActionRef = useRef<(() => void) | null>(null);
   const supabase = createClientComponentClient();
   const router = useRouter();
   const procedureGuideUrl = useMemo(() => encodeURI('/docu/양성화 절차 안내.pdf'), []);
+  // TODO(daily-notice): Remove once service notice popup is no longer needed.
+  const isDailyNoticeEnabled = process.env.NEXT_PUBLIC_DAILY_NOTICE_ENABLED === 'true';
 
   useEffect(() => {
     let active = true;
@@ -195,6 +208,23 @@ export function LandingPage() {
 
   const validateAccessCode = useCallback((code: string) => code === ACCESS_PASSWORD, []);
 
+  useEffect(() => {
+    // TODO(daily-notice): Remove once service notice popup is no longer needed.
+    if (typeof window === 'undefined' || !isDailyNoticeEnabled) {
+      return;
+    }
+
+    try {
+      const storedDate = window.localStorage.getItem(DAILY_NOTICE_STORAGE_KEY);
+      const todayKey = getTodayKey();
+      if (storedDate !== todayKey) {
+        setNoticeOpen(true);
+      }
+    } catch {
+      setNoticeOpen(true);
+    }
+  }, [isDailyNoticeEnabled]);
+
   const handleDownloadGuide = useCallback(() => {
     const link = document.createElement('a');
     link.href = procedureGuideUrl;
@@ -216,6 +246,22 @@ export function LandingPage() {
     [setNavOpen]
   );
 
+  const handleHideNoticeToday = useCallback(() => {
+    // TODO(daily-notice): Remove once service notice popup is no longer needed.
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(DAILY_NOTICE_STORAGE_KEY, getTodayKey());
+      } catch {
+        // Ignore storage failures — popup will reappear on next load.
+      }
+    }
+    setNoticeOpen(false);
+  }, []);
+
+  const handleCloseNotice = useCallback(() => {
+    // TODO(daily-notice): Remove once service notice popup is no longer needed.
+    setNoticeOpen(false);
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground transition-colors duration-200">
@@ -228,6 +274,36 @@ export function LandingPage() {
         onSuccess={handleAccessSuccess}
         validateCode={validateAccessCode}
       />
+      {isNoticeOpen ? (
+        // TODO(daily-notice): Remove once service notice popup is no longer needed.
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-md rounded-3xl border border-border bg-background/95 p-8 text-center shadow-2xl">
+            <h2 className="text-2xl font-semibold text-foreground">서비스 이용 안내</h2>
+            <div className="mt-4 space-y-2 text-left text-sm leading-6 text-muted-foreground">
+              <p>ArchLegal 찾아 주셔서 감사합니다.</p>
+              <p>현재 회원가입 및 상담내역 신청은 준비 중이며 11월 중순부터 순차적으로 이용하실 수 있습니다.</p>
+              <p>조금만 더 기다려 주시면 최선을 다해 준비한 모습으로 인사드리겠습니다.</p>
+            </div>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <CTAButton type="button" className="flex-1" onClick={handleHideNoticeToday}>
+                오늘 하루 보지 않기
+              </CTAButton>
+              <CTAButton
+                type="button"
+                tone="secondary"
+                className="flex-1"
+                onClick={handleCloseNotice}
+              >
+                닫기
+              </CTAButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Attention */}
       <section
