@@ -84,11 +84,6 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
   const handleInputChange = useCallback((field: keyof ConsultationForm, value: string) => {
     let processedValue = value;
 
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-
     if (field === 'name') {
       processedValue = filterNameInput(value);
     }
@@ -112,7 +107,29 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
     }
 
     setFormData(prev => ({ ...prev, [field]: processedValue }));
-  }, [errors]);
+
+    setErrors(prev => {
+      const next = { ...prev };
+
+      if (field === 'email') {
+        if (processedValue && processedValue.length > 100) {
+          next.email = '이메일은 100자 이하로 입력해주세요';
+        } else {
+          next.email = '';
+        }
+      } else if (field === 'message') {
+        if ((processedValue?.length ?? 0) > 1000) {
+          next.message = '상담 내용은 1000글자 이하로 입력해주세요';
+        } else {
+          next.message = '';
+        }
+      } else {
+        next[field] = '';
+      }
+
+      return next;
+    });
+  }, []);
 
   // Handle address selection
   const handleAddressSelect = useCallback(async (address: AddressSearchResult) => {

@@ -25,9 +25,19 @@ export function MessageSection({ formData, errors, onInputChange }: MessageSecti
           rows={4}
           error={!!errors.message}
         />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{errors.message}</span>
-          <span>{(formData.message || '').length}/1000</span>
+        <div className="flex justify-between text-xs">
+          <span className={errors.message ? 'text-destructive' : 'text-muted-foreground'}>
+            {errors.message}
+          </span>
+          <span
+            className={
+              (formData.message || '').length > 1000
+                ? 'text-destructive'
+                : 'text-muted-foreground'
+            }
+          >
+            {(formData.message || '').length}/1000
+          </span>
         </div>
       </div>
     </div>

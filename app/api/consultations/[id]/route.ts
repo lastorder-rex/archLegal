@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/user-session';
+import { revalidatePath } from 'next/cache';
+import { withSupabaseAuth } from '@/lib/auth/server-auth';
 
 /**
  * 상담 메시지 입력 필터링 (서버 측) - SQL injection 및 XSS 방지
@@ -22,92 +21,75 @@ interface UpdateConsultationRequest {
     storagePath: string;
   }[];
 }
-
 // PATCH method to update consultation
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const consultationId = params.id;
-    const body: UpdateConsultationRequest = await request.json();
+    return await withSupabaseAuth(request, async ({ supabase, userId }) => {
+      const consultationId = params.id;
+      const body: UpdateConsultationRequest = await request.json();
 
-    // Initialize Supabase client
-    const cookieStore = cookies();
+      if (body.message !== undefined) {
+        if (!body.message || typeof body.message !== 'string' || body.message.trim().length === 0) {
+          return NextResponse.json(
+            { error: '상담 요청사항을 입력해주세요.' },
+            { status: 400 }
+          );
+        }
+        if (body.message.length > 1000) {
+          return NextResponse.json(
+            { error: '상담 내용은 1000글자 이하로 입력해주세요.' },
+            { status: 400 }
+          );
+        }
+      }
 
-    if (isUserSessionExpired(cookieStore)) {
-      return createExpiredSessionResponse('세션이 만료되었습니다. 다시 로그인해주세요.');
-    }
+      const updateData: Record<string, unknown> = {};
 
-    const supabase = createRouteHandlerClient({ cookies });
+      if (body.name !== undefined) updateData.name = body.name.trim();
+      if (body.phone !== undefined) updateData.phone = body.phone;
+      if (body.email !== undefined) updateData.email = body.email?.trim() || null;
+      if (body.message !== undefined) {
+        updateData.message = sanitizeMessage(body.message.trim());
+      }
+      if (body.attachments !== undefined) updateData.attachments = body.attachments;
 
-    // Get authenticated user
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+      const { data: consultation, error: updateError } = await supabase
+        .from('consultations')
+        .update(updateData)
+        .eq('id', consultationId)
+        .eq('user_id', userId)
+        .select('id')
+        .single();
 
-    if (authError || !session?.user) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-
-    // Validate required fields
-    if (body.message !== undefined) {
-      if (!body.message || typeof body.message !== 'string' || body.message.trim().length === 0) {
+      if (updateError) {
+        console.error('Database update error:', updateError);
         return NextResponse.json(
-          { error: '상담 요청사항을 입력해주세요.' },
-          { status: 400 }
+          { error: '상담 요청 수정 중 오류가 발생했습니다.' },
+          { status: 500 }
         );
       }
-      if (body.message.length > 1000) {
+
+      if (!consultation) {
         return NextResponse.json(
-          { error: '상담 내용은 1000글자 이하로 입력해주세요.' },
-          { status: 400 }
+          { error: '수정 권한이 없거나 존재하지 않는 상담 요청입니다.' },
+          { status: 404 }
         );
       }
-    }
 
-    // Prepare update data with sanitization
-    const updateData: any = {};
+      revalidatePath('/mypage');
+      revalidatePath('/mypage/consultations');
+      revalidatePath('/mypage/payments');
+      revalidatePath('/request/history');
 
-    if (body.name !== undefined) updateData.name = body.name.trim();
-    if (body.phone !== undefined) updateData.phone = body.phone;
-    if (body.email !== undefined) updateData.email = body.email?.trim() || null;
-    if (body.message !== undefined) {
-      updateData.message = sanitizeMessage(body.message.trim());
-    }
-    if (body.attachments !== undefined) updateData.attachments = body.attachments;
-
-    // Update consultation (only if user owns it)
-    const { data: consultation, error: updateError } = await supabase
-      .from('consultations')
-      .update(updateData)
-      .eq('id', consultationId)
-      .eq('user_id', session.user.id)
-      .select('id')
-      .single();
-
-    if (updateError) {
-      console.error('Database update error:', updateError);
-      return NextResponse.json(
-        { error: '상담 요청 수정 중 오류가 발생했습니다.' },
-        { status: 500 }
-      );
-    }
-
-    if (!consultation) {
-      return NextResponse.json(
-        { error: '수정 권한이 없거나 존재하지 않는 상담 요청입니다.' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: '상담 요청이 수정되었습니다.',
-      id: consultation.id
+      return NextResponse.json({
+        success: true,
+        message: '상담 요청이 수정되었습니다.',
+        id: consultation.id
+      });
     });
-
   } catch (error) {
     console.error('Consultation update error:', error);
 
@@ -131,60 +113,46 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const consultationId = params.id;
+    return await withSupabaseAuth(request, async ({ supabase, userId }) => {
+      const consultationId = params.id;
 
-    // Initialize Supabase client
-    const cookieStore = cookies();
+      const { data: consultation, error: deleteError } = await supabase
+        .from('consultations')
+        .update({
+          is_del: 'Y',
+          deleted_at: new Date().toISOString()
+        })
+        .eq('id', consultationId)
+        .eq('user_id', userId)
+        .select('id')
+        .single();
 
-    if (isUserSessionExpired(cookieStore)) {
-      return createExpiredSessionResponse('세션이 만료되었습니다. 다시 로그인해주세요.');
-    }
+      if (deleteError) {
+        console.error('Database delete error:', deleteError);
+        return NextResponse.json(
+          { error: '상담 요청 삭제 중 오류가 발생했습니다.' },
+          { status: 500 }
+        );
+      }
 
-    const supabase = createRouteHandlerClient({ cookies });
+      if (!consultation) {
+        return NextResponse.json(
+          { error: '삭제 권한이 없거나 존재하지 않는 상담 요청입니다.' },
+          { status: 404 }
+        );
+      }
 
-    // Get authenticated user
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+      revalidatePath('/mypage');
+      revalidatePath('/mypage/consultations');
+      revalidatePath('/mypage/payments');
+      revalidatePath('/request/history');
 
-    if (authError || !session?.user) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-
-    // Soft delete consultation (only if user owns it)
-    const { data: consultation, error: deleteError } = await supabase
-      .from('consultations')
-      .update({
-        is_del: 'Y',
-        deleted_at: new Date().toISOString()
-      })
-      .eq('id', consultationId)
-      .eq('user_id', session.user.id)
-      .select('id')
-      .single();
-
-    if (deleteError) {
-      console.error('Database delete error:', deleteError);
-      return NextResponse.json(
-        { error: '상담 요청 삭제 중 오류가 발생했습니다.' },
-        { status: 500 }
-      );
-    }
-
-    if (!consultation) {
-      return NextResponse.json(
-        { error: '삭제 권한이 없거나 존재하지 않는 상담 요청입니다.' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: '상담 요청이 삭제되었습니다.',
-      id: consultation.id
+      return NextResponse.json({
+        success: true,
+        message: '상담 요청이 삭제되었습니다.',
+        id: consultation.id
+      });
     });
-
   } catch (error) {
     console.error('Consultation delete error:', error);
     return NextResponse.json(

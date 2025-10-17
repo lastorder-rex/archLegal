@@ -20,6 +20,7 @@ archLegal/
 │   ├── supercore/              # 관리자 콘솔 전용 UI
 │   ├── ui/                     # shadcn 기반 공통 UI 프리미티브
 │   └── providers/              # 전역 컨텍스트/테마 공급자
+├── hooks/                      # React Query 등 비즈니스 훅 모음
 ├── docs/
 │   ├── folder-structure.md
 │   ├── report.md               # 진행 리포트/회고
@@ -28,10 +29,11 @@ archLegal/
 │   ├── auth/                   # 인증/세션 유틸리티
 │   ├── constants/              # 상수(연락처, 랜딩 데이터 등)
 │   ├── utils/                  # 공통 유틸(예: 파일 업로드, 건축물 fallback)
-│   └── validations/            # zod 스키마 및 폼 검증 로직
+│   └── validations/            # Zod 스키마 및 폼 검증 로직
 ├── public/
 │   ├── docu/                   # 서비스 문서 및 정적 자료
-│   └── (데이터 적재용 CSV 등은 .gitignore로 제외)
+│   ├── robots.txt              # 검색엔진 크롤러 지시 파일
+│   └── sitemap.xml             # 검색엔진용 사이트맵
 ├── scripts/
 │   ├── import_seoul_building_title.py  # Supabase 표제부 데이터 업서트 스크립트
 │   └── ...                             # 기타 데이터 마이그레이션 도구
@@ -54,6 +56,7 @@ archLegal/
 - **components/** – 도메인별/공통 UI 컴포넌트 집합. 상담, 관리자, 랜딩 등의 세부 폴더로 분리되어 있습니다.
 - **docs/** – 프로젝트 문서와 리포트, 데이터 적재 가이드 등 참고 자료.
 - **lib/** – 인증/주소/검증 등 비 UI 로직과 상수 정의.
+- **hooks/** – React Query 기반 데이터 훅, 폼 상태 훅 등 재사용 가능한 로직.
 - **public/** – 정적 자산(이미지, 문서). 대규모 데이터 파일은 별도 업로드 후 `.gitignore` 처리.
 - **scripts/** – 데이터 마이그레이션·Supabase 업로드 등 보조 스크립트.
 - **supabase/** – Supabase 프로젝트 설정, SQL 마이그레이션, 정책 스크립트.

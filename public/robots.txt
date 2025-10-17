@@ -1,0 +1,10 @@
+# robots.txt for ArchLegal
+
+User-agent: *
+Disallow: /api/
+Disallow: /supercore/
+Disallow: /auth/
+
+Allow: /
+
+Sitemap: https://www.archlegal.co.kr/sitemap.xml

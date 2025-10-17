@@ -38,11 +38,11 @@ export default async function HistoryLayout({ children }: HistoryLayoutProps) {
   }
 
   const tabs = [
-    { id: 'info', label: '정보수정', href: '/mypage?tab=info' },
-    { id: 'consultations', label: '상담내역', href: '/mypage?tab=consultations' },
+    { id: 'info', label: '정보수정', href: '/mypage/info' },
+    { id: 'consultations', label: '상담내역', href: '/mypage/consultations' },
     { id: 'history', label: '상담내역 상세', href: '/request/history' },
-    { id: 'payments', label: '결제내역', href: '/mypage?tab=payments' }
-  ];
+    { id: 'payments', label: '결제내역', href: '/mypage/payments' }
+  ] as const;
 
   return (
     <main className="min-h-screen bg-background">
@@ -70,17 +70,17 @@ export default async function HistoryLayout({ children }: HistoryLayoutProps) {
               {tabs.map(tab => {
                 const active = tab.id === 'history';
                 return (
-                  <Link key={tab.id} href={tab.href} className="flex-1 md:flex-none">
-                    <button
-                      type="button"
-                      className={`w-full rounded-xl border px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                        active
-                          ? 'border-primary bg-primary text-primary-foreground shadow'
-                          : 'border-border bg-background text-muted-foreground hover:bg-muted/70'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
+                  <Link
+                    key={tab.id}
+                    href={tab.href}
+                    className={`flex-1 rounded-xl border px-4 py-2 text-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex-none ${
+                      active
+                        ? 'border-primary bg-primary text-primary-foreground shadow'
+                        : 'border-border bg-background text-muted-foreground hover:bg-muted/70'
+                    }`}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    {tab.label}
                   </Link>
                 );
               })}
