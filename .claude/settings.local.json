@@ -47,7 +47,9 @@
       "Bash(awk:*)",
       "Bash(pip3 install:*)",
       "Bash(xargs kill:*)",
-      "Bash(export JUSO_API_KEY=\"U01TX0FVVEgyMDI1MDkyOTEwMDY1MjExNjI3NTA=\")"
+      "Bash(export JUSO_API_KEY=\"U01TX0FVVEgyMDI1MDkyOTEwMDY1MjExNjI3NTA=\")",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []

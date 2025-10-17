@@ -63,7 +63,7 @@ type DesireIconKey = (typeof desireItems)[number]['icon'];
 type TimelineIconKey = (typeof timelineItems)[number]['icon'];
 
 // TODO(temporary-review-gate): Remove access gating once external review is complete.
-const ACCESS_PASSWORD = 'superCool!@#';
+const ACCESS_PASSWORD = 'welcome2025!';
 const ACCESS_STORAGE_KEY = 'archlegal:access-granted';
 
 const renderDesireIcon = (type: DesireIconKey) => {
