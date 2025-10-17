@@ -13,6 +13,7 @@ import {
   filterPhoneInput,
   filterEmailInput,
   filterBirthDateInput,
+  isAtLeastAge,
 } from '@/lib/validations/user';
 
 interface SignupFormProps {
@@ -133,6 +134,8 @@ export function SignupForm({ profile, nextPath, fallbackEmail }: SignupFormProps
 
     if (!sanitized.birthDate) {
       consentErrors.birthDate = '생년월일을 입력해주세요.';
+    } else if (!isAtLeastAge(sanitized.birthDate, 14)) {
+      consentErrors.birthDate = '만 14세 이상만 가입할 수 있습니다.';
     }
 
     return { errors: consentErrors, sanitized };

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/user-session';
+import { isAtLeastAge } from '@/lib/validations/user';
 
 const updateProfileSchema = z.object({
   legalName: z.string().trim().min(2, '이름은 2글자 이상 입력해주세요').max(50, '이름은 50글자 이하로 입력해주세요'),
@@ -56,6 +57,10 @@ export async function PUT(request: Request) {
   }
 
   const { legalName, contactPhone, email, birthDate, consentTerms, consentPrivacy } = result.data;
+
+  if (birthDate && !isAtLeastAge(birthDate, 14)) {
+    return NextResponse.json({ error: '만 14세 이상만 가입할 수 있습니다.' }, { status: 400 });
+  }
   const now = new Date().toISOString();
 
   const updatePayload = {
