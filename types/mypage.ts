@@ -24,4 +24,5 @@ export type MyPageContextValue = {
   profile: UserProfile;
   fallbackEmail: string | null;
   consultations: ConsultationSummary[];
+  setProfile: (profile: UserProfile) => void;
 };

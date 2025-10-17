@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +13,7 @@ import {
   validatePhoneInput
 } from '@/lib/validations/user';
 import { useMyPageContext } from '@/components/mypage/MyPageContext';
+import type { UserProfile } from '@/types/profile';
 
 type FormState = {
   legalName: string;
@@ -24,9 +24,13 @@ type FormState = {
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
 
+type UpdateProfileResponse = {
+  profile?: UserProfile;
+  error?: string;
+};
+
 export function MyPageInfoSection() {
-  const router = useRouter();
-  const { profile } = useMyPageContext();
+  const { profile, setProfile } = useMyPageContext();
 
   const initialFormState = useMemo<FormState>(
     () => ({
@@ -47,7 +51,6 @@ export function MyPageInfoSection() {
   useEffect(() => {
     setFormState(initialFormState);
     setErrors({});
-    setSuccessMessage(null);
     setServerError(null);
   }, [initialFormState]);
 
@@ -102,6 +105,12 @@ export function MyPageInfoSection() {
         return;
       }
 
+      if (!validation.data.birthDate) {
+        setErrors(prev => ({ ...prev, birthDate: '생년월일을 입력해주세요.' }));
+        setSubmitting(false);
+        return;
+      }
+
       try {
         const payload: Record<string, unknown> = {
           legalName: validation.data.legalName,
@@ -122,13 +131,17 @@ export function MyPageInfoSection() {
           body: JSON.stringify(payload)
         });
 
+        const data = (await response.json().catch(() => null)) as UpdateProfileResponse | null;
+
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || '회원정보 저장에 실패했습니다.');
+          throw new Error(data?.error || '회원정보 저장에 실패했습니다.');
+        }
+
+        if (data?.profile) {
+          setProfile(data.profile);
         }
 
         setSuccessMessage('회원정보가 저장되었습니다.');
-        router.refresh();
       } catch (_error) {
         const error = _error as Error;
         setServerError(error.message || '회원정보 저장 중 오류가 발생했습니다.');
@@ -136,7 +149,7 @@ export function MyPageInfoSection() {
         setSubmitting(false);
       }
     },
-    [formState.birthDate, formState.contactPhone, formState.email, formState.legalName, router]
+    [formState.birthDate, formState.contactPhone, formState.email, formState.legalName, setProfile]
   );
 
   return (
@@ -177,10 +190,13 @@ export function MyPageInfoSection() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="birthDate">생년월일 (선택)</Label>
+            <Label htmlFor="birthDate" required>
+              생년월일
+            </Label>
             <Input
               id="birthDate"
               type="date"
+              required
               value={formState.birthDate}
               onChange={event => handleChange('birthDate', event.target.value)}
               max={new Date().toISOString().split('T')[0]}
