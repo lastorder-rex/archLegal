@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import clsx from 'clsx';
-import { loadPaymentWidget } from '@tosspayments/payment-widget-sdk';
+import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useMyPageContext } from '@/components/mypage/MyPageContext';
 import { paymentStagesResponseSchema, type PaymentStage } from '@/lib/validations/payment';
 
-type TossPaymentWidget = Awaited<ReturnType<typeof loadPaymentWidget>>;
+type TossPayments = Awaited<ReturnType<typeof loadTossPayments>>;
+type PaymentWidget = Awaited<ReturnType<TossPayments['widgets']>>;
 
 type PaymentOrderState = {
   stageId: string;
@@ -36,7 +37,7 @@ export function MyPagePaymentsSection() {
   const [paymentWidgetLoading, setPaymentWidgetLoading] = useState(false);
   const [paymentWidgetError, setPaymentWidgetError] = useState<string | null>(null);
   const [paymentWidgetOrder, setPaymentWidgetOrder] = useState<PaymentOrderState | null>(null);
-  const paymentWidgetRef = useRef<TossPaymentWidget | null>(null);
+  const paymentWidgetRef = useRef<PaymentWidget | null>(null);
   const activePaymentStageRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -160,13 +161,21 @@ export function MyPagePaymentsSection() {
           });
         }
 
-        const widget = await loadPaymentWidget(clientKey, customerKey);
+        const tossPayments = await loadTossPayments(clientKey);
+        const widget = await tossPayments.widgets({ customerKey });
         paymentWidgetRef.current = widget;
 
-        await widget.renderPaymentMethods(`#payment-widget-${stage.id}`, stage.amount, {
+        // Set payment amount first
+        await widget.setAmount({ value: stage.amount, currency: 'KRW' });
+
+        await widget.renderPaymentMethods({
+          selector: `#payment-widget-${stage.id}`,
           variantKey: 'DEFAULT'
         });
-        await widget.renderAgreement(`#payment-agreement-${stage.id}`);
+        await widget.renderAgreement({
+          selector: `#payment-agreement-${stage.id}`,
+          variantKey: 'AGREEMENT'
+        });
 
         setPaymentWidgetOrder({
           stageId: stage.id,
