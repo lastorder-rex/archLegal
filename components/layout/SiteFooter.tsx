@@ -39,14 +39,22 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm font-medium text-foreground transition-colors hover:text-primary hover:underline"
-                >
-                  개인정보 처리방침
-                </Link>
-                <Link
-                  href="/refund-policy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-foreground transition-colors hover:text-primary hover:underline"
+              >
+                개인정보 처리방침
+              </Link>
+              <Link
+                href="/terms-of-service"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-foreground transition-colors hover:text-primary hover:underline"
+              >
+                이용 약관
+              </Link>
+              <Link
+                href="/refund-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-foreground transition-colors hover:text-primary hover:underline"
                 >
                   환불 정책
                 </Link>

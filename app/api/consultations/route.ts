@@ -6,6 +6,7 @@ import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/u
 import { isValidKoreanPhone, isValidEmail } from '@/lib/validations/user';
 import { getUserNickname } from '@/lib/auth/user-utils';
 import { createFallbackBuildingInfo } from '@/lib/utils/building-info';
+import { consultationsResponseSchema } from '@/lib/validations/consultation';
 
 // Types for request validation
 interface ConsultationRequest {
@@ -298,9 +299,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      consultations: consultations || []
-    });
+    const parsed = consultationsResponseSchema.parse({ consultations: consultations ?? [] });
+
+    return NextResponse.json(parsed);
 
   } catch (error) {
     console.error('Consultation fetch error:', error);

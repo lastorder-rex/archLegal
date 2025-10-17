@@ -42,6 +42,13 @@ export const buildingInfoSchema = z.object({
   rawData: z.any(), // Store full API response
 });
 
+export const storedBuildingInfoSchema = buildingInfoSchema
+  .extend({
+    queryTimestamp: z.string().optional(),
+    rawData: z.any().optional()
+  })
+  .passthrough();
+
 // Main consultation form validation schema
 export const consultationFormSchema = z.object({
   // User information
@@ -110,6 +117,54 @@ export const buildingSearchResultSchema = z.object({
 });
 
 export type BuildingSearchResult = z.infer<typeof buildingSearchResultSchema>;
+
+export const consultationAttachmentSchema = z.object({
+  name: z.string(),
+  storagePath: z.string(),
+  size: z.number().optional(),
+  type: z.string().optional()
+});
+
+export const consultationRecordSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  phone: z.string(),
+  email: z.string().nullable(),
+  address: z.string(),
+  address_detail: z.string().nullable(),
+  address_code: addressCodeSchema,
+  building_info: storedBuildingInfoSchema.nullable().optional(),
+  main_purps: z.string().nullable(),
+  tot_area: z.number().nullable(),
+  plat_area: z.number().nullable(),
+  ground_floor_cnt: z.number().nullable(),
+  message: z.string().nullable(),
+  attachments: z.array(consultationAttachmentSchema).nullable().optional(),
+  created_at: z.string(),
+  is_del: z.enum(['Y', 'N']),
+  deleted_at: z.string().nullable().optional()
+});
+
+export const consultationSummarySchema = consultationRecordSchema.pick({
+  id: true,
+  created_at: true,
+  address: true,
+  address_detail: true,
+  main_purps: true,
+  tot_area: true,
+  plat_area: true,
+  ground_floor_cnt: true,
+  message: true,
+  email: true,
+  phone: true,
+  attachments: true
+});
+
+export const consultationsResponseSchema = z.object({
+  consultations: z.array(consultationRecordSchema)
+});
+
+export type ConsultationRecord = z.infer<typeof consultationRecordSchema>;
 
 /**
  * 상세주소 입력 필터링 - SQL injection 및 XSS 방지

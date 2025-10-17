@@ -3,6 +3,8 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/user-session';
 
+export const dynamic = 'force-dynamic';
+
 // 개발용: 현재 로그인한 사용자 정보 확인
 export async function GET(request: NextRequest) {
   try {

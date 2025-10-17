@@ -8,7 +8,21 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const redirectTo = requestUrl.searchParams.get('next') ?? '/';
-  const safeRedirectPath = redirectTo.startsWith('/') ? redirectTo : '/';
+
+  // Open Redirect 방지: //로 시작하는 경로 차단 및 동일 origin 검증
+  let safeRedirectPath = '/';
+  if (redirectTo.startsWith('/') && !redirectTo.startsWith('//')) {
+    try {
+      // URL 파싱하여 동일 origin인지 검증
+      const redirectUrl = new URL(redirectTo, requestUrl.origin);
+      if (redirectUrl.origin === requestUrl.origin) {
+        safeRedirectPath = redirectUrl.pathname + redirectUrl.search + redirectUrl.hash;
+      }
+    } catch {
+      // URL 파싱 실패 시 기본 경로 사용
+      safeRedirectPath = '/';
+    }
+  }
 
   if (!code) {
     return NextResponse.redirect(new URL(safeRedirectPath, requestUrl.origin));
