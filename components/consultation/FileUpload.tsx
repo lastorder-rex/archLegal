@@ -39,7 +39,6 @@ export default function FileUpload({
 
   // Sync files state with parent whenever it changes
   React.useEffect(() => {
-    console.log('📡 Files state changed, notifying parent:', files);
     onFilesChange(files);
   }, [files, onFilesChange]);
 
@@ -51,8 +50,6 @@ export default function FileUpload({
   // Upload file directly (helper function for auto-upload)
   const uploadFileDirectly = useCallback(async (fileToUpload: AttachmentFile, currentFiles: AttachmentFile[]) => {
     if (disabled || fileToUpload.uploadStatus !== 'pending') return;
-
-    console.log('🚀 Starting upload for:', fileToUpload.name);
 
     // Find the file index
     const fileIndex = currentFiles.findIndex(f => f.id === fileToUpload.id);
@@ -83,8 +80,6 @@ export default function FileUpload({
       }
     );
 
-    console.log('📤 Upload result for', fileToUpload.name, ':', result);
-
     // Update file status - use setFiles with callback to get latest state
     setFiles(prev => {
       const finalFiles = [...prev];
@@ -97,14 +92,12 @@ export default function FileUpload({
             uploadProgress: 100,
             storagePath: result.path
           };
-          console.log('✅ Upload completed:', fileToUpload.name, 'Path:', result.path);
         } else {
           finalFiles[finalFileIndex] = {
             ...finalFiles[finalFileIndex],
             uploadStatus: 'error',
             errorMessage: result.error
           };
-          console.error('❌ Upload failed:', fileToUpload.name, 'Error:', result.error);
         }
       }
       return finalFiles;
@@ -201,8 +194,9 @@ export default function FileUpload({
     const fileToRemove = files.find(f => f.id === fileId);
     if (!fileToRemove) return;
 
-    // If file was uploaded, delete from storage
-    if (fileToRemove.storagePath && consultationId) {
+    // If file was uploaded to storage (including temp_* paths), delete it
+    // This fixes the security issue where temp files were not being cleaned up
+    if (fileToRemove.storagePath) {
       const result = await deleteFile(fileToRemove.storagePath);
       if (!result.success) {
         alert(`파일 삭제 실패: ${result.error}`);
@@ -211,7 +205,7 @@ export default function FileUpload({
     }
 
     updateFiles(files.filter(f => f.id !== fileId));
-  }, [files, updateFiles, disabled, consultationId]);
+  }, [files, updateFiles, disabled]);
 
   // Upload file
   const uploadSingleFile = useCallback(async (fileId: string, filesList?: AttachmentFile[]) => {
