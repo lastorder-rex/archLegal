@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -27,12 +28,27 @@ type MyPageShellProps = {
 export function MyPageShell({ profile, fallbackEmail, consultations, children }: MyPageShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [profileState, setProfileState] = useState(profile);
+
+  useEffect(() => {
+    setProfileState(profile);
+  }, [profile]);
 
   const activeTab: TabId =
     tabs.find(tab => pathname === tab.href || pathname.startsWith(`${tab.href}/`))?.id ?? 'info';
 
+  const contextValue = useMemo(
+    () => ({
+      profile: profileState,
+      fallbackEmail,
+      consultations,
+      setProfile: setProfileState
+    }),
+    [consultations, fallbackEmail, profileState]
+  );
+
   return (
-    <MyPageProvider value={{ profile, fallbackEmail, consultations }}>
+    <MyPageProvider value={contextValue}>
       <main className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">

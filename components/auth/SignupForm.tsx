@@ -129,7 +129,13 @@ export function SignupForm({ profile, nextPath, fallbackEmail }: SignupFormProps
       return { errors: consentErrors, sanitized: null };
     }
 
-    return { errors: consentErrors, sanitized: validationResult.data };
+    const sanitized = validationResult.data;
+
+    if (!sanitized.birthDate) {
+      consentErrors.birthDate = '생년월일을 입력해주세요.';
+    }
+
+    return { errors: consentErrors, sanitized };
   }, [formState]);
 
   const handleSubmit = useCallback(
@@ -231,10 +237,13 @@ export function SignupForm({ profile, nextPath, fallbackEmail }: SignupFormProps
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="birthDate">생년월일 (선택)</Label>
+          <Label htmlFor="birthDate" required>
+            생년월일
+          </Label>
           <Input
             id="birthDate"
             type="date"
+            required
             value={formState.birthDate}
             onChange={event => handleInputChange('birthDate', event.target.value)}
             error={Boolean(errors.birthDate)}

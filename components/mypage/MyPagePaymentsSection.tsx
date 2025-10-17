@@ -33,6 +33,8 @@ export function MyPagePaymentsSection() {
   const { profile, fallbackEmail } = useMyPageContext();
   const queryClient = useQueryClient();
   const [paymentAgreements, setPaymentAgreements] = useState<Record<string, boolean>>({});
+  const [ageConfirmations, setAgeConfirmations] = useState<Record<string, boolean>>({});
+  const [ageErrors, setAgeErrors] = useState<Record<string, string | null>>({});
   const [activePaymentStageId, setActivePaymentStageId] = useState<string | null>(null);
   const [paymentWidgetLoading, setPaymentWidgetLoading] = useState(false);
   const [paymentWidgetError, setPaymentWidgetError] = useState<string | null>(null);
@@ -124,10 +126,95 @@ export function MyPagePaymentsSection() {
     setPaymentAgreements(prev => ({ ...prev, [stageId]: checked }));
   }, []);
 
+  const validateAgeRequirement = useCallback(() => {
+    const birthDateStr = profile.birth_date;
+    if (!birthDateStr) {
+      return {
+        valid: false,
+        message: '생년월일 정보가 없습니다. 마이페이지에서 먼저 입력해주세요.'
+      };
+    }
+
+    const birthDate = new Date(`${birthDateStr}T00:00:00`);
+    if (Number.isNaN(birthDate.getTime())) {
+      return {
+        valid: false,
+        message: '생년월일 형식이 올바르지 않습니다. 마이페이지에서 다시 저장해주세요.'
+      };
+    }
+
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age -= 1;
+    }
+
+    if (age < 14) {
+      return { valid: false, message: '만 14세 이상이 아닙니다.' };
+    }
+
+    return { valid: true, message: null };
+  }, [profile.birth_date]);
+
+  useEffect(() => {
+    setAgeConfirmations({});
+    setAgeErrors({});
+  }, [profile.birth_date]);
+
+  const handleAgeConfirmationToggle = useCallback(
+    (stageId: string, checked: boolean) => {
+      if (!checked) {
+        setAgeConfirmations(prev => ({ ...prev, [stageId]: false }));
+        setAgeErrors(prev => ({ ...prev, [stageId]: null }));
+        return;
+      }
+
+      const result = validateAgeRequirement();
+      if (!result.valid) {
+        setAgeConfirmations(prev => ({ ...prev, [stageId]: false }));
+        setAgeErrors(prev => ({ ...prev, [stageId]: result.message ?? '만 14세 이상 확인에 실패했습니다.' }));
+        return;
+      }
+
+      setAgeErrors(prev => ({ ...prev, [stageId]: null }));
+      setAgeConfirmations(prev => ({ ...prev, [stageId]: true }));
+    },
+    [validateAgeRequirement]
+  );
+
   const handlePaymentStart = useCallback(
     async (stage: PaymentStage) => {
       if (stage.disabled || stage.status === 'locked') {
         return;
+      }
+
+      const requiresAgreement = stage.status === 'awaiting' || stage.status === 'requested';
+      if (requiresAgreement) {
+        const ageConfirmed = ageConfirmations[stage.id] ?? false;
+        const agreementChecked = paymentAgreements[stage.id] ?? false;
+
+        if (!ageConfirmed) {
+          const ageCheck = validateAgeRequirement();
+          setAgeErrors(prev => ({
+            ...prev,
+            [stage.id]: ageCheck.valid ? '만 14세 이상임을 체크한 뒤 진행해주세요.' : ageCheck.message ?? '만 14세 이상이 아닙니다.'
+          }));
+          setPaymentWidgetError(ageCheck.valid ? '만 14세 이상임을 체크해주세요.' : ageCheck.message ?? '만 14세 이상이 아닙니다.');
+          return;
+        } else {
+          setAgeErrors(prev => {
+            if (!prev[stage.id]) return prev;
+            const next = { ...prev };
+            next[stage.id] = null;
+            return next;
+          });
+        }
+
+        if (!agreementChecked) {
+          setPaymentWidgetError('결제 전 안내 사항에 동의해주세요.');
+          return;
+        }
       }
 
       if (!stage.amount || stage.amount <= 0) {
@@ -198,7 +285,15 @@ export function MyPagePaymentsSection() {
         setPaymentWidgetLoading(false);
       }
     },
-    [fallbackEmail, profile.auth_id, profile.email, resetPaymentWidget]
+    [
+      ageConfirmations,
+      paymentAgreements,
+      fallbackEmail,
+      profile.auth_id,
+      profile.email,
+      resetPaymentWidget,
+      validateAgeRequirement
+    ]
   );
 
   const handlePaymentSubmit = useCallback(async () => {
@@ -305,13 +400,16 @@ export function MyPagePaymentsSection() {
           const isDisabled = stage.disabled || stage.status === 'locked';
           const requiresAgreement = stage.status === 'awaiting' || stage.status === 'requested';
           const isAgreed = paymentAgreements[stage.id] ?? false;
+          const isAgeConfirmed = ageConfirmations[stage.id] ?? false;
+          const ageError = ageErrors[stage.id] ?? null;
           const isCurrentStageActive = activePaymentStageId === stage.id;
           const isCurrentStageLoading = paymentWidgetLoading && isCurrentStageActive;
-          const isButtonDisabled = isDisabled || (requiresAgreement && !isAgreed) || isCurrentStageLoading;
+          const isButtonDisabled =
+            isDisabled || (requiresAgreement && (!isAgreed || !isAgeConfirmed)) || isCurrentStageLoading;
           const canSubmitPayment = paymentWidgetOrder?.stageId === stage.id && !paymentWidgetLoading;
           const agreementContent = (
             <>
-              본 결제는 양성화 관련 전문 용역의 단계별 비용 결제임을 이해하고, 제공 범위·금액·환불 규정을 확인했습니다.{' '}
+              본 결제는 양성화 관련 전문 용역의 단계별 비용 결제임을 이해하고, 제공 범위·금액·환불 규정을 확인했습니다.(필수){' '}
               <Link href="/refund-policy" className="text-primary underline underline-offset-2">
                 환불 정책 보기
               </Link>
@@ -365,16 +463,29 @@ export function MyPagePaymentsSection() {
                         : '결제를 진행하면 서비스가 다음 단계로 이동합니다.'}
                   </p>
                   {requiresAgreement ? (
-                    <label className={clsx('flex items-start gap-2 text-xs', isDisabled ? 'opacity-60' : undefined)}>
-                      <input
-                        type="checkbox"
-                        className="mt-0.5 h-4 w-4 rounded border border-border accent-[hsl(var(--border))] focus-visible:outline-none focus-visible:ring-0"
-                        checked={isAgreed}
-                        onChange={event => handlePaymentAgreementToggle(stage.id, event.target.checked)}
-                        disabled={isDisabled}
-                      />
-                      <span className="leading-snug">{agreementContent}</span>
-                    </label>
+                    <div className="flex flex-col gap-2">
+                      <label className={clsx('flex items-start gap-2 text-xs', isDisabled ? 'opacity-60' : undefined)}>
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 h-4 w-4 rounded border border-border accent-[hsl(var(--border))] focus-visible:outline-none focus-visible:ring-0"
+                          checked={isAgeConfirmed}
+                          onChange={event => handleAgeConfirmationToggle(stage.id, event.target.checked)}
+                          disabled={isDisabled}
+                        />
+                        <span className="leading-snug">만 14세 이상입니다.(필수)</span>
+                      </label>
+                      {ageError ? <p className="text-xs text-destructive">{ageError}</p> : null}
+                      <label className={clsx('flex items-start gap-2 text-xs', isDisabled ? 'opacity-60' : undefined)}>
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 h-4 w-4 rounded border border-border accent-[hsl(var(--border))] focus-visible:outline-none focus-visible:ring-0"
+                          checked={isAgreed}
+                          onChange={event => handlePaymentAgreementToggle(stage.id, event.target.checked)}
+                          disabled={isDisabled}
+                        />
+                        <span className="leading-snug">{agreementContent}</span>
+                      </label>
+                    </div>
                   ) : stage.status !== 'paid' ? (
                     <p className={clsx('text-xs leading-snug text-muted-foreground', isDisabled ? 'opacity-60' : undefined)}>
                       {agreementContent}
