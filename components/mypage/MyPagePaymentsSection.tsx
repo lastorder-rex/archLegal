@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useMyPageContext } from '@/components/mypage/MyPageContext';
 import { paymentStagesResponseSchema, type PaymentStage } from '@/lib/validations/payment';
+import { isAtLeastAge } from '@/lib/validations/user';
 
 type TossPayments = Awaited<ReturnType<typeof loadTossPayments>>;
 type PaymentWidget = Awaited<ReturnType<TossPayments['widgets']>>;
@@ -143,14 +144,7 @@ export function MyPagePaymentsSection() {
       };
     }
 
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age -= 1;
-    }
-
-    if (age < 14) {
+    if (!isAtLeastAge(birthDateStr, 14)) {
       return { valid: false, message: '만 14세 이상이 아닙니다.' };
     }
 

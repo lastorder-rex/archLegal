@@ -111,3 +111,26 @@ export function isValidKoreanPhone(phone: string): boolean {
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
+
+export function calculateAge(birthDate: string, referenceDate = new Date()): number | null {
+  const parsedBirthDate = new Date(`${birthDate}T00:00:00`);
+  if (Number.isNaN(parsedBirthDate.getTime())) {
+    return null;
+  }
+
+  let age = referenceDate.getFullYear() - parsedBirthDate.getFullYear();
+  const monthDiff = referenceDate.getMonth() - parsedBirthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && referenceDate.getDate() < parsedBirthDate.getDate())) {
+    age -= 1;
+  }
+
+  return age;
+}
+
+export function isAtLeastAge(birthDate: string, minimumAge: number, referenceDate = new Date()): boolean {
+  const age = calculateAge(birthDate, referenceDate);
+  if (age === null) {
+    return false;
+  }
+  return age >= minimumAge;
+}
