@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import {
   filterBirthDateInput,
@@ -193,13 +194,13 @@ export function MyPageInfoSection() {
             <Label htmlFor="birthDate" required>
               생년월일
             </Label>
-            <Input
+            <DateInput
               id="birthDate"
-              type="date"
               required
               value={formState.birthDate}
-              onChange={event => handleChange('birthDate', event.target.value)}
-              max={new Date().toISOString().split('T')[0]}
+              onChange={date => handleChange('birthDate', date)}
+              maxDate={new Date().toISOString().split('T')[0]}
+              placeholder="YYYY-MM-DD"
             />
             {errors.birthDate ? (
               <p className="text-sm text-destructive">{errors.birthDate}</p>
