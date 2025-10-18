@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 
@@ -191,20 +192,20 @@ export default function ConsultationsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dateFrom">등록일 (시작)</Label>
-              <Input
+              <DateInput
                 id="dateFrom"
-                type="date"
                 value={searchFilters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                onChange={(value) => handleFilterChange('dateFrom', value)}
+                placeholder="YYYY-MM-DD"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="dateTo">등록일 (종료)</Label>
-              <Input
+              <DateInput
                 id="dateTo"
-                type="date"
                 value={searchFilters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                onChange={(value) => handleFilterChange('dateTo', value)}
+                placeholder="YYYY-MM-DD"
               />
             </div>
             <div className="space-y-2">

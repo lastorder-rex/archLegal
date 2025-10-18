@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useMemo, useState, useEffect, useRef } from 're
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import type { UserProfile } from '@/types/profile';
 import {
@@ -243,14 +244,14 @@ export function SignupForm({ profile, nextPath, fallbackEmail }: SignupFormProps
           <Label htmlFor="birthDate" required>
             생년월일
           </Label>
-          <Input
+          <DateInput
             id="birthDate"
-            type="date"
             required
             value={formState.birthDate}
-            onChange={event => handleInputChange('birthDate', event.target.value)}
+            onChange={date => handleInputChange('birthDate', date)}
             error={Boolean(errors.birthDate)}
-            max={new Date().toISOString().split('T')[0]}
+            maxDate={new Date().toISOString().split('T')[0]}
+            placeholder="YYYY-MM-DD"
           />
           {errors.birthDate ? (
             <p className="text-sm text-destructive">{errors.birthDate}</p>
