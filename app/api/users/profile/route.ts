@@ -87,7 +87,11 @@ export async function PUT(request: Request) {
     .single();
 
   if (error) {
-    console.error('Failed to update profile', error);
+    console.error('Failed to update profile', {
+      userId: session.user.id,
+      code: (error as { code?: string }).code ?? null,
+      message: (error as { message?: string }).message ?? 'unknown'
+    });
     return NextResponse.json({ error: '회원정보 저장에 실패했습니다.' }, { status: 500 });
   }
 
