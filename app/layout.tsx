@@ -29,7 +29,10 @@ export const metadata: Metadata = {
   title: '건축물 양성화 전문 플랫폼',
   description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼',
   verification: {
-    google: 'p7WIGZAwCfciOQ_W4f0HIfNk41SWCI7f5uKVBh9HbxA'
+    google: 'p7WIGZAwCfciOQ_W4f0HIfNk41SWCI7f5uKVBh9HbxA',
+    other: {
+      'naver-site-verification': '8ac76bcd8471aa77c7da87ed9490d764716cdd22'
+    }
   },
   icons: {
     icon: [
