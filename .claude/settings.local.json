@@ -49,7 +49,9 @@
       "Bash(xargs kill:*)",
       "Bash(export JUSO_API_KEY=\"U01TX0FVVEgyMDI1MDkyOTEwMDY1MjExNjI3NTA=\")",
       "Bash(git pull:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Read(//Users/kbsc/Library/**)",
+      "Read(//Users/kbsc/.config/claude-code/**)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
+import { paymentStageStatusSchema } from '@/lib/validations/payment';
+import { verifyAdminSession } from '@/lib/utils/admin-auth';
 
 export async function GET(
   request: NextRequest,
@@ -8,41 +9,14 @@ export async function GET(
 ) {
   try {
     const consultationId = params.id;
-    const cookieStore = await cookies();
-    const adminCookie = cookieStore.get('admin_session');
 
-    if (!adminCookie) {
-      return NextResponse.json(
-        { error: '관리자 인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-
-    // Parse admin session
-    let adminId;
-    try {
-      const sessionData = JSON.parse(adminCookie.value);
-      adminId = sessionData.adminId;
-    } catch (e) {
-      // Fallback for old format (just ID string)
-      adminId = adminCookie.value;
+    // 관리자 인증 확인
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     const supabase = getSupabaseAdminClient();
-
-    // Verify admin user exists
-    const { data: adminUser, error: adminError } = await supabase
-      .from('admin_users')
-      .select('id, username')
-      .eq('id', adminId)
-      .single();
-
-    if (adminError || !adminUser) {
-      return NextResponse.json(
-        { error: '관리자 인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
 
     // Get consultation by ID
     const { data: consultation, error: fetchError } = await supabase
@@ -80,8 +54,94 @@ export async function GET(
       );
     }
 
+    const { data: stageTemplates, error: stageTemplateError } = await supabase
+      .from('payment_stage_templates')
+      .select('id, stage_order, code, title, description, default_amount, updated_at')
+      .order('stage_order', { ascending: true });
+
+    if (stageTemplateError) {
+      console.error('Failed to load payment stage templates', stageTemplateError);
+      return NextResponse.json(
+        { error: '결제 단계 정보를 불러올 수 없습니다.' },
+        { status: 500 }
+      );
+    }
+
+    const { data: userStageRows, error: userStagesError } = await supabase
+      .from('user_payment_stages')
+      .select(`
+        id,
+        stage_template_id,
+        status,
+        request_amount,
+        requested_at,
+        requested_by,
+        paid_at,
+        paid_amount,
+        payment_key,
+        updated_at
+      `)
+      .eq('user_id', consultation.user_id);
+
+    if (userStagesError) {
+      console.error('Failed to load user payment stages', userStagesError);
+      return NextResponse.json(
+        { error: '결제 단계 정보를 불러올 수 없습니다.' },
+        { status: 500 }
+      );
+    }
+
+    const stageMap = new Map(
+      (userStageRows ?? []).map(stage => [stage.stage_template_id, stage])
+    );
+
+    const paymentStages = (stageTemplates ?? []).map(template => {
+      const matchedStage = stageMap.get(template.id);
+      const status = matchedStage?.status ?? 'locked';
+      const parsedStatus = paymentStageStatusSchema.safeParse(status);
+
+      const requestAmount =
+        matchedStage && matchedStage.request_amount !== null
+          ? Number(matchedStage.request_amount)
+          : null;
+
+      const paidAmount =
+        matchedStage && matchedStage.paid_amount !== null
+          ? Number(matchedStage.paid_amount)
+          : null;
+
+      const prerequisites = (stageTemplates ?? []).filter(other => other.stage_order < template.stage_order);
+      const prerequisitesPaid = prerequisites.every(other => {
+        const previous = stageMap.get(other.id);
+        return (previous?.status ?? 'locked') === 'paid';
+      });
+      const disabled =
+        parsedStatus.success && parsedStatus.data === 'locked' ? !prerequisitesPaid : false;
+
+      return {
+        id: template.id,
+        stageTemplateId: template.id,
+        stageOrder: template.stage_order,
+        code: template.code,
+        title: template.title,
+        description: template.description ?? null,
+        defaultAmount: template.default_amount !== null ? Number(template.default_amount) : null,
+        status: parsedStatus.success ? parsedStatus.data : 'locked',
+        requestAmount,
+        requestedAt: matchedStage?.requested_at ?? null,
+        requestedBy: matchedStage?.requested_by ?? null,
+        paidAt: matchedStage?.paid_at ?? null,
+        paidAmount,
+        paymentKey: matchedStage?.payment_key ?? null,
+        updatedAt: matchedStage?.updated_at ?? template.updated_at ?? null,
+        nextActionLabel: parsedStatus.success && parsedStatus.data === 'awaiting' ? '결제 진행' : null,
+        disabled
+      };
+    });
+
     return NextResponse.json({
-      consultation
+      consultation,
+      paymentStages
     });
 
   } catch (error) {

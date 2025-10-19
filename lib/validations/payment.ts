@@ -4,10 +4,18 @@ export const paymentStageStatusSchema = z.enum(['locked', 'requested', 'awaiting
 
 export const paymentStageSchema = z.object({
   id: z.string(),
+  stageTemplateId: z.string(),
+  stageOrder: z.number(),
+  code: z.string(),
   title: z.string(),
-  description: z.string(),
-  amount: z.number().nullable(),
+  description: z.string().nullable(),
   status: paymentStageStatusSchema,
+  defaultAmount: z.number().nullable(),
+  requestAmount: z.number().nullable(),
+  requestedAt: z.string().nullable(),
+  paidAt: z.string().nullable(),
+  paidAmount: z.number().nullable(),
+  paymentKey: z.string().nullable().optional(),
   updatedAt: z.string().nullable().optional(),
   nextActionLabel: z.string().nullable().optional(),
   disabled: z.boolean().optional()

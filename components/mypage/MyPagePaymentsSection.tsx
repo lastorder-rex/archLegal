@@ -21,13 +21,10 @@ type PaymentOrderState = {
 };
 
 function createOrderId(stageId: string) {
-  const now = new Date();
-  const timestamp = now
-    .toISOString()
-    .replace(/[-:TZ.]/g, '')
-    .slice(0, 17); // up to milliseconds
-  const random = Math.random().toString(36).slice(-6).toUpperCase();
-  return `ORD-${timestamp}-${stageId}-${random}`;
+  const timePart = Date.now().toString(36).toUpperCase();
+  const stagePart = stageId.replace(/[^A-Z0-9]/gi, '').slice(0, 6).toUpperCase() || 'STAGE';
+  const randomPart = Math.random().toString(36).slice(-6).toUpperCase();
+  return `ORD-${timePart}-${stagePart}-${randomPart}`;
 }
 
 export function MyPagePaymentsSection() {
@@ -211,7 +208,8 @@ export function MyPagePaymentsSection() {
         }
       }
 
-      if (!stage.amount || stage.amount <= 0) {
+      const payableAmount = stage.requestAmount;
+      if (!payableAmount || payableAmount <= 0) {
         setPaymentWidgetError('결제 금액 정보가 없습니다. 담당자에게 문의해주세요.');
         return;
       }
@@ -247,7 +245,7 @@ export function MyPagePaymentsSection() {
         paymentWidgetRef.current = widget;
 
         // Set payment amount first
-        await widget.setAmount({ value: stage.amount, currency: 'KRW' });
+        await widget.setAmount({ value: payableAmount, currency: 'KRW' });
 
         await widget.renderPaymentMethods({
           selector: `#payment-widget-${stage.id}`,
@@ -262,7 +260,7 @@ export function MyPagePaymentsSection() {
           stageId: stage.id,
           orderId: createOrderId(stage.id),
           orderName: stage.title,
-          amount: stage.amount
+          amount: payableAmount
         });
       } catch (_error) {
         const error = _error as { message?: string; code?: string } | Error;
@@ -409,6 +407,7 @@ export function MyPagePaymentsSection() {
               </Link>
             </>
           );
+          const displayAmount = stage.requestAmount ?? null;
 
           return (
             <article
@@ -431,15 +430,21 @@ export function MyPagePaymentsSection() {
                       {statusMeta.text}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">{stage.description}</p>
+                  {stage.description ? (
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">{stage.description}</p>
+                  ) : null}
                 </div>
                 <div className="text-right">
-                  {stage.amount ? (
-                    <p className="text-lg font-semibold text-foreground">{stage.amount.toLocaleString()}원</p>
+                  {displayAmount ? (
+                    <p className="text-lg font-semibold text-foreground">{displayAmount.toLocaleString()}원</p>
                   ) : (
                     <p className="text-sm text-muted-foreground">금액은 관리자 안내 후 활성화됩니다.</p>
                   )}
-                  {stage.updatedAt ? (
+                  {stage.requestedAt ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      요청일: {new Date(stage.requestedAt).toLocaleString('ko-KR')}
+                    </p>
+                  ) : stage.updatedAt ? (
                     <p className="mt-1 text-xs text-muted-foreground">
                       업데이트: {new Date(stage.updatedAt).toLocaleString('ko-KR')}
                     </p>
