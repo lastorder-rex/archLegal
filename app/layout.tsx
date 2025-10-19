@@ -31,7 +31,8 @@ export const metadata: Metadata = {
   verification: {
     google: 'p7WIGZAwCfciOQ_W4f0HIfNk41SWCI7f5uKVBh9HbxA',
     other: {
-      'naver-site-verification': '8ac76bcd8471aa77c7da87ed9490d764716cdd22'
+      'naver-site-verification': '8ac76bcd8471aa77c7da87ed9490d764716cdd22',
+      'msvalidate.01': '918CCA78985C4CF5624C1F2712123FB0'
     }
   },
   icons: {
