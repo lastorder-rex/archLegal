@@ -4,6 +4,55 @@ import bcrypt from 'bcryptjs';
 import speakeasy from 'speakeasy';
 import { createClient } from '@supabase/supabase-js';
 
+const LOGIN_RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const LOGIN_RATE_LIMIT_MAX = 5;
+
+type RateLimitBucket = {
+  count: number;
+  expiresAt: number;
+};
+
+const loginRateLimitStore = new Map<string, RateLimitBucket>();
+
+function pruneExpiredBuckets(now: number) {
+  for (const [key, bucket] of loginRateLimitStore.entries()) {
+    if (bucket.expiresAt <= now) {
+      loginRateLimitStore.delete(key);
+    }
+  }
+}
+
+function checkLoginRateLimit(identifier: string) {
+  const now = Date.now();
+  pruneExpiredBuckets(now);
+
+  const bucket = loginRateLimitStore.get(identifier);
+  if (bucket) {
+    if (bucket.expiresAt > now) {
+      if (bucket.count >= LOGIN_RATE_LIMIT_MAX) {
+        return { limited: true, retryAfter: Math.ceil((bucket.expiresAt - now) / 1000) };
+      }
+      bucket.count += 1;
+      return { limited: false };
+    }
+  }
+
+  loginRateLimitStore.set(identifier, {
+    count: 1,
+    expiresAt: now + LOGIN_RATE_LIMIT_WINDOW_MS
+  });
+
+  return { limited: false };
+}
+
+function getClientIdentifier(request: NextRequest, username?: string) {
+  // Use request.ip only - Next.js already parses this from trusted proxy headers
+  // X-Forwarded-For can be spoofed by attackers to bypass rate limiting
+  const ip = request.ip || 'unknown';
+  const userPart = username ? username.toLowerCase() : 'anonymous';
+  return `${ip}:${userPart}`;
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -21,6 +70,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: '아이디와 비밀번호를 입력해주세요.' },
         { status: 400 }
+      );
+    }
+
+    const rateLimitKey = getClientIdentifier(request, body.username);
+    const rateLimitResult = checkLoginRateLimit(rateLimitKey);
+
+    if (rateLimitResult.limited) {
+      return NextResponse.json(
+        { error: '너무 많은 로그인 시도가 감지되었습니다. 잠시 후 다시 시도해주세요.' },
+        {
+          status: 429,
+          headers: rateLimitResult.retryAfter
+            ? { 'Retry-After': String(rateLimitResult.retryAfter) }
+            : undefined
+        }
       );
     }
 

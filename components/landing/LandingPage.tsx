@@ -620,7 +620,12 @@ export function LandingPage() {
               양성화의 장점과 확실한 절차
             </h2>
             <p className="mt-4 text-base text-slate-700 dark:text-slate-200">
+              ArchLegal은 합법적 해결과 신뢰 기반의 양성화 해결 서비스를 제공하는<br className="hidden sm:inline" />
+              대한민국 양성화 전문 솔루션 플랫폼입니다.
+            </p>
+            <p className="mt-2 text-base text-slate-700 dark:text-slate-200">
               30년 노하우로 진행되는 맞춤 컨설팅과 함께 합법화의 모든 과정을 한 번에 해결하세요.
+
             </p>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -695,6 +700,7 @@ export function LandingPage() {
               <p className="text-lg text-primary-foreground opacity-80">
                 30년 전문가와 함께 안전하게 합법화 하세요. 이행강제금 반복 부과, 공인중개사 건축물대장
                 제시 의무화 등 강화되는 규제 속에서 선제적 대응이 합법화 성공을 좌우합니다.
+
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
                 
