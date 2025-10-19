@@ -27,7 +27,8 @@ import {
   PhoneCall,
   Search,
   ShieldCheck,
-  UserRoundCog
+  UserRoundCog,
+  Newspaper
 } from 'lucide-react';
 import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
@@ -53,10 +54,21 @@ import {
 
 type NavigationItem =
   | { label: string; type: 'modal'; icon?: ReactNode }
+  | { label: string; type: 'link'; href: string; icon?: ReactNode }
   | { label: string; type: 'anchor'; target: string; icon?: ReactNode };
 
 const navigationItems: NavigationItem[] = [
-  { label: '우리의 역할', type: 'modal' as const, icon: <ShieldCheck className="h-4 w-4" aria-hidden /> }
+  {
+    label: '우리의 역할',
+    type: 'modal',
+    icon: <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '언론보도',
+    type: 'link',
+    href: '/press',
+    icon: <Newspaper className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  }
 ];
 
 type DesireIconKey = (typeof desireItems)[number]['icon'];
@@ -329,23 +341,38 @@ export function LandingPage() {
             </a>
             <div className="flex items-center gap-3">
               <nav className="hidden items-center gap-6 text-base font-medium text-white/80 lg:flex">
-                    {navigationItems.map((item) => {
-                      const icon = item.icon;
-                      return item.type === 'modal' ? (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => setAboutModalOpen(true)}
-                      className="flex items-center gap-2 bg-transparent transition hover:text-white focus:outline-none"
-                    >
-                      {icon}
-                      <span>{item.label}</span>
-                    </button>
-                  ) : (
+                {navigationItems.map(item => {
+                  const icon = item.icon;
+                  if (item.type === 'modal') {
+                    return (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => setAboutModalOpen(true)}
+                        className="flex items-center gap-2 bg-transparent transition hover:text-white focus:outline-none"
+                      >
+                        {icon}
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  }
+                  if (item.type === 'link') {
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-2 transition hover:text-white"
+                      >
+                        {icon}
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  }
+                  return (
                     <a
                       key={item.target}
                       href={`#${item.target}`}
-                      onClick={(event) => handleSectionNavigate(event, item.target)}
+                      onClick={event => handleSectionNavigate(event, item.target)}
                       className="flex items-center gap-2 transition hover:text-white"
                     >
                       {icon}
@@ -395,25 +422,41 @@ export function LandingPage() {
                       <SheetTitle>모바일 내비게이션</SheetTitle>
                     </SheetHeader>
                     <nav className="mt-10 flex flex-col gap-6 text-lg font-medium">
-                      {navigationItems.map((item) => {
-                        return item.type === 'modal' ? (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={() => {
-                              setAboutModalOpen(true);
-                              setNavOpen(false);
-                            }}
-                            className="flex items-center gap-3 bg-transparent text-left transition hover:text-primary focus:outline-none"
+                      {navigationItems.map(item => {
+                        if (item.type === 'modal') {
+                          return (
+                            <button
+                              key={item.label}
+                              type="button"
+                              onClick={() => {
+                                setAboutModalOpen(true);
+                                setNavOpen(false);
+                              }}
+                          className="flex items-center gap-3 bg-transparent text-left transition hover:text-primary focus:outline-none"
                           >
-                            <ShieldCheck className="h-6 w-6" aria-hidden />
-                            <span>{item.label}</span>
-                          </button>
-                        ) : (
+                              {item.icon ?? <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />}
+                              <span>{item.label}</span>
+                            </button>
+                          );
+                        }
+                        if (item.type === 'link') {
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setNavOpen(false)}
+                              className="flex items-center gap-3 transition hover:text-primary"
+                            >
+                              {item.icon ?? <Newspaper className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />}
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        }
+                        return (
                           <a
                             key={item.target}
                             href={`#${item.target}`}
-                            onClick={(event) => handleSectionNavigate(event, item.target)}
+                            onClick={event => handleSectionNavigate(event, item.target)}
                             className="flex items-center gap-3 transition hover:text-primary"
                           >
                             {item.icon}

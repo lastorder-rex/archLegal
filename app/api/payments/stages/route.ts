@@ -1,19 +1,13 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { paymentStagesResponseSchema } from '@/lib/validations/payment';
-import { isUserSessionExpired, createExpiredSessionResponse } from '@/lib/auth/user-session';
+import { paymentStageStatusSchema, paymentStagesResponseSchema } from '@/lib/validations/payment';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
-
-    if (isUserSessionExpired(cookieStore)) {
-      return createExpiredSessionResponse('세션이 만료되었습니다. 다시 로그인해주세요.');
-    }
-
+    // Supabase 세션으로 통일 (이중 검증 제거)
     const supabase = createRouteHandlerClient({ cookies });
     const {
       data: { session },
@@ -21,44 +15,72 @@ export async function GET() {
     } = await supabase.auth.getSession();
 
     if (sessionError || !session?.user) {
-      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+      return NextResponse.json({ error: '세션이 만료되었습니다. 다시 로그인해주세요.' }, { status: 401 });
     }
 
-    const { data: latestConsultation } = await supabase
-      .from('consultations')
-      .select('id, created_at')
-      .eq('user_id', session.user.id)
-      .eq('is_del', 'N')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: stageTemplates, error: stageTemplateError } = await supabase
+      .from('payment_stage_templates')
+      .select('id, stage_order, code, title, description, default_amount, updated_at')
+      .order('stage_order', { ascending: true });
 
-    const stages = [
-      {
-        id: 'stage-site-survey',
-        title: '1단계 · 현장 답사 및 상담 비용',
-        description:
-          '현장 답사를 위한 기본 상담 수수료를 결제해주세요. 결제가 완료되어야 일정 조율이 진행됩니다.',
-        amount: 88000,
-        status: 'awaiting' as const,
-        updatedAt: latestConsultation?.created_at ?? null,
-        nextActionLabel: '결제 진행'
-      },
-      {
-        id: 'stage-legalization',
-        title: '2단계 · 양성화 대행 서비스',
-        description:
-          '양성화 대행 계약이 확정되면 관리자가 결제를 활성화합니다. 활성화 전까지는 준비 상태로 표시됩니다.',
-        amount: null,
-        status: 'locked' as const,
-        disabled: true,
-        nextActionLabel: '관리자 승인 대기'
-      }
-    ];
+    if (stageTemplateError) {
+      console.error('[payments/stages] failed to load templates', stageTemplateError);
+      return NextResponse.json({ error: '결제 단계 정보를 불러올 수 없습니다.' }, { status: 500 });
+    }
 
-    const parsed = paymentStagesResponseSchema.parse({ stages });
+    const { data: userStageRows, error: userStagesError } = await supabase
+      .from('user_payment_stages')
+      .select('stage_template_id, status, request_amount, requested_at, paid_at, paid_amount, payment_key, updated_at')
+      .eq('user_id', session.user.id);
 
-    return NextResponse.json(parsed);
+    if (userStagesError) {
+      console.error('[payments/stages] failed to load user stages', userStagesError);
+      return NextResponse.json({ error: '결제 단계 정보를 불러올 수 없습니다.' }, { status: 500 });
+    }
+
+    const stageMap = new Map((userStageRows ?? []).map(row => [row.stage_template_id, row]));
+
+    const stages = (stageTemplates ?? []).map(template => {
+      const matched = stageMap.get(template.id);
+      const rawStatus = matched?.status ?? 'locked';
+      const parsedStatus = paymentStageStatusSchema.safeParse(rawStatus);
+      const status = parsedStatus.success ? parsedStatus.data : 'locked';
+
+      const previousStages = (stageTemplates ?? []).filter(item => item.stage_order < template.stage_order);
+      const prerequisitesPaid = previousStages.every(item => {
+        const previous = stageMap.get(item.id);
+        return (previous?.status ?? 'locked') === 'paid';
+      });
+
+      const disabled = status === 'locked' ? !prerequisitesPaid : false;
+      const nextActionLabel = status === 'awaiting' ? '결제 진행' : null;
+
+      const requestAmount = matched && matched.request_amount !== null ? Number(matched.request_amount) : null;
+      const paidAmount = matched && matched.paid_amount !== null ? Number(matched.paid_amount) : null;
+
+      return {
+        id: template.id,
+        stageTemplateId: template.id,
+        stageOrder: template.stage_order,
+        code: template.code,
+        title: template.title,
+        description: template.description ?? null,
+        defaultAmount: template.default_amount !== null ? Number(template.default_amount) : null,
+        status,
+        requestAmount,
+        requestedAt: matched?.requested_at ?? null,
+        paidAt: matched?.paid_at ?? null,
+        paidAmount,
+        paymentKey: matched?.payment_key ?? null,
+        updatedAt: matched?.updated_at ?? template.updated_at ?? null,
+        nextActionLabel,
+        disabled
+      };
+    });
+
+    const payload = paymentStagesResponseSchema.parse({ stages });
+
+    return NextResponse.json(payload);
   } catch (error) {
     console.error('[payments/stages] fetch error', error);
     return NextResponse.json(

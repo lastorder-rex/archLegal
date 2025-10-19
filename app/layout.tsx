@@ -28,6 +28,9 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.archlegal.co.kr'),
   title: '건축물 양성화 전문 플랫폼',
   description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼',
+  verification: {
+    google: 'p7WIGZAwCfciOQ_W4f0HIfNk41SWCI7f5uKVBh9HbxA'
+  },
   icons: {
     icon: [
       { url: '/docu/archlegal-fa.ico', rel: 'icon', sizes: 'any' },
@@ -50,8 +53,8 @@ export const metadata: Metadata = {
     title: 'ArchLegal - 건축물 양성화 전문 플랫폼',
     description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼',
     images: ['https://www.archlegal.co.kr/docu/archlegal-og.png']
-  }, 
-  
+  },
+
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
