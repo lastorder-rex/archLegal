@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
@@ -31,6 +32,7 @@ type UpdateProfileResponse = {
 };
 
 export function MyPageInfoSection() {
+  const router = useRouter();
   const { profile, setProfile } = useMyPageContext();
 
   const initialFormState = useMemo<FormState>(
@@ -142,6 +144,7 @@ export function MyPageInfoSection() {
           setProfile(data.profile);
         }
 
+        router.refresh();
         setSuccessMessage('회원정보가 저장되었습니다.');
       } catch (_error) {
         const error = _error as Error;
@@ -150,7 +153,7 @@ export function MyPageInfoSection() {
         setSubmitting(false);
       }
     },
-    [formState.birthDate, formState.contactPhone, formState.email, formState.legalName, setProfile]
+    [formState.birthDate, formState.contactPhone, formState.email, formState.legalName, router, setProfile]
   );
 
   return (

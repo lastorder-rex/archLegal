@@ -6,6 +6,8 @@ import { MyPageShell } from '@/components/mypage/MyPageShell';
 import type { ConsultationSummary } from '@/types/mypage';
 import type { UserProfile } from '@/types/profile';
 
+export const revalidate = 0;
+
 type MyPageLayoutProps = {
   children: React.ReactNode;
 };
