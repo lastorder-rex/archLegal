@@ -19,7 +19,7 @@ export const KAKAO_PROPERTY_KEYS = [
   'kakao_account.phone_number',
   'kakao_account.birthday',
   'kakao_account.birthyear'
-];
+] as const;
 
 function getNestedObject(source: KakaoMetadata | null | undefined, key: string): KakaoMetadata | null {
   if (!source) return null;
@@ -150,32 +150,70 @@ export function normalizeBirthDateFromYearDay(year: string | null, day: string |
   return isValidIsoDate(candidate) ? candidate : null;
 }
 
-function collectSources(...sourcesInput: Array<KakaoMetadata | null | undefined>): KakaoMetadata[] {
-  const sources: KakaoMetadata[] = [];
+const KAKAO_ACCOUNT_INDICATOR_KEYS = [
+  'has_email',
+  'email_needs_agreement',
+  'is_email_valid',
+  'name_needs_agreement',
+  'birthyear_needs_agreement',
+  'birthday_needs_agreement',
+  'legal_name_needs_agreement',
+  'profile_needs_agreement',
+  'profile_image_needs_agreement',
+  'profile_nickname_needs_agreement'
+] as const;
+
+function isLikelyKakaoAccount(source: KakaoMetadata): boolean {
+  return KAKAO_ACCOUNT_INDICATOR_KEYS.some(key => key in source);
+}
+
+type CollectedKakaoSources = {
+  accounts: KakaoMetadata[];
+  profiles: KakaoMetadata[];
+  properties: KakaoMetadata[];
+  others: KakaoMetadata[];
+  combined: KakaoMetadata[];
+};
+
+function collectKakaoSources(...sourcesInput: Array<KakaoMetadata | null | undefined>): CollectedKakaoSources {
+  const seen = new Set<KakaoMetadata>();
+  const accounts: KakaoMetadata[] = [];
+  const profiles: KakaoMetadata[] = [];
+  const properties: KakaoMetadata[] = [];
+  const others: KakaoMetadata[] = [];
+
+  const addSource = (collection: KakaoMetadata[], source: KakaoMetadata | null) => {
+    if (!source || seen.has(source)) return;
+    seen.add(source);
+    collection.push(source);
+  };
 
   for (const input of sourcesInput) {
     if (!input) continue;
-    sources.push(input);
+
+    if (isLikelyKakaoAccount(input)) {
+      addSource(accounts, input);
+    } else {
+      addSource(others, input);
+    }
 
     const kakaoAccount = getNestedObject(input, 'kakao_account');
+    addSource(accounts, kakaoAccount);
+
     if (kakaoAccount) {
-      sources.push(kakaoAccount);
-      const kakaoProfile = getNestedObject(kakaoAccount, 'profile');
-      if (kakaoProfile) {
-        sources.push(kakaoProfile);
-      }
+      addSource(profiles, getNestedObject(kakaoAccount, 'profile'));
     }
 
-    const properties = getNestedObject(input, 'properties');
-    if (properties) {
-      sources.push(properties);
-    }
+    addSource(profiles, getNestedObject(input, 'profile'));
+    addSource(properties, getNestedObject(input, 'properties'));
   }
 
-  return sources;
+  const combined = [...accounts, ...profiles, ...properties, ...others];
+
+  return { accounts, profiles, properties, others, combined };
 }
 
-function pickFirstString(sources: KakaoMetadata[], keys: string[]): string | null {
+function pickFirstString(sources: KakaoMetadata[], keys: readonly string[]): string | null {
   for (const source of sources) {
     for (const key of keys) {
       const value = source[key];
@@ -189,25 +227,26 @@ function pickFirstString(sources: KakaoMetadata[], keys: string[]): string | nul
 export function extractKakaoProfile(
   ...sourcesInput: Array<KakaoMetadata | null | undefined>
 ) {
-  const sources = collectSources(...sourcesInput);
+  const { combined, accounts } = collectKakaoSources(...sourcesInput);
 
   const phone = normalizeKakaoPhone(
-    pickFirstString(sources, ['phone_number', 'phoneNumber', 'phone', 'contact_phone'])
+    pickFirstString(combined, ['phone_number', 'phoneNumber', 'phone', 'contact_phone'])
   );
 
   const directBirthDate = normalizeBirthDate(
-    pickFirstString(sources, ['birth_date', 'birthdate', 'birthday_full'])
+    pickFirstString(combined, ['birth_date', 'birthdate', 'birthday_full'])
   );
   const birthDate =
     directBirthDate ??
     normalizeBirthDateFromYearDay(
-      pickFirstString(sources, ['birthyear', 'birth_year', 'birthYear']),
-      pickFirstString(sources, ['birthday', 'birth_day', 'birthDay'])
+      pickFirstString(combined, ['birthyear', 'birth_year', 'birthYear']),
+      pickFirstString(combined, ['birthday', 'birth_day', 'birthDay'])
     );
 
+  // kakao_account.name (실명) 우선, 없으면 nickname
   const legalName =
-    pickFirstString(sources, ['legal_name', 'legalName', 'name', 'full_name']) ??
-    pickFirstString(sources, ['profile_nickname', 'nickname']);
+    pickFirstString(accounts, ['name', 'legal_name', 'legalName', 'full_name']) ??
+    pickFirstString(combined, ['profile_nickname', 'nickname']);
 
   return {
     legalName,
@@ -219,10 +258,11 @@ export function extractKakaoProfile(
 export function extractKakaoNameFallback(
   ...sourcesInput: Array<KakaoMetadata | null | undefined>
 ) {
-  const sources = collectSources(...sourcesInput);
+  const { combined, accounts } = collectKakaoSources(...sourcesInput);
+  // kakao_account.name (실명) 우선, 없으면 nickname
   return (
-    pickFirstString(sources, ['legal_name', 'legalName', 'name', 'full_name']) ??
-    pickFirstString(sources, ['profile_nickname', 'nickname'])
+    pickFirstString(accounts, ['name', 'legal_name', 'legalName', 'full_name']) ??
+    pickFirstString(combined, ['profile_nickname', 'nickname'])
   );
 }
 
