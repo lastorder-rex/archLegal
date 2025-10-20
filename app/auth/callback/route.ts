@@ -13,6 +13,15 @@ import {
 import { setUserSessionCookie } from '@/lib/auth/user-session';
 import { createSupabaseAdminClient } from '../../../supabase/admin';
 
+const pickFirstString = (...values: Array<string | null | undefined>): string | null => {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return null;
+};
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
@@ -58,6 +67,7 @@ export async function GET(request: Request) {
       const kakaoApiProfile = providerAccessToken
         ? await fetchKakaoUserProfile(providerAccessToken)
         : null;
+      const kakaoAccount = kakaoApiProfile?.kakao_account ?? null;
       if (process.env.NODE_ENV !== 'production') {
         console.log('Kakao API profile response:', JSON.stringify(kakaoApiProfile, null, 2));
       }
@@ -65,10 +75,10 @@ export async function GET(request: Request) {
         metadata,
         identityData,
         kakaoApiProfile ?? undefined,
-        kakaoApiProfile?.kakao_account
+        kakaoAccount ?? undefined
       );
-      const rawBirthyear = getKakaoString(kakaoApiProfile?.kakao_account?.birthyear);
-      const rawBirthday = getKakaoString(kakaoApiProfile?.kakao_account?.birthday);
+      const rawBirthyear = getKakaoString(kakaoAccount?.birthyear);
+      const rawBirthday = getKakaoString(kakaoAccount?.birthday);
       const kakaoBirthDate = birthDate ?? combineBirthDate(rawBirthyear, rawBirthday);
       if (process.env.NODE_ENV !== 'production') {
         console.log('Extracted Kakao profile:', {
@@ -79,13 +89,15 @@ export async function GET(request: Request) {
           rawBirthday
         });
       }
-      const fullName =
-        getKakaoString(user.user_metadata?.name) ??
-        getKakaoString(user.user_metadata?.full_name) ??
-        legalName ??
-        getKakaoString(user.email) ??
-        null;
-      const normalizedPhone = kakaoPhone ?? normalizeKakaoPhone(getKakaoString(user.phone)) ?? null;
+      // 카카오 실명(name)을 최우선으로 사용
+      const fullName = pickFirstString(
+        legalName,
+        getKakaoString(user.user_metadata?.name),
+        getKakaoString(user.user_metadata?.full_name),
+        getKakaoString(user.email)
+      );
+      const normalizedPhone =
+        kakaoPhone ?? normalizeKakaoPhone(getKakaoString(user.phone)) ?? null;
 
       const upsertPayload: Record<string, unknown> = {
         auth_id: user.id,
@@ -117,8 +129,9 @@ export async function GET(request: Request) {
       if (profileData) {
         const updates: Record<string, unknown> = {};
 
-        if (!profileData.contact_phone && (kakaoPhone ?? normalizedPhone)) {
-          updates.contact_phone = kakaoPhone ?? normalizedPhone;
+        const preferredPhone = kakaoPhone ?? normalizedPhone;
+        if (!profileData.contact_phone && preferredPhone) {
+          updates.contact_phone = preferredPhone;
         }
 
         if (!profileData.legal_name && legalName) {
