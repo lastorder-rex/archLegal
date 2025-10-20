@@ -1,4 +1,5 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -94,6 +95,10 @@ export async function PUT(request: Request) {
     });
     return NextResponse.json({ error: '회원정보 저장에 실패했습니다.' }, { status: 500 });
   }
+
+  revalidatePath('/mypage');
+  revalidatePath('/mypage/info');
+  revalidatePath('/request');
 
   return NextResponse.json({ profile: data });
 }
