@@ -33,7 +33,14 @@ export function LoginModal({ open, onClose, nextPath }: LoginModalProps) {
         options: {
           redirectTo: `${cleanOrigin}/auth/callback?next=${encodedNext}`,
           queryParams: {
-            scope: 'account_email'
+            scope: [
+              'account_email',
+              'phone_number',
+              'name',
+              'birthday',
+              'birthyear'
+            ].join(' '),
+            prompt: 'consent'
           }
         }
       });
