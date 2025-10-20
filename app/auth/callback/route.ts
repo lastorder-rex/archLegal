@@ -1,6 +1,15 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import {
+  combineBirthDate,
+  extractKakaoProfile,
+  fetchKakaoUserProfile,
+  getKakaoString,
+  KakaoMetadata,
+  normalizeKakaoPhone,
+  parseKakaoIdentityData
+} from '@/lib/auth/kakao-profile';
 import { setUserSessionCookie } from '@/lib/auth/user-session';
 import { createSupabaseAdminClient } from '../../../supabase/admin';
 
@@ -31,46 +40,99 @@ export async function GET(request: Request) {
   const supabase = createRouteHandlerClient({ cookies });
   await supabase.auth.exchangeCodeForSession(code);
 
+  const { data: sessionData } = await supabase.auth.getSession();
+  const providerAccessToken = sessionData.session?.provider_token ?? null;
+
   const {
     data: { user }
   } = await supabase.auth.getUser();
 
   if (user) {
+    const metadata = (user.user_metadata ?? null) as KakaoMetadata | null;
     try {
       const admin = createSupabaseAdminClient();
+      const rawIdentityData = user.identities?.find(
+        identity => identity.provider === 'kakao'
+      )?.identity_data;
+      const identityData = parseKakaoIdentityData(rawIdentityData);
+      const kakaoApiProfile = providerAccessToken
+        ? await fetchKakaoUserProfile(providerAccessToken)
+        : null;
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Kakao API profile response:', JSON.stringify(kakaoApiProfile, null, 2));
+      }
+      const { legalName, phone: kakaoPhone, birthDate } = extractKakaoProfile(
+        metadata,
+        identityData,
+        kakaoApiProfile ?? undefined,
+        kakaoApiProfile?.kakao_account
+      );
+      const rawBirthyear = getKakaoString(kakaoApiProfile?.kakao_account?.birthyear);
+      const rawBirthday = getKakaoString(kakaoApiProfile?.kakao_account?.birthday);
+      const kakaoBirthDate = birthDate ?? combineBirthDate(rawBirthyear, rawBirthday);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Extracted Kakao profile:', {
+          legalName,
+          kakaoPhone,
+          birthDate: kakaoBirthDate,
+          rawBirthyear,
+          rawBirthday
+        });
+      }
       const fullName =
-        (user.user_metadata?.name as string | undefined) ||
-        (user.user_metadata?.full_name as string | undefined) ||
-        user.email ||
+        getKakaoString(user.user_metadata?.name) ??
+        getKakaoString(user.user_metadata?.full_name) ??
+        legalName ??
+        getKakaoString(user.email) ??
         null;
-      const phone =
-        (user.user_metadata?.phone_number as string | undefined) ||
-        user.phone ||
-        null;
+      const normalizedPhone = kakaoPhone ?? normalizeKakaoPhone(getKakaoString(user.phone)) ?? null;
 
-      await admin
-        .from('users')
-        .upsert(
-          {
-            auth_id: user.id,
-            email: user.email,
-            full_name: fullName,
-            phone
-          },
-          { onConflict: 'auth_id' }
-        );
+      const upsertPayload: Record<string, unknown> = {
+        auth_id: user.id,
+        email: user.email,
+        full_name: fullName,
+        phone: normalizedPhone
+      };
+      if (legalName) {
+        upsertPayload.legal_name = legalName;
+      }
+      if (kakaoBirthDate) {
+        upsertPayload.birth_date = kakaoBirthDate;
+      }
 
-      const { data: profileData } = await admin
+      await admin.from('users').upsert(upsertPayload, { onConflict: 'auth_id' });
+
+      const profileResult = await admin
         .from('users')
         .select(
           'auth_id, profile_completed, contact_phone, legal_name, profile_completed_at, consent_terms_at, consent_privacy_at, birth_date'
         )
         .eq('auth_id', user.id)
         .single();
+      if (profileResult.error) {
+        console.error('Failed to load profile for updates', profileResult.error);
+      }
+      let profileData = profileResult.data;
 
-      if (profileData && !profileData.contact_phone && phone) {
-        await admin.from('users').update({ contact_phone: phone }).eq('auth_id', user.id);
-        profileData.contact_phone = phone;
+      if (profileData) {
+        const updates: Record<string, unknown> = {};
+
+        if (!profileData.contact_phone && (kakaoPhone ?? normalizedPhone)) {
+          updates.contact_phone = kakaoPhone ?? normalizedPhone;
+        }
+
+        if (!profileData.legal_name && legalName) {
+          updates.legal_name = legalName;
+        }
+
+        if (!profileData.birth_date && kakaoBirthDate) {
+          updates.birth_date = kakaoBirthDate;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await admin.from('users').update(updates).eq('auth_id', user.id);
+          profileData = { ...profileData, ...updates };
+        }
       }
 
       const profileCompleted = profileData?.profile_completed ?? false;
