@@ -5,6 +5,13 @@ import { SignupForm } from '@/components/auth/SignupForm';
 import type { UserProfile } from '@/types/profile';
 import { isUserSessionExpired } from '@/lib/auth/user-session';
 import { sanitizeRedirectPath } from '@/lib/utils/navigation';
+import {
+  extractKakaoProfile,
+  getKakaoString,
+  KakaoMetadata,
+  normalizeKakaoPhone,
+  parseKakaoIdentityData
+} from '@/lib/auth/kakao-profile';
 
 export const revalidate = 0;
 
@@ -41,19 +48,41 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     .eq('auth_id', session.user.id)
     .maybeSingle();
 
+  const metadata = (session.user.user_metadata ?? null) as KakaoMetadata | null;
+  const rawIdentityData = session.user.identities?.find(identity => identity.provider === 'kakao')
+    ?.identity_data;
+  const identityData = parseKakaoIdentityData(rawIdentityData);
+  const { legalName: kakaoLegalName, phone: kakaoPhone, birthDate: kakaoBirthDate } = extractKakaoProfile(
+    metadata,
+    identityData
+  );
+
+  const fallbackEmail = profileRow?.email ?? session.user.email ?? null;
+  const fallbackFullName =
+    profileRow?.full_name ??
+    kakaoLegalName ??
+    getKakaoString(metadata?.['name']) ??
+    getKakaoString(metadata?.['full_name']) ??
+    (fallbackEmail ? fallbackEmail.split('@')[0] : null);
+  const sessionPhone = normalizeKakaoPhone(getKakaoString(session.user.phone));
+  const fallbackPhone = profileRow?.phone ?? kakaoPhone ?? sessionPhone ?? null;
+  const fallbackLegalName = profileRow?.legal_name ?? kakaoLegalName ?? null;
+  const fallbackContactPhone = profileRow?.contact_phone ?? kakaoPhone ?? fallbackPhone ?? null;
+  const fallbackBirthDate = profileRow?.birth_date ?? kakaoBirthDate ?? null;
+
   const profile: UserProfile = {
     auth_id: session.user.id,
-    full_name: profileRow?.full_name ?? null,
-    email: profileRow?.email ?? session.user.email ?? null,
-    phone: profileRow?.phone ?? session.user.phone ?? null,
-    legal_name: profileRow?.legal_name ?? null,
-    contact_phone: profileRow?.contact_phone ?? null,
+    full_name: fallbackFullName,
+    email: fallbackEmail,
+    phone: fallbackPhone,
+    legal_name: fallbackLegalName,
+    contact_phone: fallbackContactPhone,
     profile_completed: profileRow?.profile_completed ?? false,
     profile_completed_at: profileRow?.profile_completed_at ?? null,
     consent_terms_at: profileRow?.consent_terms_at ?? null,
     consent_privacy_at: profileRow?.consent_privacy_at ?? null,
     contact_phone_verified_at: profileRow?.contact_phone_verified_at ?? null,
-    birth_date: profileRow?.birth_date ?? null
+    birth_date: fallbackBirthDate
   };
 
   return (
@@ -65,7 +94,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             상담 신청 전에 실명과 연락처를 확인하고 필수 동의 항목을 완료해주세요.
           </p>
         </header>
-        <SignupForm profile={profile} nextPath={nextPath} fallbackEmail={session.user.email ?? null} />
+        <SignupForm profile={profile} nextPath={nextPath} fallbackEmail={fallbackEmail} />
       </div>
     </main>
   );
