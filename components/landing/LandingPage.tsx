@@ -136,7 +136,6 @@ export function LandingPage() {
   const pendingActionRef = useRef<(() => void) | null>(null);
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const procedureGuideUrl = useMemo(() => encodeURI('/docu/양성화 절차 안내.pdf'), []);
   // TODO(daily-notice): Remove once service notice popup is no longer needed.
   const isDailyNoticeEnabled = process.env.NEXT_PUBLIC_DAILY_NOTICE_ENABLED === 'true';
 
@@ -237,14 +236,6 @@ export function LandingPage() {
     }
   }, [isDailyNoticeEnabled]);
 
-  const handleDownloadGuide = useCallback(() => {
-    const link = document.createElement('a');
-    link.href = procedureGuideUrl;
-    link.download = '양성화 절차 안내.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }, [procedureGuideUrl]);
 
   const handleSectionNavigate = useCallback(
     (event: MouseEvent<HTMLAnchorElement>, targetId: string) => {
@@ -522,8 +513,8 @@ export function LandingPage() {
               <CTAButton className="sm:w-auto" onClick={() => requestAccess(() => setModalOpen(true))}>
                 무료 상담 신청
               </CTAButton>
-              <CTAButton tone="secondary" className="sm:w-auto" onClick={handleDownloadGuide}>
-                절차 자세히 보기
+              <CTAButton tone="secondary" className="sm:w-auto" asChild>
+                <Link href="/procedure">절차 자세히 보기</Link>
               </CTAButton>
             </div>
           </div>

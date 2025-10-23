@@ -148,6 +148,8 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
     // Clear building info when address changes
     setBuildingInfo(null);
 
+    // 2025-10-23: 건축물 대장 자동 조회 기능 비활성화 (당분간 미사용)
+    /*
     // Auto-fetch building information
     setIsBuildingLoading(true);
     try {
@@ -180,6 +182,7 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
     } finally {
       setIsBuildingLoading(false);
     }
+    */
   }, []);
 
   const handleOpenRoadview = useCallback((provider: 'kakao' | 'naver') => {
@@ -393,6 +396,8 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
         onOpenAddressModal={() => setIsAddressModalOpen(true)}
       />
 
+      {/* 2025-10-23: 건축물 정보 섹션 비활성화 (당분간 미사용) */}
+      {/*
       <BuildingInfoSection
         selectedAddress={selectedAddress}
         buildingInfo={buildingInfo}
@@ -400,6 +405,7 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
         errors={errors}
         onOpenRoadview={handleOpenRoadview}
       />
+      */}
 
       <MessageSection
         formData={formData}
