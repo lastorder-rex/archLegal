@@ -50,6 +50,7 @@ export async function POST(
       .from('payment_stage_templates')
       .select('id, stage_order, code, title, description, default_amount')
       .eq('id', body.stageTemplateId)
+      .eq('is_use', 'Y')
       .single();
 
     if (stageTemplateError || !stageTemplate) {
@@ -62,6 +63,7 @@ export async function POST(
     const { data: stageTemplates, error: stageTemplatesError } = await supabase
       .from('payment_stage_templates')
       .select('id, stage_order')
+      .eq('is_use', 'Y')
       .order('stage_order', { ascending: true });
 
     if (stageTemplatesError) {
@@ -279,6 +281,7 @@ export async function DELETE(
       .from('payment_stage_templates')
       .select('id, stage_order, code, title, description, default_amount')
       .eq('id', body.stageTemplateId)
+      .eq('is_use', 'Y')
       .single();
 
     if (stageTemplateError || !stageTemplate) {

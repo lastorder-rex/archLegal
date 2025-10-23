@@ -57,6 +57,7 @@ export async function GET(
     const { data: stageTemplates, error: stageTemplateError } = await supabase
       .from('payment_stage_templates')
       .select('id, stage_order, code, title, description, default_amount, updated_at')
+      .eq('is_use', 'Y')
       .order('stage_order', { ascending: true });
 
     if (stageTemplateError) {

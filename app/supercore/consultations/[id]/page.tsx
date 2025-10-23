@@ -402,7 +402,7 @@ export default function ConsultationDetailPage() {
         </div>
 
         {/* 건축물 정보 */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+        {/* <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
           <h2 className="text-xl font-semibold text-slate-900 mb-4">건축물 정보</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -428,7 +428,7 @@ export default function ConsultationDetailPage() {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* 상담 내용 */}
         {consultation.message && (

@@ -9,10 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Download, FileText, X } from 'lucide-react';
 import { getFileUrl, getFileIcon, formatFileSize, AttachmentFile } from '@/lib/utils/file-upload';
 import FileUpload from '@/components/consultation/FileUpload';
-import { BuildingInfoDisplay } from '@/components/consultation/BuildingInfoDisplay';
+// import { BuildingInfoDisplay } from '@/components/consultation/BuildingInfoDisplay';
 import type { ConsultationRecord as ConsultationRecordType } from '@/lib/validations/consultation';
 import {
-  BuildingSearchResult,
+  // BuildingSearchResult,
   consultationRecordSchema,
   filterMessageInput
 } from '@/lib/validations/consultation';
@@ -29,7 +29,7 @@ interface EditFormState {
   attachments: ConsultationAttachment[];
 }
 
-function createBuildingDisplay(record: ConsultationRecord): BuildingSearchResult | null {
+/* function createBuildingDisplay(record: ConsultationRecord): BuildingSearchResult | null {
   const info = record.building_info;
   if (!info) {
     return null;
@@ -104,7 +104,7 @@ function createBuildingDisplay(record: ConsultationRecord): BuildingSearchResult
       households
     }
   };
-}
+} */
 
 export default function ConsultationHistoryPage() {
   const router = useRouter();
@@ -455,9 +455,9 @@ export default function ConsultationHistoryPage() {
           {recordsToDisplay.map(record => {
             const isEditing = editingId === record.id;
             const createdAt = new Date(record.created_at);
-            const rawData = record.building_info?.rawData as { status?: string } | null;
-            const isBuildingUnavailable = rawData && typeof rawData === 'object' && rawData.status === 'UNAVAILABLE';
-            const buildingInfoForDisplay = createBuildingDisplay(record);
+            // const rawData = record.building_info?.rawData as { status?: string } | null;
+            // const isBuildingUnavailable = rawData && typeof rawData === 'object' && rawData.status === 'UNAVAILABLE';
+            // const buildingInfoForDisplay = createBuildingDisplay(record);
 
             return (
               <div key={record.id} className="border border-border rounded-lg p-5 space-y-4 bg-card shadow-md">
@@ -497,7 +497,7 @@ export default function ConsultationHistoryPage() {
                   </div>
                 </div>
 
-                {buildingInfoForDisplay ? (
+                {/* {buildingInfoForDisplay ? (
                   <div className="rounded-lg border border-border bg-muted/20 p-4">
                     <BuildingInfoDisplay buildingInfo={buildingInfoForDisplay} />
                   </div>
@@ -505,15 +505,15 @@ export default function ConsultationHistoryPage() {
                   <div className="text-xs text-muted-foreground bg-muted/40 p-3 rounded-md">
                     저장된 건축물 표제부 정보를 찾지 못했습니다. 상담 등록 당시 주소를 다시 조회해 보세요.
                   </div>
-                )}
+                )} */}
 
                 {!isEditing && (
                   <>
-                    {isBuildingUnavailable && (
+                    {/* {isBuildingUnavailable && (
                       <div className="text-xs text-muted-foreground bg-muted/40 border border-dashed border-border/60 rounded-md p-3">
                         건축물대장 API 장애로 상세 건축물 정보를 확인하지 못했습니다. 상담 시 추가 확인이 필요합니다.
                       </div>
-                    )}
+                    )} */}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div className="space-y-1">
