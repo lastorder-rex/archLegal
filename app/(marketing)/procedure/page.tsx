@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { HouseHeart } from 'lucide-react';
 
-const PDF_URL = '/docu/양성화 절차 안내.pdf';
+const PDF_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/interword_process.pdf';
 
 export const metadata = {
   title: '양성화 절차 안내 | 인건(仁建)',
