@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 import { verifyAdminSession } from '@/lib/utils/admin-auth';
+import { ensureConsultationDriveFolder, cancelConsultationDriveFolder } from '@/lib/services/consultation-drive-service';
 
 type PaymentRequestPayload = {
   stageTemplateId?: string;
@@ -169,6 +170,35 @@ export async function POST(
       return NextResponse.json({
         error: `이미 ${stageTemplate.title} 결제 요청이 진행 중입니다. 기존 요청을 취소한 뒤 다시 시도해주세요.`
       }, { status: 400 });
+    }
+
+    if (!userStageId) {
+      return NextResponse.json({ error: '결제 요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' }, { status: 500 });
+    }
+
+    try {
+      await ensureConsultationDriveFolder({
+        supabase,
+        consultationId: consultation.id,
+        userPaymentStageId: userStageId,
+        requestAmount: Number(body.amount)
+      });
+    } catch (driveError) {
+      console.error('Failed to create consultation drive folder', driveError);
+      await supabase
+        .from('user_payment_stages')
+        .update({
+          status: 'locked',
+          request_amount: null,
+          requested_at: null,
+          requested_by: null,
+          updated_at: now
+        })
+        .eq('id', userStageId);
+
+      return NextResponse.json({
+        error: '문서 폴더 자동 생성에 실패했습니다. 다시 시도해주세요.'
+      }, { status: 500 });
     }
 
     // 알림 생성 (에러 발생 시 결제 단계도 롤백)
@@ -341,6 +371,19 @@ export async function DELETE(
           });
       } catch (error) {
         console.error('Failed to enqueue cancellation notification', error);
+      }
+
+      try {
+        await cancelConsultationDriveFolder({
+          supabase,
+          consultationId: consultation.id,
+          userPaymentStageId: existingStage.id
+        });
+      } catch (driveError) {
+        console.error('Failed to delete consultation drive folder', driveError);
+        return NextResponse.json({
+          error: '폴더 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        }, { status: 500 });
       }
     }
 
