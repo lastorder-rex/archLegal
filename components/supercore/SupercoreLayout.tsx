@@ -172,11 +172,15 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
             </li>
             <li>
               <button
-                disabled
-                className="w-full text-left px-4 py-2 rounded-md text-slate-400 cursor-not-allowed flex items-center gap-3"
+                onClick={() => handleMenuClick('/supercore/payments')}
+                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
+                  isActive('/supercore/payments')
+                    ? 'bg-primary text-white'
+                    : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
+                }`}
               >
                 <CreditCard className="w-5 h-5" />
-                <span>결제 관리 (준비중)</span>
+                <span>결제 관리</span>
               </button>
             </li>
             <li>
@@ -244,11 +248,15 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
                 </li>
                 <li>
                   <button
-                    disabled
-                    className="w-full text-left px-4 py-2 rounded-md text-slate-400 cursor-not-allowed flex items-center gap-3"
+                    onClick={() => router.push('/supercore/payments')}
+                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
+                      isActive('/supercore/payments')
+                        ? 'bg-primary text-white'
+                        : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
+                    }`}
                   >
                     <CreditCard className="w-5 h-5" />
-                    <span>결제 관리 (준비중)</span>
+                    <span>결제 관리</span>
                   </button>
                 </li>
                 <li>
