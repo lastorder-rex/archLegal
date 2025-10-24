@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { Readable } from 'stream';
 import { getDriveClient, getDriveRootFolderId, getDriveSharedDriveId, isDriveDryRun } from '@/lib/google/drive-client';
 
 type DriveTemplateRow = {
@@ -14,8 +15,30 @@ type ConsultationRow = {
   address_detail: string | null;
 };
 
-function sanitizeForFolderName(value: string): string {
+export function sanitizeForFolderName(value: string): string {
   return value.replace(/[\\/]/g, '-').replace(/\s+/g, ' ').trim();
+}
+
+function sanitizeForFileName(value: string): string {
+  return value
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function formatKstTimestamp(date: Date): string {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${map.year}${map.month}${map.day}_${map.hour}${map.minute}`;
 }
 
 function extractBaseAddress(address: string, addressDetail?: string | null): string {
@@ -410,4 +433,83 @@ export async function cancelConsultationDriveFolder({
 
     throw error;
   }
+}
+
+type FileUploadParams = {
+  folderId: string;
+  fileName: string;
+  mimeType: string;
+  data: Buffer;
+};
+
+export async function uploadFileToDriveFolder({
+  folderId,
+  fileName,
+  mimeType,
+  data
+}: FileUploadParams): Promise<{ fileId: string | null; dryRun: boolean }> {
+  if (!folderId) {
+    throw new Error('대상 Google Drive 폴더 ID가 없습니다.');
+  }
+
+  const dryRun = isDriveDryRun();
+  if (dryRun) {
+    return { fileId: `dry-run-${Date.now()}`, dryRun: true };
+  }
+
+  const drive = await getDriveClient();
+  const sharedDriveId = getDriveSharedDriveId();
+  const useAllDrives = shouldUseAllDrives();
+
+  // Remove files with the same name to support overwrite semantics
+  const existing = await drive.files.list({
+    q: `name = '${escapeQueryValue(fileName)}' and '${folderId}' in parents and trashed = false`,
+    fields: 'files(id)',
+    supportsAllDrives: useAllDrives,
+    includeItemsFromAllDrives: useAllDrives,
+    corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
+    driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
+  } as any);
+
+  const existingFiles = existing.data.files ?? [];
+  for (const file of existingFiles) {
+    if (!file.id) continue;
+    try {
+      await drive.files.delete({
+        fileId: file.id,
+        supportsAllDrives: useAllDrives,
+        driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
+      } as any);
+    } catch (error) {
+      console.warn('Failed to delete existing Drive file before overwrite', error);
+    }
+  }
+
+  const mediaBody = Readable.from(data);
+  const response = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      parents: [folderId]
+    },
+    media: {
+      mimeType,
+      body: mediaBody
+    },
+    fields: 'id, name',
+    supportsAllDrives: useAllDrives,
+    driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
+  } as any);
+
+  return {
+    fileId: response.data.id ?? null,
+    dryRun: false
+  };
+}
+
+export function buildDriveFileName(categoryLabel: string, customerName: string, originalFileName: string): string {
+  const extension = originalFileName.includes('.') ? `.${originalFileName.split('.').pop()}` : '';
+  const baseCustomer = sanitizeForFileName(customerName || '고객');
+  const baseCategory = sanitizeForFileName(categoryLabel || '자료');
+  const timestamp = formatKstTimestamp(new Date());
+  return `${baseCategory}_${baseCustomer}_${timestamp}${extension}`;
 }
