@@ -51,7 +51,8 @@
       "Bash(git pull:*)",
       "Bash(git merge:*)",
       "Read(//Users/kbsc/Library/**)",
-      "Read(//Users/kbsc/.config/claude-code/**)"
+      "Read(//Users/kbsc/.config/claude-code/**)",
+      "Bash(SUPABASE_ACCESS_TOKEN=\"sbp_9d87698d1b8b76f28e065dd7c50f4389df0c486b\" npx supabase db push:*)"
     ],
     "deny": [],
     "ask": []

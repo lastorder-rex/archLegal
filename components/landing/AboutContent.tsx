@@ -45,9 +45,9 @@ export function AboutContent({ faqs }: AboutContentProps) {
         <div className="rounded-2xl border border-border bg-card p-6">
           <h3 className="text-lg font-semibold text-foreground">우리가 해결하는 핵심 이슈</h3>
           <ul className="mt-4 space-y-3 text-base text-muted-foreground">
-            <li>• 반복 부과되는 이행강제금과 원상복구 비용 부담을 줄이고 합법적인 운영으로 전환합니다.</li>
-            <li>• 위반 건축물로 인한 대출 제한, 매매 지연, 임차인 피해를 예방합니다.</li>
-            <li>• 준공 직후 발생하는 무단 증축·용도변경 등 고위험 사례를 체계적으로 진단합니다.</li>
+            <li>• 현재 국회에 계류되어 있는 『특정건축물 정리에 관한 특별조치법』이 곧 통과될 것으로 전망되고 있습니다.</li>
+            <li>• 이 특별법에 포함되는 단독, 다세대, 다가구 주택의 양성화 가능성을 정확히 진단하고, 실패없는 양성화 솔류션을 제공합니다.</li>
+      
           </ul>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6">
@@ -75,14 +75,16 @@ export function AboutContent({ faqs }: AboutContentProps) {
             3. <span className="font-semibold">공공기관 협의</span> – 지자체 TF, 건축위원회 심의, 관계부서 협의를 대행하여 승인 리스크를
             관리합니다.
           </li>
-          <li>
-            4. <span className="font-semibold">시공·복구 관리</span> – 특례 규정을 활용해 필요한 부분 보수·복구를 설계하고 시공 품질을
-            관리합니다.
-          </li>
-          <li>
-            5. <span className="font-semibold">사후 모니터링</span> – 재발 방지를 위한 정기 점검과 기준 변화 알림으로 안전한 자산 운용을
-            지원합니다.
-          </li>
+          {/*
+                <li>
+                4. <span className="font-semibold">시공·복구 관리</span> – 특례 규정을 활용해 필요한 부분 보수·복구를 설계하고 시공 품질을
+                관리합니다.
+                </li>
+                <li>
+                5. <span className="font-semibold">사후 모니터링</span> – 재발 방지를 위한 정기 점검과 기준 변화 알림으로 안전한 자산 운용을
+                지원합니다.
+                </li>
+          */}
         </ol>
       </section>
 
