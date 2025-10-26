@@ -37,8 +37,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/docu/archlegal-fa.ico', rel: 'icon', sizes: 'any' },
-      { url: '/docu/archlegal-fa-p.png', rel: 'icon', type: 'image/png', sizes: '512x512' }
+      { url: 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/archlegal-fa.ico', rel: 'icon', sizes: 'any' },
+      { url: 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/archlegal-fa-p.png', rel: 'icon', type: 'image/png', sizes: '512x512' }
     ]
   },
   openGraph: {

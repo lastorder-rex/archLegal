@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { HouseHeart } from 'lucide-react';
 
-const PDF_URL = '/docu/company-interview.pdf';
+const PDF_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/company-interview.pdf';
 
 export const metadata = {
   title: '언론보도 | Interworld',
