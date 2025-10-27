@@ -50,7 +50,7 @@ export const metadata: Metadata = {
       {
         url: 'https://www.archlegal.co.kr/docu/archlegal-og.png'
       }
-    ]₩
+    ]
   },
   twitter: {
     card: 'summary_large_image',
