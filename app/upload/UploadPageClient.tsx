@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback, ChangeEvent } from 'react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Upload } from 'lucide-react';
 
 type UploadLog = {
   id: string;
@@ -262,9 +264,14 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
             const uploading = status?.uploading ?? false;
             const errorMessage = status?.error;
             const successMessage = status?.successMessage;
+            const inputId = `upload-file-${index}`;
+            const isDisabled = folder.remainingSlots <= 0 || uploading;
 
             return (
-              <div key={folder.templateName} className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 flex flex-col gap-4">
+              <div
+                key={folder.templateName}
+                className="group flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/95 p-6 shadow-md backdrop-blur transition hover:border-primary hover:ring-2 hover:ring-primary hover:ring-opacity-40 dark:border-border/40 dark:bg-slate-900/60 dark:hover:border-primary dark:hover:ring-primary"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-sm text-slate-500">STEP {index + 1}</div>
@@ -278,11 +285,24 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-700">파일 선택</label>
                   <Input
+                    id={inputId}
                     type="file"
                     accept="image/*,application/pdf"
-                    disabled={folder.remainingSlots <= 0 || uploading}
+                    disabled={isDisabled}
+                    className="hidden"
                     onChange={(event) => handleFileChange(event, folder.templateName)}
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="default"
+                    disabled={isDisabled}
+                    className="w-full sm:w-auto gap-2"
+                    onClick={() => document.getElementById(inputId)?.click()}
+                  >
+                    {uploading ? '업로드 중...' : '파일 선택'}
+                    <Upload className="h-4 w-4" />
+                  </Button>
                   <p className="text-xs text-slate-500">jpg, png, pdf, heic 파일만 가능하며 최대 10MB까지 업로드할 수 있습니다.</p>
                   {folder.remainingSlots <= 0 && (
                     <p className="text-xs text-amber-600">업로드 가능한 파일 수를 초과했습니다. 기존 파일을 교체하려면 관리자에게 문의해주세요.</p>

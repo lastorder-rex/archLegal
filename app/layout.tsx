@@ -27,7 +27,7 @@ const themeInitializer = `(function() {
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.archlegal.co.kr'),
   title: '건축물 양성화 전문 플랫폼',
-  description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼 ArchLegal. 합법 해결, 결과 중심, 신뢰 기반 양성화 서비스를 제공합니다.',
+  description: '위반/불법 건축물을 합법적으로 정리하는 전문 플랫폼 - 인건(仁建). 합법 해결, 결과 중심, 신뢰 기반 양성화 서비스를 제공합니다.',
   verification: {
     google: 'p7WIGZAwCfciOQ_W4f0HIfNk41SWCI7f5uKVBh9HbxA',
     other: {
@@ -42,20 +42,20 @@ export const metadata: Metadata = {
     ]
   },
   openGraph: {
-    title: 'ArchLegal - 건축물 양성화 전문 플랫폼',
-    description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼 ArchLegal. 합법 해결, 결과 중심, 신뢰 기반 양성화 서비스를 제공합니다.',
+    title: '인건(仁建) - 건축물 양성화 전문 플랫폼',
+    description: '위반/불법 건축물을 합법적으로 정리하는 전문 플랫폼 - 인건(仁建). 합법 해결, 결과 중심, 신뢰 기반 양성화 서비스를 제공합니다.',
     url: 'https://www.archlegal.co.kr',
     type: 'website',
     images: [
       {
         url: 'https://www.archlegal.co.kr/docu/archlegal-og.png'
       }
-    ]
+    ]₩
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ArchLegal - 건축물 양성화 전문 플랫폼',
-    description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼 ArchLegal. 합법 해결, 결과 중심, 신뢰 기반 양성화 서비스를 제공합니다.',
+    title: '인건(仁建) - 건축물 양성화 전문 플랫폼',
+    description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼 인건(仁建). 합법 해결, 결과 중심, 신뢰 기반 양성화 서비스를 제공합니다.',
     images: ['https://www.archlegal.co.kr/docu/archlegal-og.png']
   },
 
