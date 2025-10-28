@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { drive_v3 } from 'googleapis';
 import { Readable } from 'stream';
 import { getDriveClient, getDriveRootFolderId, getDriveSharedDriveId, isDriveDryRun } from '@/lib/google/drive-client';
 
@@ -441,6 +442,104 @@ type FileUploadParams = {
   mimeType: string;
   data: Buffer;
 };
+
+export type DriveFolderChildSummary = {
+  id: string | null;
+  name: string;
+  hasFiles: boolean | null;
+};
+
+export type DriveFolderSummary = {
+  fetchedAt: string;
+  folders: DriveFolderChildSummary[];
+  root: {
+    hasFiles: boolean | null;
+    sampleFiles: Array<{ id: string; name: string }>;
+  };
+};
+
+async function checkFolderHasDirectFiles(
+  drive: drive_v3.Drive,
+  folderId: string,
+  useAllDrives: boolean,
+  sharedDriveId: string | null
+): Promise<boolean> {
+  const response = await drive.files.list({
+    q: `'${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
+    fields: 'files(id)',
+    pageSize: 1,
+    supportsAllDrives: useAllDrives,
+    includeItemsFromAllDrives: useAllDrives,
+    corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
+    driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
+  } as any);
+
+  return (response.data.files ?? []).length > 0;
+}
+
+export async function fetchDriveFolderSummary(folderId: string): Promise<DriveFolderSummary> {
+  const drive = await getDriveClient();
+  const sharedDriveId = getDriveSharedDriveId();
+  const useAllDrives = shouldUseAllDrives();
+
+  const [folderResponse, rootFilesResponse] = await Promise.all([
+    drive.files.list({
+      q: `'${folderId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'`,
+      fields: 'files(id, name)',
+      supportsAllDrives: useAllDrives,
+      includeItemsFromAllDrives: useAllDrives,
+      corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
+      driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
+    } as any),
+    drive.files.list({
+      q: `'${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
+      fields: 'files(id, name)',
+      pageSize: 10,
+      supportsAllDrives: useAllDrives,
+      includeItemsFromAllDrives: useAllDrives,
+      corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
+      driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
+    } as any)
+  ]);
+
+  const rawFolders = folderResponse.data.files ?? [];
+
+  const folders = await Promise.all(
+    rawFolders
+      .filter((file): file is { id: string; name?: string | null } => Boolean(file.id))
+      .map(async (file) => {
+        try {
+          const hasFiles = await checkFolderHasDirectFiles(drive, file.id!, useAllDrives, sharedDriveId);
+          return {
+            id: file.id!,
+            name: file.name ?? '이름 없는 폴더',
+            hasFiles
+          };
+        } catch (error) {
+          console.error('[drive] failed to inspect subfolder files', { folderId: file.id }, error);
+          return {
+            id: file.id!,
+            name: file.name ?? '이름 없는 폴더',
+            hasFiles: null
+          };
+        }
+      })
+  );
+
+  const rootFiles = (rootFilesResponse.data.files ?? []).filter((file) => Boolean(file.id && file.name));
+
+  return {
+    fetchedAt: new Date().toISOString(),
+    folders,
+    root: {
+      hasFiles: rootFiles.length > 0,
+      sampleFiles: rootFiles.slice(0, 3).map((file) => ({
+        id: file.id as string,
+        name: file.name as string
+      }))
+    }
+  };
+}
 
 export async function uploadFileToDriveFolder({
   folderId,

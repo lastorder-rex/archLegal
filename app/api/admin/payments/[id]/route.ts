@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { DriveFolderSummary } from '@/lib/services/consultation-drive-service';
+import { fetchDriveFolderSummary } from '@/lib/services/consultation-drive-service';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 import { verifyAdminSession } from '@/lib/utils/admin-auth';
 
@@ -51,6 +53,62 @@ async function fetchPaymentDetail(id: string) {
     console.error('[admin/payments] drive folder fetch error', driveError);
   }
 
+  let driveFolderSummary: DriveFolderSummary | null = null;
+  if (driveRow?.drive_folder_id && driveRow.status !== 'dry_run') {
+    try {
+      driveFolderSummary = await fetchDriveFolderSummary(driveRow.drive_folder_id);
+
+      if (driveFolderSummary && Array.isArray((driveRow.metadata as any)?.templates)) {
+        const templateOrder = new Map<string, number>();
+        (driveRow.metadata as any).templates.forEach((template: Record<string, unknown>, index: number) => {
+          const templateFolderId = typeof template?.folderId === 'string'
+            ? (template.folderId as string)
+            : typeof template?.folder_id === 'string'
+              ? (template.folder_id as string)
+              : null;
+          if (templateFolderId) {
+            templateOrder.set(templateFolderId, index);
+          }
+        });
+
+        driveFolderSummary.folders.sort((a, b) => {
+          const orderA = a.id ? templateOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+          const orderB = b.id ? templateOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+          if (orderA !== orderB) {
+            return orderA - orderB;
+          }
+          return a.name.localeCompare(b.name, 'ko');
+        });
+      }
+    } catch (summaryError) {
+      console.error('[admin/payments] drive folder summary error', summaryError);
+    }
+  } else if (Array.isArray((driveRow as any)?.metadata?.templates)) {
+    const fallbackFolders = (driveRow as any).metadata.templates
+      .filter((template: Record<string, unknown>) => typeof template?.name === 'string')
+      .map((template: Record<string, unknown>) => {
+        const templateFolderId = typeof template?.folderId === 'string'
+          ? (template.folderId as string)
+          : typeof template?.folder_id === 'string'
+            ? (template.folder_id as string)
+            : null;
+        return {
+          id: templateFolderId,
+          name: template.name as string,
+          hasFiles: null
+        };
+      });
+
+    driveFolderSummary = {
+      fetchedAt: new Date().toISOString(),
+      folders: fallbackFolders,
+      root: {
+        hasFiles: null,
+        sampleFiles: []
+      }
+    };
+  }
+
   let requestedByAdmin: { id: string; username: string } | null = null;
   if (row.requested_by) {
     const { data: adminRow, error: adminError } = await supabase
@@ -96,7 +154,8 @@ async function fetchPaymentDetail(id: string) {
           driveFolderName: driveRow.drive_folder_name,
           status: driveRow.status,
           metadata: driveRow.metadata ?? null,
-          updatedAt: driveRow.updated_at
+          updatedAt: driveRow.updated_at,
+          summary: driveFolderSummary
         }
       : null
   };

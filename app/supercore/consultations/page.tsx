@@ -273,22 +273,22 @@ export default function ConsultationsPage() {
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         접수일시
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         이름
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         연락처
                       </th>
-                      <th className="hidden md:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="hidden md:table-cell px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         주소
                       </th>
-                      <th className="hidden lg:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="hidden lg:table-cell px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         첨부파일
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         관리
                       </th>
                     </tr>
@@ -300,16 +300,16 @@ export default function ConsultationsPage() {
                         className="hover:bg-slate-50 cursor-pointer"
                         onClick={() => router.push(`/supercore/consultations/${consultation.id}`)}
                       >
-                        <td className="px-4 py-3 text-sm text-slate-600">
+                        <td className="px-4 py-3 text-sm text-slate-600 text-center">
                           {formatDateTime(consultation.created_at)}
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                        <td className="px-4 py-3 text-sm font-medium text-slate-900 text-center">
                           {consultation.name}
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600">
+                        <td className="px-4 py-3 text-sm text-slate-600 text-center">
                           {consultation.phone}
                         </td>
-                        <td className="hidden md:table-cell px-4 py-3 text-sm text-slate-600">
+                        <td className="hidden md:table-cell px-4 py-3 text-sm text-slate-600 text-left">
                           <div className="max-w-xs truncate" title={consultation.address}>
                             {consultation.address}
                           </div>
@@ -319,10 +319,10 @@ export default function ConsultationsPage() {
                             </div>
                           )}
                         </td>
-                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600">
+                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600 text-center">
                           {consultation.attachments?.length || 0}개
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-3 text-sm text-center">
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
