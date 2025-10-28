@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
+import { Folder } from 'lucide-react';
 
 interface Admin {
   id: string;
@@ -47,21 +48,12 @@ interface PaymentRow {
   } | null;
 }
 
-interface StageTemplateOption {
-  id: string;
-  stageOrder: number;
-  code: string;
-  title: string;
-  isUse: boolean;
-}
-
 interface SearchFilters {
   requestedFrom: string;
   requestedTo: string;
   name: string;
   phone: string;
   address: string;
-  stageTemplateId: string;
   status: string;
 }
 
@@ -133,8 +125,6 @@ export default function AdminPaymentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingPayments, setIsLoadingPayments] = useState(false);
 
-  const [stageTemplates, setStageTemplates] = useState<StageTemplateOption[]>([]);
-
   const defaultDates = getDefaultDateRange();
   const [filters, setFilters] = useState<SearchFilters>({
     requestedFrom: defaultDates.requestedFrom,
@@ -142,7 +132,6 @@ export default function AdminPaymentsPage() {
     name: '',
     phone: '',
     address: '',
-    stageTemplateId: 'all',
     status: 'all'
   });
 
@@ -153,22 +142,6 @@ export default function AdminPaymentsPage() {
   }, [filters]);
 
   const itemsPerPage = 15;
-
-  const loadStageTemplates = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/payments/templates', {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        console.error('결제 단계 정보를 불러오지 못했습니다.');
-        return;
-      }
-      const data = await response.json();
-      setStageTemplates(data.templates || []);
-    } catch (error) {
-      console.error('결제 단계 조회 중 오류', error);
-    }
-  }, []);
 
   const loadPayments = useCallback(async (
     page = 1,
@@ -187,9 +160,6 @@ export default function AdminPaymentsPage() {
       if (appliedFilters.name) params.append('name', appliedFilters.name);
       if (appliedFilters.phone) params.append('phone', appliedFilters.phone);
       if (appliedFilters.address) params.append('address', appliedFilters.address);
-      if (appliedFilters.stageTemplateId && appliedFilters.stageTemplateId !== 'all') {
-        params.append('stageTemplateId', appliedFilters.stageTemplateId);
-      }
       if (appliedFilters.status && appliedFilters.status !== 'all') {
         params.append('status', appliedFilters.status);
       }
@@ -230,14 +200,14 @@ export default function AdminPaymentsPage() {
       const data = await response.json();
       setAdmin(data.admin);
       setIsAuthenticated(true);
-      await Promise.all([loadStageTemplates(), loadPayments(1)]);
+      await loadPayments(1);
     } catch (error) {
       console.error('관리자 인증 오류', error);
       router.push('/supercore');
     } finally {
       setIsLoading(false);
     }
-  }, [loadPayments, loadStageTemplates, router]);
+  }, [loadPayments, router]);
 
   useEffect(() => {
     checkAuth();
@@ -259,7 +229,6 @@ export default function AdminPaymentsPage() {
       name: '',
       phone: '',
       address: '',
-      stageTemplateId: 'all',
       status: 'all'
     };
     setFilters(resetFilters);
@@ -322,24 +291,6 @@ export default function AdminPaymentsPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="stageTemplateId">결제 단계</Label>
-              <select
-                id="stageTemplateId"
-                value={filters.stageTemplateId}
-                onChange={(e) => handleFilterChange('stageTemplateId', e.target.value)}
-                className="w-full h-10 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="all">전체</option>
-                {stageTemplates
-                  .filter((template) => template.isUse)
-                  .map((template) => (
-                    <option key={template.id} value={template.id}>
-                      {template.title}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="name">고객명</Label>
               <Input
                 id="name"
@@ -395,61 +346,73 @@ export default function AdminPaymentsPage() {
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-600">결제 단계</th>
                   <th className="px-4 py-3 text-left font-semibold text-slate-600">고객</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-600">요청 금액</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-600">상태</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-600">요청일</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-600">결제일</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-600">문서함</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-600">관리</th>
+                  <th className="px-4 py-3 text-center font-semibold text-slate-600">요청 금액</th>
+                  <th className="px-4 py-3 text-center font-semibold text-slate-600">상태</th>
+                  <th className="px-4 py-3 text-center font-semibold text-slate-600 hidden md:table-cell">요청일</th>
+                  <th className="px-4 py-3 text-center font-semibold text-slate-600 hidden md:table-cell">결제일</th>
+                  <th className="px-4 py-3 text-center font-semibold text-slate-600 hidden md:table-cell">문서함</th>
+                  <th className="px-4 py-3 text-center font-semibold text-slate-600">관리</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoadingPayments ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                    <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
                       결제 목록을 불러오는 중입니다...
                     </td>
                   </tr>
                 ) : payments.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                    <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
                       검색 조건에 해당하는 결제 요청이 없습니다.
                     </td>
                   </tr>
                 ) : (
                   payments.map((payment) => {
-                    const stageTitle = payment.stageTemplate?.title ?? '-';
                     const customerName = payment.consultation?.name ?? '미확인';
                     const customerPhone = payment.consultation?.phone ?? '-';
                     const address = payment.consultation?.address ?? '-';
                     const statusLabel = statusLabelMap[payment.status] ?? payment.status;
                     const statusClass = statusClassMap[payment.status] ?? 'bg-slate-100 text-slate-700 border-slate-200';
-                    const driveFolderName = payment.driveFolder?.driveFolderName ?? '-';
+                    const driveFolderId = payment.driveFolder?.driveFolderId ?? null;
                     return (
                       <tr key={payment.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-slate-900">{stageTitle}</div>
-                          <div className="text-xs text-slate-500 uppercase">{payment.stageTemplate?.code ?? ''}</div>
-                        </td>
                         <td className="px-4 py-3">
                           <div className="font-medium text-slate-900">{customerName}</div>
                           <div className="text-xs text-slate-500">{customerPhone}</div>
                           <div className="text-xs text-slate-400 truncate max-w-[200px]">{address}</div>
                         </td>
-                        <td className="px-4 py-3 text-slate-900">₩ {formatAmount(payment.requestAmount)}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${statusClass}`}>
+                        <td className="px-4 py-3 text-center text-slate-900">₩ {formatAmount(payment.requestAmount)}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-medium ${statusClass}`}>
                             {statusLabel}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-700">{formatDateTime(payment.requestedAt)}</td>
-                        <td className="px-4 py-3 text-slate-700">{formatDateTime(payment.paidAt)}</td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {driveFolderName}
+                        <td className="px-4 py-3 text-center text-slate-700 hidden md:table-cell">
+                          {formatDateTime(payment.requestedAt)}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-center text-slate-700 hidden md:table-cell">
+                          {formatDateTime(payment.paidAt)}
+                        </td>
+                        <td className="px-4 py-3 text-center text-slate-700 hidden md:table-cell">
+                          {driveFolderId ? (
+                            <a
+                              href={`https://drive.google.com/drive/folders/${driveFolderId}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center text-primary hover:text-primary/80"
+                            >
+                              <Folder className="h-5 w-5" />
+                              <span className="sr-only">문서함 열기</span>
+                            </a>
+                          ) : (
+                            <span className="inline-flex items-center text-slate-400">
+                              <Folder className="h-5 w-5" />
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
                           <Button size="sm" variant="outline" onClick={() => router.push(`/supercore/payments/${payment.id}`)}>
                             상세
                           </Button>

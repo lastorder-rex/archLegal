@@ -6,6 +6,22 @@ import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Check, X } from 'lucide-react';
+
+interface DriveFolderChildSummary {
+  id: string | null;
+  name: string;
+  hasFiles: boolean | null;
+}
+
+interface DriveFolderSummary {
+  fetchedAt: string;
+  folders: DriveFolderChildSummary[];
+  root: {
+    hasFiles: boolean | null;
+    sampleFiles: { id: string; name: string }[];
+  };
+}
 
 interface Admin {
   id: string;
@@ -53,6 +69,7 @@ interface PaymentDetail {
     status: string | null;
     metadata: Record<string, unknown> | null;
     updatedAt: string | null;
+    summary: DriveFolderSummary | null;
   } | null;
 }
 
@@ -474,30 +491,112 @@ export default function AdminPaymentDetailPage() {
             <section className="bg-white border border-slate-200 rounded-lg p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-4">문서 폴더 정보</h2>
               {payment.driveFolder ? (
-                <div className="space-y-2 text-sm text-slate-600">
-                  <div>
-                    <span className="font-semibold text-slate-800">폴더명</span>
-                    <div className="mt-1 text-slate-900">{payment.driveFolder.driveFolderName ?? '-'}</div>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-slate-800">상태</span>
-                    <div className="mt-1 text-slate-900">{payment.driveFolder.status ?? '-'}</div>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-slate-800">최종 동기화</span>
-                    <div className="mt-1 text-slate-900">{formatDateTime(payment.driveFolder.updatedAt ?? null)}</div>
-                  </div>
-                  {payment.driveFolder.driveFolderId && (
+                <div className="space-y-4 text-sm text-slate-600">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <a
-                        href={`https://drive.google.com/drive/folders/${payment.driveFolder.driveFolderId}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        Google Drive에서 열기
-                      </a>
+                      <span className="font-semibold text-slate-800">폴더명</span>
+                      <div className="mt-1 text-slate-900">{payment.driveFolder.driveFolderName ?? '-'}</div>
                     </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">상태</span>
+                      <div className="mt-1 text-slate-900">{payment.driveFolder.status ?? '-'}</div>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">최종 동기화</span>
+                      <div className="mt-1 text-slate-900">{formatDateTime(payment.driveFolder.updatedAt ?? null)}</div>
+                    </div>
+                    {payment.driveFolder.driveFolderId && (
+                      <div>
+                        <span className="font-semibold text-slate-800">루트 폴더</span>
+                        <div className="mt-1">
+                          <a
+                            href={`https://drive.google.com/drive/folders/${payment.driveFolder.driveFolderId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            Google Drive에서 열기
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {payment.driveFolder.summary ? (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-end justify-between gap-2">
+                        <span className="font-semibold text-slate-800">하위 폴더</span>
+                        <span className="text-xs text-slate-400">
+                          확인 시각: {formatDateTime(payment.driveFolder.summary.fetchedAt)}
+                        </span>
+                      </div>
+
+                      {payment.driveFolder.summary.folders.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                          {payment.driveFolder.summary.folders.map((folder) => {
+                            const statusClass =
+                              folder.hasFiles === true
+                                ? 'text-emerald-600'
+                                : folder.hasFiles === false
+                                  ? 'text-slate-500'
+                                  : 'text-amber-600';
+                            const statusLabel =
+                              folder.hasFiles === true
+                                ? '파일 있음'
+                                : folder.hasFiles === false
+                                  ? '비어 있음'
+                                  : '확인 불가';
+                            const StatusIcon = folder.hasFiles === true ? Check : X;
+
+                            return (
+                              <div
+                                key={`drive-folder-${folder.id ?? folder.name}`}
+                                className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs"
+                              >
+                                <div className="text-slate-900 font-medium">{folder.name}</div>
+                                <div className="mt-2 flex items-center gap-6">
+                                  {folder.id && (
+                                    <a
+                                      href={`https://drive.google.com/drive/folders/${folder.id}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-primary hover:underline"
+                                    >
+                                      폴더 열기
+                                    </a>
+                                  )}
+                                  <span className={`inline-flex items-center gap-2 font-medium ${statusClass}`}>
+                                    {statusLabel}
+                                    <StatusIcon className="h-3.5 w-3.5" />
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500">등록된 하위 폴더가 없습니다.</p>
+                      )}
+
+                      <div className="text-xs text-slate-500">
+                        <span className="font-semibold text-slate-700">루트 폴더 파일</span>
+                        {payment.driveFolder.summary.root.hasFiles === true ? (
+                          payment.driveFolder.summary.root.sampleFiles.length > 0 ? (
+                            <span className="ml-2 text-slate-900">
+                              {payment.driveFolder.summary.root.sampleFiles.map((file) => file.name).join(', ')}
+                            </span>
+                          ) : (
+                            <span className="ml-2 text-slate-900">파일 있음</span>
+                          )
+                        ) : payment.driveFolder.summary.root.hasFiles === false ? (
+                          <span className="ml-2 text-slate-500">없음</span>
+                        ) : (
+                          <span className="ml-2 text-amber-600">확인 불가</span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">폴더 요약 정보를 불러오지 못했습니다.</p>
                   )}
                 </div>
               ) : (

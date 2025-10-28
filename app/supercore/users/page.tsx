@@ -238,16 +238,16 @@ export default function UsersPage() {
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         가입일시
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         이름
                       </th>
-                      <th className="hidden md:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="hidden md:table-cell px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         전화번호
                       </th>
-                      <th className="hidden lg:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
+                      <th className="hidden lg:table-cell px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         마지막 로그인
                       </th>
                       <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">
@@ -267,17 +267,17 @@ export default function UsersPage() {
                         key={user.id}
                         className="hover:bg-slate-50"
                       >
-                        <td className="px-4 py-3 text-sm text-slate-600">
+                        <td className="px-4 py-3 text-sm text-slate-600 text-center">
                           <span className="hidden sm:inline">{formatDateTime(user.created_at)}</span>
                           <span className="sm:hidden">{formatDate(user.created_at)}</span>
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                        <td className="px-4 py-3 text-sm font-medium text-slate-900 text-center">
                           {user.legal_name || '-'}
                         </td>
-                        <td className="hidden md:table-cell px-4 py-3 text-sm text-slate-600">
+                        <td className="hidden md:table-cell px-4 py-3 text-sm text-slate-600 text-center">
                           {user.phone || '-'}
                         </td>
-                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600">
+                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600 text-center">
                           {user.last_sign_in_at ? formatDateTime(user.last_sign_in_at) : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-600 text-center">
