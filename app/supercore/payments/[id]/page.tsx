@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Check, X } from 'lucide-react';
+import { Check, X, Link as LinkIcon, Unplug } from 'lucide-react';
 
 interface DriveFolderChildSummary {
   id: string | null;
@@ -90,6 +90,9 @@ interface UploadTokenRow {
   sentMethod?: string | null;
   sentAt?: string | null;
   uploadUrl: string;
+  audience: 'customer' | 'staff';
+  allowedTemplates: string[];
+  maxFilesPerFolder: number;
 }
 
 function formatDateTime(value: string | null) {
@@ -125,6 +128,7 @@ export default function AdminPaymentDetailPage() {
   const [isTokenLoading, setIsTokenLoading] = useState(false);
   const [uploadTokens, setUploadTokens] = useState<UploadTokenRow[]>([]);
   const [lastCopiedTokenId, setLastCopiedTokenId] = useState<string | null>(null);
+  const [revokingTokenId, setRevokingTokenId] = useState<string | null>(null);
 
   const [paidAmountInput, setPaidAmountInput] = useState('');
   const [paymentKeyInput, setPaymentKeyInput] = useState('');
@@ -301,7 +305,7 @@ export default function AdminPaymentDetailPage() {
     }
   };
 
-  const handleCreateUploadToken = async () => {
+  const handleCreateUploadToken = async (audience: 'customer' | 'staff') => {
     if (!paymentId) return;
     setIsTokenLoading(true);
     try {
@@ -309,7 +313,7 @@ export default function AdminPaymentDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({})
+        body: JSON.stringify({ audience })
       });
 
       const data = await response.json().catch(() => ({}));
@@ -340,6 +344,48 @@ export default function AdminPaymentDetailPage() {
       alert('클립보드 복사에 실패했습니다.');
     }
   };
+
+  const hasActiveTokenForAudience = useCallback(
+    (audience: UploadTokenRow['audience']) => {
+      return uploadTokens.some((token) => token.audience === audience && token.status === 'active');
+    },
+    [uploadTokens]
+  );
+
+  const handleRevokeToken = useCallback(
+    async (token: UploadTokenRow) => {
+      if (!paymentId) return;
+      if (token.status === 'expired' || token.status === 'revoked') return;
+
+      const confirmed = window.confirm('이 업로드 링크를 종료하시겠습니까? 종료 후에는 다시 사용할 수 없습니다.');
+      if (!confirmed) return;
+
+      setRevokingTokenId(token.id);
+      try {
+        const response = await fetch(`/api/admin/payments/${paymentId}/upload-tokens/${token.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ status: 'revoked' })
+        });
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          console.error('업로드 링크 종료 실패', data);
+          alert(data.error || '업로드 링크를 종료하지 못했습니다.');
+          return;
+        }
+
+        await loadUploadTokens();
+      } catch (error) {
+        console.error('업로드 링크 종료 오류', error);
+        alert('업로드 링크를 종료하는 중 오류가 발생했습니다.');
+      } finally {
+        setRevokingTokenId((current) => (current === token.id ? null : current));
+      }
+    },
+    [loadUploadTokens, paymentId]
+  );
 
   if (isLoading) {
     return (
@@ -608,14 +654,24 @@ export default function AdminPaymentDetailPage() {
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">업로드 링크</h2>
-                  <p className="text-sm text-slate-500">결제 완료 고객에게 전달할 업로드 페이지 링크를 생성하고 관리합니다.</p>
+                  <p className="text-sm text-slate-500">고객 또는 현장실사 직원을 위한 업로드 링크를 생성하고 관리합니다.</p>
                 </div>
-                <Button
-                  onClick={handleCreateUploadToken}
-                  disabled={isTokenLoading || payment.status !== 'paid'}
-                >
-                  업로드 링크 생성
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => handleCreateUploadToken('customer')}
+                    disabled={isTokenLoading || payment.status !== 'paid' || hasActiveTokenForAudience('customer')}
+                    className="w-auto min-w-[140px] !bg-[hsl(var(--sidebar-primary))] !text-[hsl(var(--sidebar-primary-foreground))] hover:!opacity-90 focus-visible:!ring-[hsl(var(--sidebar-primary))]"
+                  >
+                    고객용 링크 생성
+                  </Button>
+                  <Button
+                    onClick={() => handleCreateUploadToken('staff')}
+                    disabled={isTokenLoading || payment.status !== 'paid' || hasActiveTokenForAudience('staff')}
+                    className="w-auto min-w-[160px] !bg-[hsl(var(--sidebar-primary))] !text-[hsl(var(--sidebar-primary-foreground))] hover:!opacity-90 focus-visible:!ring-[hsl(var(--sidebar-primary))]"
+                  >
+                    현장실사 링크 생성
+                  </Button>
+                </div>
               </div>
               {payment.status !== 'paid' && (
                 <p className="text-sm text-amber-600 mb-4">
@@ -624,43 +680,68 @@ export default function AdminPaymentDetailPage() {
               )}
               <div className="border border-slate-200 rounded-md overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-600">
+                  <thead className="bg-slate-50 text-center text-slate-600">
                     <tr>
-                      <th className="px-4 py-3">상태</th>
-                      <th className="px-4 py-3">만료</th>
-                      <th className="px-4 py-3">링크</th>
-                      <th className="px-4 py-3">전송 대상</th>
-                      <th className="px-4 py-3 text-right">동작</th>
+                      <th className="px-4 py-3 text-center">상태</th>
+                      <th className="px-4 py-3 text-center">용도</th>
+                      <th className="px-4 py-3 text-center">만료</th>
+                      <th className="px-4 py-3 text-center">링크</th>
+                      <th className="px-4 py-3 text-center">전송 대상</th>
+                      <th className="px-4 py-3 text-center">동작</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {isTokenLoading ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-6 text-center text-slate-500">업로드 링크를 불러오는 중입니다...</td>
+                        <td colSpan={6} className="px-4 py-6 text-center text-slate-500">업로드 링크를 불러오는 중입니다...</td>
                       </tr>
                     ) : uploadTokens.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-6 text-center text-slate-500">생성된 업로드 링크가 없습니다.</td>
+                        <td colSpan={6} className="px-4 py-6 text-center text-slate-500">생성된 업로드 링크가 없습니다.</td>
                       </tr>
                     ) : (
                       uploadTokens.map((token) => {
                         const expires = formatDateTime(token.expiresAt);
+                        const audienceLabel = token.audience === 'staff' ? '현장실사' : '고객';
                         const statusLabel = token.status === 'expired' ? '만료' : token.status === 'revoked' ? '취소됨' : '활성';
+                        const isExpiredLike = token.status === 'expired' || token.status === 'revoked';
+                        const isRevoking = revokingTokenId === token.id;
+                        const copyButtonClasses = isExpiredLike
+                          ? 'inline-flex items-center gap-2 border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700'
+                          : 'inline-flex items-center gap-2';
+                        const revokeButtonClasses = isExpiredLike || isRevoking
+                          ? 'inline-flex items-center gap-2 text-slate-400 hover:text-slate-400 hover:bg-transparent'
+                          : 'inline-flex items-center gap-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50';
+
                         return (
                           <tr key={token.id} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 text-slate-900">{statusLabel}</td>
-                            <td className="px-4 py-3 text-slate-700">{expires}</td>
-                            <td className="px-4 py-3">
-                              <div className="max-w-xs truncate text-slate-600">{token.uploadUrl}</div>
-                            </td>
-                            <td className="px-4 py-3 text-slate-600">{token.sentTo || '-'}</td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-4 py-3 text-slate-900 text-center">{statusLabel}</td>
+                            <td className="px-4 py-3 text-slate-700 text-center">{audienceLabel}</td>
+                            <td className="px-4 py-3 text-slate-700 text-center">{expires}</td>
+                            <td className="px-4 py-3 text-center">
                               <Button
+                                type="button"
                                 size="sm"
                                 variant="outline"
+                                className={`${copyButtonClasses} w-24 justify-center`}
                                 onClick={() => handleCopyLink(token)}
                               >
-                                {lastCopiedTokenId === token.id ? '복사됨!' : '링크 복사'}
+                                <LinkIcon className="h-4 w-4" aria-hidden="true" />
+                                <span className="hidden sm:inline">{lastCopiedTokenId === token.id ? '복사됨!' : '링크 복사'}</span>
+                              </Button>
+                            </td>
+                            <td className="px-4 py-3 text-slate-600 text-center">{token.sentTo || '-'}</td>
+                            <td className="px-4 py-3 text-center">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                disabled={isExpiredLike || isRevoking}
+                                onClick={() => handleRevokeToken(token)}
+                                className={revokeButtonClasses}
+                              >
+                                <Unplug className="h-4 w-4" aria-hidden="true" />
+                                <span className="hidden sm:inline">{isRevoking ? '종료 중' : '링크 종료'}</span>
                               </Button>
                             </td>
                           </tr>

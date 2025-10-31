@@ -30,16 +30,18 @@ function sanitizeForFileName(value: string): string {
 function formatKstTimestamp(date: Date): string {
   const parts = new Intl.DateTimeFormat('ko-KR', {
     timeZone: 'Asia/Seoul',
-    year: 'numeric',
+    year: '2-digit',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
     hour12: false
   }).formatToParts(date);
 
   const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${map.year}${map.month}${map.day}_${map.hour}${map.minute}`;
+  const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
+  return `${map.year}${map.month}${map.day}_${map.hour}${map.minute}${map.second}${milliseconds}`;
 }
 
 function extractBaseAddress(address: string, addressDetail?: string | null): string {
@@ -80,6 +82,13 @@ function shouldUseAllDrives(): boolean {
   return explicit === 'true' || explicit === '1';
 }
 
+function applyDriveScope<T extends object>(params: T, sharedDriveId: string | null, useAllDrives: boolean): T {
+  if (useAllDrives && sharedDriveId) {
+    return { ...params, driveId: sharedDriveId } as T;
+  }
+  return params;
+}
+
 async function fetchConsultation(
   supabase: SupabaseClient,
   consultationId: string
@@ -118,18 +127,16 @@ async function findExistingFolderId(name: string): Promise<string | null> {
   const sharedDriveId = getDriveSharedDriveId();
   const useAllDrives = shouldUseAllDrives();
 
-  const listParams = {
+  const listParams: drive_v3.Params$Resource$Files$List = {
     q: `name = '${escapeQueryValue(name)}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
     fields: 'files(id, name)',
     supportsAllDrives: useAllDrives,
     includeItemsFromAllDrives: useAllDrives,
     corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
-    driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-  } as any;
+  };
 
-  const response = await drive.files.list(listParams);
-  const data = (response as any).data;
-  const files = data.files ?? [];
+  const response = await drive.files.list(applyDriveScope(listParams, sharedDriveId, useAllDrives));
+  const files = response.data.files ?? [];
   return files.length > 0 ? files[0].id ?? null : null;
 }
 
@@ -160,7 +167,7 @@ async function createDriveFolder(name: string) {
   const sharedDriveId = getDriveSharedDriveId();
   const useAllDrives = shouldUseAllDrives();
 
-  const response = await drive.files.create({
+  const createParams: drive_v3.Params$Resource$Files$Create = {
     requestBody: {
       name,
       mimeType: 'application/vnd.google-apps.folder',
@@ -168,10 +175,10 @@ async function createDriveFolder(name: string) {
     },
     fields: 'id, name, webViewLink',
     supportsAllDrives: useAllDrives,
-    driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-  } as any);
+  };
 
-  const data = (response as any).data;
+  const response = await drive.files.create(applyDriveScope(createParams, sharedDriveId, useAllDrives));
+  const data = response.data;
 
   if (!data.id) {
     throw new Error('Google Drive 폴더 ID를 확인할 수 없습니다.');
@@ -189,32 +196,33 @@ async function createSubFolders(parentFolderId: string, templateRows: DriveTempl
   const sharedDriveId = getDriveSharedDriveId();
   const useAllDrives = shouldUseAllDrives();
 
-  const results: Array<{ templateId: string; folderId: string; name: string }> = [];
-  for (const template of templateRows) {
-    const folderName = sanitizeForFolderName(template.name);
-    const response = await drive.files.create({
-      requestBody: {
-        name: folderName,
-        mimeType: 'application/vnd.google-apps.folder',
-        parents: [parentFolderId]
-      },
-      fields: 'id, name',
-      supportsAllDrives: useAllDrives,
-      driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-    } as any);
+  const results = await Promise.all(
+    templateRows.map(async (template) => {
+      const folderName = sanitizeForFolderName(template.name);
+      const params: drive_v3.Params$Resource$Files$Create = {
+        requestBody: {
+          name: folderName,
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [parentFolderId]
+        },
+        fields: 'id, name',
+        supportsAllDrives: useAllDrives
+      };
 
-    const data = (response as any).data;
+      const { data } = await drive.files.create(applyDriveScope(params, sharedDriveId, useAllDrives));
+      if (!data?.id) {
+        return null;
+      }
 
-    if (data.id) {
-      results.push({
+      return {
         templateId: template.id,
         folderId: data.id,
         name: data.name ?? folderName
-      });
-    }
-  }
+      };
+    })
+  );
 
-  return results;
+  return results.filter((value): value is { templateId: string; folderId: string; name: string } => Boolean(value));
 }
 
 type EnsureParams = {
@@ -464,15 +472,16 @@ async function checkFolderHasDirectFiles(
   useAllDrives: boolean,
   sharedDriveId: string | null
 ): Promise<boolean> {
-  const response = await drive.files.list({
+  const params: drive_v3.Params$Resource$Files$List = {
     q: `'${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
     fields: 'files(id)',
     pageSize: 1,
     supportsAllDrives: useAllDrives,
     includeItemsFromAllDrives: useAllDrives,
     corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
-    driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-  } as any);
+  };
+
+  const response = await drive.files.list(applyDriveScope(params, sharedDriveId, useAllDrives));
 
   return (response.data.files ?? []).length > 0;
 }
@@ -483,23 +492,25 @@ export async function fetchDriveFolderSummary(folderId: string): Promise<DriveFo
   const useAllDrives = shouldUseAllDrives();
 
   const [folderResponse, rootFilesResponse] = await Promise.all([
-    drive.files.list({
-      q: `'${folderId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'`,
-      fields: 'files(id, name)',
-      supportsAllDrives: useAllDrives,
-      includeItemsFromAllDrives: useAllDrives,
-      corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
-      driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-    } as any),
-    drive.files.list({
-      q: `'${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
-      fields: 'files(id, name)',
-      pageSize: 10,
-      supportsAllDrives: useAllDrives,
-      includeItemsFromAllDrives: useAllDrives,
-      corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
-      driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-    } as any)
+    drive.files.list(
+      applyDriveScope({
+        q: `'${folderId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'`,
+        fields: 'files(id, name)',
+        supportsAllDrives: useAllDrives,
+        includeItemsFromAllDrives: useAllDrives,
+        corpora: useAllDrives && sharedDriveId ? 'drive' : undefined
+      }, sharedDriveId, useAllDrives)
+    ),
+    drive.files.list(
+      applyDriveScope({
+        q: `'${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
+        fields: 'files(id, name)',
+        pageSize: 10,
+        supportsAllDrives: useAllDrives,
+        includeItemsFromAllDrives: useAllDrives,
+        corpora: useAllDrives && sharedDriveId ? 'drive' : undefined
+      }, sharedDriveId, useAllDrives)
+    )
   ]);
 
   const rawFolders = folderResponse.data.files ?? [];
@@ -546,46 +557,44 @@ export async function uploadFileToDriveFolder({
   fileName,
   mimeType,
   data
-}: FileUploadParams): Promise<{ fileId: string | null; dryRun: boolean }> {
+}: FileUploadParams): Promise<string> {
   if (!folderId) {
     throw new Error('대상 Google Drive 폴더 ID가 없습니다.');
   }
 
-  const dryRun = isDriveDryRun();
-  if (dryRun) {
-    return { fileId: `dry-run-${Date.now()}`, dryRun: true };
-  }
+  console.log('[drive] upload start', { folderId, fileName, mimeType });
 
   const drive = await getDriveClient();
   const sharedDriveId = getDriveSharedDriveId();
   const useAllDrives = shouldUseAllDrives();
 
   // Remove files with the same name to support overwrite semantics
-  const existing = await drive.files.list({
+  const listParams: drive_v3.Params$Resource$Files$List = {
     q: `name = '${escapeQueryValue(fileName)}' and '${folderId}' in parents and trashed = false`,
     fields: 'files(id)',
     supportsAllDrives: useAllDrives,
     includeItemsFromAllDrives: useAllDrives,
     corpora: useAllDrives && sharedDriveId ? 'drive' : undefined,
-    driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-  } as any);
+  };
+
+  const existing = await drive.files.list(applyDriveScope(listParams, sharedDriveId, useAllDrives));
 
   const existingFiles = existing.data.files ?? [];
   for (const file of existingFiles) {
     if (!file.id) continue;
     try {
-      await drive.files.delete({
+      const deleteParams: drive_v3.Params$Resource$Files$Delete = {
         fileId: file.id,
-        supportsAllDrives: useAllDrives,
-        driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-      } as any);
+        supportsAllDrives: useAllDrives
+      };
+      await drive.files.delete(applyDriveScope(deleteParams, sharedDriveId, useAllDrives));
     } catch (error) {
       console.warn('Failed to delete existing Drive file before overwrite', error);
     }
   }
 
   const mediaBody = Readable.from(data);
-  const response = await drive.files.create({
+  const params: drive_v3.Params$Resource$Files$Create = {
     requestBody: {
       name: fileName,
       parents: [folderId]
@@ -596,19 +605,44 @@ export async function uploadFileToDriveFolder({
     },
     fields: 'id, name',
     supportsAllDrives: useAllDrives,
-    driveId: useAllDrives && sharedDriveId ? sharedDriveId : undefined
-  } as any);
-
-  return {
-    fileId: response.data.id ?? null,
-    dryRun: false
   };
+
+  const response = await drive.files.create(applyDriveScope(params, sharedDriveId, useAllDrives));
+
+  const fileId = response.data.id;
+  if (!fileId) {
+    throw new Error('Google Drive에 파일을 업로드했지만 파일 ID를 확인하지 못했습니다.');
+  }
+
+  console.log('[drive] upload success', { folderId, fileId, fileName });
+  return fileId;
 }
 
 export function buildDriveFileName(categoryLabel: string, customerName: string, originalFileName: string): string {
   const extension = originalFileName.includes('.') ? `.${originalFileName.split('.').pop()}` : '';
-  const baseCustomer = sanitizeForFileName(customerName || '고객');
-  const baseCategory = sanitizeForFileName(categoryLabel || '자료');
+  const baseCategory = sanitizeForFileName(categoryLabel || '자료').replace(/\s+/g, '') || '자료';
+  const baseCustomer = sanitizeForFileName(customerName || '고객').replace(/\s+/g, '') || '고객';
   const timestamp = formatKstTimestamp(new Date());
   return `${baseCategory}_${baseCustomer}_${timestamp}${extension}`;
+}
+
+export async function deleteDriveFile(fileId: string): Promise<void> {
+  if (!fileId) return;
+  const drive = await getDriveClient();
+  const sharedDriveId = getDriveSharedDriveId();
+  const useAllDrives = shouldUseAllDrives();
+
+  try {
+    const params: drive_v3.Params$Resource$Files$Delete = {
+      fileId,
+      supportsAllDrives: useAllDrives
+    };
+    await drive.files.delete(applyDriveScope(params, sharedDriveId, useAllDrives));
+  } catch (error) {
+    const status = (error as { code?: number; response?: { status?: number } }) ?? {};
+    if (status.code === 404 || status.response?.status === 404) {
+      return;
+    }
+    throw error;
+  }
 }

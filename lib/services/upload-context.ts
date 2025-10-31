@@ -2,8 +2,17 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 import { isDriveDryRun } from '@/lib/google/drive-client';
 
-export const MAX_FILES_PER_FOLDER = 2;
-const ALLOWED_CUSTOMER_FOLDER_NAMES = ['1. 인감증명서', '2. 위임장'];
+export type UploadAudience = 'customer' | 'staff';
+
+export const DEFAULT_ALLOWED_TEMPLATES: Record<UploadAudience, string[]> = {
+  customer: ['1. 인감증명서', '2. 위임장'],
+  staff: ['3. 현장 실사', '현장 실사', '3. 현장실사', '현장실사']
+};
+
+export const DEFAULT_MAX_FILES_PER_FOLDER: Record<UploadAudience, number> = {
+  customer: 4,
+  staff: 20
+};
 
 type UploadTokenRow = {
   id: string;
@@ -13,6 +22,9 @@ type UploadTokenRow = {
   consultation_id: string;
   payment_id: string | null;
   drive_folder_id: string | null;
+  audience?: UploadAudience | null;
+  scope?: Record<string, unknown> | null;
+  max_files_per_folder?: number | null;
 };
 
 type ConsultationRow = {
@@ -66,6 +78,9 @@ export type UploadContext = {
   driveFolder: DriveFolderRow | null;
   folders: UploadFolderInfo[];
   dryRun: boolean;
+  audience: UploadAudience;
+  allowedTemplates: string[];
+  maxFilesPerFolder: number;
 };
 
 export type UploadContextResult =
@@ -74,10 +89,6 @@ export type UploadContextResult =
 
 function stripFolderPrefix(name: string): string {
   return name.replace(/^\d+\.\s*/, '').trim();
-}
-
-function now(): Date {
-  return new Date();
 }
 
 export async function resolveUploadContext(token: string): Promise<UploadContextResult> {
@@ -92,7 +103,7 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
     return { ok: false, status: 404, error: '업로드 링크를 찾을 수 없습니다.' };
   }
 
-  const nowTime = now().getTime();
+  const nowTime = Date.now();
   const expiresAt = new Date(tokenRow.expires_at).getTime();
 
   if (tokenRow.status === 'revoked') {
@@ -115,31 +126,84 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
     ? await fetchPaymentStage(supabase, tokenRow.payment_id)
     : null;
 
-  const driveFolder = tokenRow.payment_id
-    ? await fetchDriveFolder(supabase, tokenRow.payment_id)
+  let driveFolder = tokenRow.payment_id
+    ? await fetchDriveFolder(supabase, { paymentStageId: tokenRow.payment_id })
     : null;
 
-  const logs = await fetchUploadLogs(supabase, tokenRow.consultation_id, tokenRow.payment_id);
+  if (!driveFolder && tokenRow.drive_folder_id) {
+    driveFolder = await fetchDriveFolder(supabase, { driveFolderId: tokenRow.drive_folder_id });
+  }
+
+  const logs = await fetchUploadLogs(supabase, tokenRow.consultation_id, tokenRow.payment_id, tokenRow.token, tokenRow.id);
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('[resolveUploadContext] logs fetched', { logCount: logs.length });
+  }
+
+  const audience = normalizeAudience(tokenRow.audience);
+  const allowedTemplates = resolveAllowedTemplates(tokenRow.scope, audience);
+  const allowedTemplateKeys = new Set(allowedTemplates.map(resolveTemplateKey));
 
   const templates = extractTemplates(driveFolder);
-  const folders = templates
-    .filter((template) => ALLOWED_CUSTOMER_FOLDER_NAMES.includes(template.name))
+  const folderLimit = resolveMaxFilesPerFolder(tokenRow.max_files_per_folder, audience);
+
+  const remainingLogs = new Map(logs.map((log) => [log.id, log]));
+
+  let folders = templates
+    .filter((template) => {
+      const key = resolveTemplateKey(template.name);
+      return allowedTemplateKeys.size === 0 || allowedTemplateKeys.has(key);
+    })
     .map((template) => {
-      const uploads = logs.filter((log) => log.file_path?.startsWith(`${template.name}/`));
+      const templateKey = resolveTemplateKey(template.name);
+      const matchedLogs: UploadLogRow[] = [];
+
+      for (const [logId, log] of Array.from(remainingLogs.entries())) {
+        const prefix = extractTemplatePrefix(log.file_path);
+        if (!prefix) continue;
+        if (resolveTemplateKey(prefix) === templateKey) {
+          matchedLogs.push(log);
+          remainingLogs.delete(logId);
+        }
+      }
+
       return {
         templateName: template.name,
-        displayName: stripFolderPrefix(template.name),
+        displayName: stripFolderPrefix(canonicalizeTemplateName(template.name)),
         folderId: template.folderId ?? null,
-        uploads,
-        remainingSlots: Math.max(0, MAX_FILES_PER_FOLDER - uploads.length)
+        uploads: matchedLogs,
+        remainingSlots: Math.max(0, folderLimit - matchedLogs.length)
       };
     });
 
   if (folders.length === 0) {
-    return { ok: false, status: 500, error: '업로드 가능한 폴더 구성이 존재하지 않습니다. 관리자에게 문의해주세요.' };
+    const fallbackTemplates = allowedTemplates.length > 0 ? allowedTemplates : ['업로드'];
+    folders = fallbackTemplates.map((name, index) => {
+      const canonicalName = canonicalizeTemplateName(name) || name;
+      const templateKey = resolveTemplateKey(canonicalName);
+      const matchedLogs = logs.filter((log) => {
+        const prefix = extractTemplatePrefix(log.file_path);
+        if (!prefix) return false;
+        return resolveTemplateKey(prefix) === templateKey;
+      });
+
+      matchedLogs.forEach((log) => remainingLogs.delete(log.id));
+
+      return {
+        templateName: canonicalName,
+        displayName: stripFolderPrefix(canonicalName) || `업로드 ${index + 1}`,
+        folderId: null,
+        uploads: matchedLogs,
+        remainingSlots: Math.max(0, folderLimit - matchedLogs.length)
+      };
+    });
   }
 
-  const dryRun = isDriveDryRun() || !driveFolder?.drive_folder_id;
+  // Log unmatched files instead of adding to fallback folder
+  if (remainingLogs.size > 0) {
+    console.warn('[resolveUploadContext] Unmatched upload logs:', Array.from(remainingLogs.values()).map(l => ({ id: l.id, filePath: l.file_path })));
+  }
+
+  const dryRun = isDriveDryRun();
 
   return {
     ok: true,
@@ -149,7 +213,10 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
       paymentStage,
       driveFolder,
       folders,
-      dryRun
+      dryRun,
+      audience,
+      allowedTemplates,
+      maxFilesPerFolder: folderLimit
     }
   };
 }
@@ -157,7 +224,7 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
 async function fetchUploadToken(supabase: SupabaseClient, token: string): Promise<UploadTokenRow | null> {
   const { data, error } = await supabase
     .from('upload_tokens')
-    .select('id, token, status, expires_at, consultation_id, payment_id, drive_folder_id')
+    .select('id, token, status, expires_at, consultation_id, payment_id, drive_folder_id, audience, scope, max_files_per_folder')
     .eq('token', token)
     .maybeSingle();
 
@@ -211,12 +278,23 @@ async function fetchPaymentStage(supabase: SupabaseClient, paymentStageId: strin
   return data as PaymentStageRow | null;
 }
 
-async function fetchDriveFolder(supabase: SupabaseClient, paymentStageId: string): Promise<DriveFolderRow | null> {
-  const { data, error } = await supabase
+type DriveFolderLookup = { paymentStageId: string } | { driveFolderId: string };
+
+async function fetchDriveFolder(
+  supabase: SupabaseClient,
+  lookup: DriveFolderLookup
+): Promise<DriveFolderRow | null> {
+  let query = supabase
     .from('consultation_drive_folders')
-    .select('id, drive_folder_id, drive_folder_name, status, metadata')
-    .eq('user_payment_stage_id', paymentStageId)
-    .maybeSingle();
+    .select('id, drive_folder_id, drive_folder_name, status, metadata');
+
+  if ('paymentStageId' in lookup) {
+    query = query.eq('user_payment_stage_id', lookup.paymentStageId);
+  } else {
+    query = query.eq('drive_folder_id', lookup.driveFolderId);
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) {
     throw error;
@@ -228,19 +306,32 @@ async function fetchDriveFolder(supabase: SupabaseClient, paymentStageId: string
 async function fetchUploadLogs(
   supabase: SupabaseClient,
   consultationId: string,
-  paymentStageId: string | null
+  paymentStageId: string | null,
+  tokenValue: string,
+  tokenId: string
 ): Promise<UploadLogRow[]> {
   let query = supabase
     .from('upload_logs')
     .select('id, file_name, file_path, mime_type, uploaded_at')
-    .eq('consultation_id', consultationId)
-    .order('uploaded_at', { ascending: false });
+    .eq('consultation_id', consultationId);
 
   if (paymentStageId) {
     query = query.eq('payment_id', paymentStageId);
+  } else {
+    const orFilters: string[] = [];
+    if (tokenValue) {
+      orFilters.push(`upload_token.eq.${tokenValue}`);
+    }
+    if (tokenId) {
+      orFilters.push(`upload_token_id.eq.${tokenId}`);
+    }
+
+    if (orFilters.length > 0) {
+      query = query.or(orFilters.join(','));
+    }
   }
 
-  const { data, error } = await query;
+  const { data, error } = await query.order('uploaded_at', { ascending: false });
 
   if (error) {
     throw error;
@@ -261,4 +352,71 @@ function extractTemplates(driveFolder: DriveFolderRow | null): Array<{ name: str
       name: template.name as string,
       folderId: template.folderId ?? template.folder_id ?? null
     }));
+}
+
+export function normalizeAudience(input: unknown): UploadAudience {
+  return input === 'staff' ? 'staff' : 'customer';
+}
+
+export function resolveAllowedTemplates(scope: unknown, audience: UploadAudience): string[] {
+  if (scope && typeof scope === 'object') {
+    const rawAllowed = (scope as { allowedTemplates?: unknown }).allowedTemplates;
+    if (Array.isArray(rawAllowed)) {
+      const cleaned = rawAllowed.filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+      if (cleaned.length > 0) {
+        return canonicalizeAllowedTemplates(cleaned);
+      }
+    }
+  }
+  return canonicalizeAllowedTemplates(DEFAULT_ALLOWED_TEMPLATES[audience]);
+}
+
+export function resolveMaxFilesPerFolder(value: unknown, audience: UploadAudience): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) {
+    return Math.floor(numeric);
+  }
+  return DEFAULT_MAX_FILES_PER_FOLDER[audience];
+}
+
+const TEMPLATE_CANONICAL_MAP: Record<string, string> = {
+  현장실사: '현장 실사'
+};
+
+function normalizeTemplateKey(value: string): string {
+  return value.replace(/^\d+\.\s*/, '').replace(/\s+/g, '').toLowerCase();
+}
+
+function canonicalizeTemplateName(value: string): string {
+  const trimmed = value.replace(/\/+$/, '').trim();
+  if (!trimmed) return trimmed;
+  const key = normalizeTemplateKey(trimmed);
+  return TEMPLATE_CANONICAL_MAP[key] ?? trimmed;
+}
+
+function resolveTemplateKey(value: string): string {
+  return normalizeTemplateKey(canonicalizeTemplateName(value));
+}
+
+export function canonicalizeAllowedTemplates(values: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  values.forEach((value) => {
+    const canonical = canonicalizeTemplateName(value);
+    if (!canonical) return;
+    const key = resolveTemplateKey(canonical);
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      result.push(canonical);
+    }
+  });
+  return result;
+}
+
+function extractTemplatePrefix(filePath: string | null): string | null {
+  if (!filePath) return null;
+  const normalized = filePath.replace(/\\/g, '/');
+  const [prefix] = normalized.split('/');
+  if (!prefix) return null;
+  return canonicalizeTemplateName(prefix);
 }
