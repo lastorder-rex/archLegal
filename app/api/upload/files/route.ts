@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
-import { resolveUploadContext, MAX_FILES_PER_FOLDER } from '@/lib/services/upload-context';
-import { buildDriveFileName, uploadFileToDriveFolder } from '@/lib/services/consultation-drive-service';
+import { resolveUploadContext } from '@/lib/services/upload-context';
+import { buildDriveFileName, uploadFileToDriveFolder, deleteDriveFile } from '@/lib/services/consultation-drive-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,10 +48,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (targetFolder.remainingSlots <= 0) {
-      return NextResponse.json({ error: `해당 폴더에는 최대 ${MAX_FILES_PER_FOLDER}개의 파일만 업로드할 수 있습니다.` }, { status: 409 });
+      return NextResponse.json(
+        { error: `해당 폴더에는 최대 ${context.maxFilesPerFolder}개의 파일만 업로드할 수 있습니다.` },
+        { status: 409 }
+      );
     }
 
-    if (!context.dryRun && !targetFolder.folderId) {
+    if (!targetFolder.folderId) {
       return NextResponse.json({ error: '문서 폴더가 준비되지 않았습니다. 관리자에게 문의해주세요.' }, { status: 500 });
     }
 
@@ -60,15 +63,21 @@ export async function POST(request: NextRequest) {
 
     const customerName = context.consultation.name ?? '고객';
     const finalFileName = buildDriveFileName(targetFolder.displayName, customerName, file.name);
+    const folderId = targetFolder.folderId;
 
-    const driveResult = context.dryRun
-      ? { fileId: `dry-run-${Date.now()}`, dryRun: true as const }
-      : await uploadFileToDriveFolder({
-          folderId: targetFolder.folderId ?? '',
-          fileName: finalFileName,
-          mimeType: file.type,
-          data: buffer
-        });
+    console.log('[upload/files] upload start', {
+      folderId,
+      templateName,
+      finalFileName
+    });
+
+    const driveFileId = await uploadFileToDriveFolder({
+      folderId,
+      fileName: finalFileName,
+      mimeType: file.type,
+      data: buffer
+    });
+    console.log('[upload/files] upload success', { folderId, driveFileId });
 
     const supabase = getSupabaseAdminClient();
     const filePath = `${targetFolder.templateName}/${finalFileName}`;
@@ -84,7 +93,7 @@ export async function POST(request: NextRequest) {
       file_path: filePath,
       mime_type: file.type || null,
       file_size: buffer.length,
-      drive_file_id: driveResult.fileId,
+      drive_file_id: driveFileId,
       ip_address: request.headers.get('x-forwarded-for') ?? null,
       user_agent: request.headers.get('user-agent') ?? null,
       uploaded_at: new Date().toISOString()
@@ -97,8 +106,7 @@ export async function POST(request: NextRequest) {
         success: true,
         fileName: finalFileName,
         filePath,
-        driveFileId: driveResult.fileId,
-        dryRun: driveResult.dryRun
+        driveFileId
       });
     }
 
@@ -108,8 +116,7 @@ export async function POST(request: NextRequest) {
       success: true,
       fileName: finalFileName,
       filePath,
-      driveFileId: driveResult.fileId,
-      dryRun: driveResult.dryRun,
+      driveFileId,
       folder: updatedFolder
         ? {
             templateName: updatedFolder.templateName,
@@ -129,5 +136,100 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
     console.error('[upload/files] unexpected error', error);
     return NextResponse.json({ error: '파일 업로드 중 오류가 발생했습니다.', detail: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const token = typeof body.token === 'string' ? body.token : '';
+    const uploadId = typeof body.uploadId === 'string' ? body.uploadId : '';
+
+    if (!token || !uploadId) {
+      return NextResponse.json({ error: '필수 값이 누락되었습니다.' }, { status: 400 });
+    }
+
+    const resolveResult = await resolveUploadContext(token);
+    if (!resolveResult.ok) {
+      return NextResponse.json({ error: resolveResult.error }, { status: resolveResult.status });
+    }
+
+    const { context } = resolveResult;
+    const belongsToToken = context.folders.some((folder) => folder.uploads.some((upload) => upload.id === uploadId));
+    if (!belongsToToken) {
+      return NextResponse.json({ error: '삭제할 파일을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const supabase = getSupabaseAdminClient();
+    const { data: logRow, error: logError } = await supabase
+      .from('upload_logs')
+      .select('id, consultation_id, payment_id, drive_file_id')
+      .eq('id', uploadId)
+      .maybeSingle();
+
+    if (logError) {
+      console.error('[upload/files] log fetch error', logError);
+      return NextResponse.json({ error: '업로드 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (!logRow) {
+      return NextResponse.json({ error: '삭제할 파일을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    if (logRow.consultation_id !== context.consultation.id) {
+      return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (context.paymentStage?.id && logRow.payment_id !== context.paymentStage.id) {
+      return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!context.paymentStage?.id && logRow.payment_id) {
+      return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!context.dryRun && logRow.drive_file_id) {
+      console.log('[upload/files] deleteDriveFile start', {
+        driveFileId: logRow.drive_file_id,
+        tokenId: context.token.id
+      });
+      await deleteDriveFile(logRow.drive_file_id);
+      console.log('[upload/files] deleteDriveFile success', {
+        driveFileId: logRow.drive_file_id,
+        tokenId: context.token.id
+      });
+    }
+
+    const { error: deleteError } = await supabase.from('upload_logs').delete().eq('id', uploadId);
+    if (deleteError) {
+      console.error('[upload/files] log delete error', deleteError);
+      return NextResponse.json({ error: '파일 삭제에 실패했습니다.' }, { status: 500 });
+    }
+
+    await supabase.from('upload_tokens').update({ updated_at: new Date().toISOString() }).eq('id', context.token.id);
+
+    const refreshed = await resolveUploadContext(token);
+    if (!refreshed.ok) {
+      return NextResponse.json({ success: true });
+    }
+
+    const updatedFolders = refreshed.context.folders.map((folder) => ({
+      templateName: folder.templateName,
+      displayName: folder.displayName,
+      remainingSlots: folder.remainingSlots,
+      uploads: folder.uploads.map((upload) => ({
+        id: upload.id,
+        fileName: upload.file_name,
+        filePath: upload.file_path,
+        uploadedAt: upload.uploaded_at,
+        mimeType: upload.mime_type
+      }))
+    }));
+
+    return NextResponse.json({ success: true, folders: updatedFolders });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+    console.error('[upload/files] delete error', error);
+    return NextResponse.json({ error: '파일 삭제 중 오류가 발생했습니다.', detail: message }, { status: 500 });
   }
 }

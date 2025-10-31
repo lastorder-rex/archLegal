@@ -48,15 +48,15 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://www.archlegal.co.kr/docu/archlegal-og.png'
+        url: 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/archlegal-og.png'
       }
     ]
   },
   twitter: {
     card: 'summary_large_image',
     title: '인건(仁建) - 건축물 양성화 전문 플랫폼',
-    description: '불법 건축물을 합법적으로 정리하는 전문 플랫폼 인건(仁建). 합법 해결, 결과 중심, 신뢰 기반 양성화 서비스를 제공합니다.',
-    images: ['https://www.archlegal.co.kr/docu/archlegal-og.png']
+    description: '위반/불법 건축물을 합법적으로 정리하는 전문 플랫폼 인건(仁建). 합법 해결, 결과 중심, 신뢰 기반 양성화 서비스를 제공합니다.',
+    images: ['https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/archlegal-og.png']
   },
 
 };

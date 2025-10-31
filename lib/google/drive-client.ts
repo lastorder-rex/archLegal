@@ -37,7 +37,12 @@ function parseServiceAccountKey(): ServiceAccountKey {
 }
 
 export function isDriveDryRun(): boolean {
-  return String(process.env.DRIVE_DRY_RUN ?? '').toLowerCase() === 'true';
+  const flag = process.env.DRIVE_DRY_RUN;
+  if (!flag) {
+    return false;
+  }
+  const normalized = flag.toString().trim().toLowerCase();
+  return normalized === 'true' || normalized === '1' || normalized === 'yes';
 }
 
 export function getDriveRootFolderId(): string {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resolveUploadContext, MAX_FILES_PER_FOLDER } from '@/lib/services/upload-context';
+import { resolveUploadContext } from '@/lib/services/upload-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +61,9 @@ export async function GET(request: NextRequest) {
         expiresInSeconds
       },
       dryRun: context.dryRun,
-      maxFilesPerFolder: MAX_FILES_PER_FOLDER
+      maxFilesPerFolder: context.maxFilesPerFolder,
+      audience: context.audience,
+      allowedTemplates: context.allowedTemplates
     });
   } catch (error) {
     console.error('[upload/validate] unexpected error', error);
