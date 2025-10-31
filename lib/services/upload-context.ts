@@ -135,9 +135,7 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
   }
 
   const logs = await fetchUploadLogs(supabase, tokenRow.consultation_id, tokenRow.payment_id, tokenRow.token, tokenRow.id);
-  if (process.env.NODE_ENV === 'development') {
-    console.debug('[resolveUploadContext] logs fetched', { logCount: logs.length });
-  }
+  console.debug('[resolveUploadContext] logs fetched', { logCount: logs.length });
 
   const audience = normalizeAudience(tokenRow.audience);
   const allowedTemplates = resolveAllowedTemplates(tokenRow.scope, audience);
@@ -198,16 +196,14 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
     });
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    const matchedUploads = folders.flatMap((folder) =>
-      folder.uploads.map((upload) => ({
-        id: upload.id,
-        filePath: upload.file_path,
-        templateName: folder.templateName
-      }))
-    );
-    console.debug('[resolveUploadContext] matched upload logs', matchedUploads);
-  }
+  const matchedUploads = folders.flatMap((folder) =>
+    folder.uploads.map((upload) => ({
+      id: upload.id,
+      filePath: upload.file_path,
+      templateName: folder.templateName
+    }))
+  );
+  console.debug('[resolveUploadContext] matched upload logs', matchedUploads);
 
   // Log unmatched files instead of adding to fallback folder
   if (remainingLogs.size > 0) {
