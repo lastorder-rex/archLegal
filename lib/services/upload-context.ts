@@ -198,6 +198,17 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
     });
   }
 
+  if (process.env.NODE_ENV === 'development') {
+    const matchedUploads = folders.flatMap((folder) =>
+      folder.uploads.map((upload) => ({
+        id: upload.id,
+        filePath: upload.file_path,
+        templateName: folder.templateName
+      }))
+    );
+    console.debug('[resolveUploadContext] matched upload logs', matchedUploads);
+  }
+
   // Log unmatched files instead of adding to fallback folder
   if (remainingLogs.size > 0) {
     console.warn('[resolveUploadContext] Unmatched upload logs:', Array.from(remainingLogs.values()).map(l => ({ id: l.id, filePath: l.file_path })));
@@ -317,6 +328,11 @@ async function fetchUploadLogs(
 
   if (paymentStageId) {
     query = query.eq('payment_id', paymentStageId);
+    if (tokenValue) {
+      query = query.eq('upload_token', tokenValue);
+    } else if (tokenId) {
+      query = query.eq('upload_token_id', tokenId);
+    }
   } else {
     const orFilters: string[] = [];
     if (tokenValue) {
