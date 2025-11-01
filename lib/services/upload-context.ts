@@ -134,6 +134,13 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
     driveFolder = await fetchDriveFolder(supabase, { driveFolderId: tokenRow.drive_folder_id });
   }
 
+  console.debug('[resolveUploadContext] fetch params', {
+    consultationId: tokenRow.consultation_id,
+    paymentId: tokenRow.payment_id,
+    token: tokenRow.token,
+    tokenId: tokenRow.id
+  });
+
   const logs = await fetchUploadLogs(supabase, tokenRow.consultation_id, tokenRow.payment_id, tokenRow.token, tokenRow.id);
   console.debug('[resolveUploadContext] logs fetched', { logCount: logs.length });
 
@@ -310,7 +317,7 @@ async function fetchDriveFolder(
   return data as DriveFolderRow | null;
 }
 
-async function fetchUploadLogs(
+async function _fetchUploadLogs(
   supabase: SupabaseClient,
   consultationId: string,
   paymentStageId: string | null,
@@ -356,6 +363,50 @@ async function fetchUploadLogs(
         sqlConditions.push(`upload_token_id = '${escapeLiteral(tokenId)}'`);
       }
     }
+  }
+
+  const { data, error } = await query.order('uploaded_at', { ascending: false });
+
+  const sqlPreview = [
+    'SELECT id, file_name, file_path, mime_type, uploaded_at',
+    'FROM upload_logs',
+    sqlConditions.length > 0 ? `WHERE ${sqlConditions.join(' AND ')}` : '',
+    'ORDER BY uploaded_at DESC;'
+  ]
+    .filter(Boolean)
+    .join('\n');
+  console.debug('[resolveUploadContext] upload_logs query', sqlPreview);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as UploadLogRow[];
+}
+
+async function fetchUploadLogs(
+  supabase: SupabaseClient,
+  consultationId: string,
+  paymentStageId: string | null,
+  tokenValue: string,
+  tokenId: string
+): Promise<UploadLogRow[]> {
+  const escapeLiteral = (input: string) => input.replace(/'/g, "''");
+  const sqlConditions: string[] = [`consultation_id = '${escapeLiteral(consultationId)}'`];
+
+  let query = supabase
+    .from('upload_logs')
+    .select('id, file_name, file_path, mime_type, uploaded_at')
+    .eq('consultation_id', consultationId);
+
+  if (paymentStageId) {
+    query = query.eq('payment_id', paymentStageId);
+    sqlConditions.push(`payment_id = '${escapeLiteral(paymentStageId)}'`);
+  }
+
+  if (tokenValue) {
+    query = query.eq('upload_token', tokenValue);
+    sqlConditions.push(`upload_token = '${escapeLiteral(tokenValue)}'`);
   }
 
   const { data, error } = await query.order('uploaded_at', { ascending: false });

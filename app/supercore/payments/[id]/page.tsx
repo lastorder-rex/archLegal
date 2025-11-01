@@ -129,6 +129,7 @@ export default function AdminPaymentDetailPage() {
   const [uploadTokens, setUploadTokens] = useState<UploadTokenRow[]>([]);
   const [lastCopiedTokenId, setLastCopiedTokenId] = useState<string | null>(null);
   const [revokingTokenId, setRevokingTokenId] = useState<string | null>(null);
+  const [hoveredTokenId, setHoveredTokenId] = useState<string | null>(null);
 
   const [paidAmountInput, setPaidAmountInput] = useState('');
   const [paymentKeyInput, setPaymentKeyInput] = useState('');
@@ -718,17 +719,29 @@ export default function AdminPaymentDetailPage() {
                             <td className="px-4 py-3 text-slate-900 text-center">{statusLabel}</td>
                             <td className="px-4 py-3 text-slate-700 text-center">{audienceLabel}</td>
                             <td className="px-4 py-3 text-slate-700 text-center">{expires}</td>
-                            <td className="px-4 py-3 text-center">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                className={`${copyButtonClasses} w-24 justify-center`}
-                                onClick={() => handleCopyLink(token)}
+                            <td className="px-4 py-3 text-center relative">
+                              <div
+                                onMouseEnter={() => setHoveredTokenId(token.id)}
+                                onMouseLeave={() => setHoveredTokenId(null)}
+                                className="relative inline-block"
                               >
-                                <LinkIcon className="h-4 w-4" aria-hidden="true" />
-                                <span className="hidden sm:inline">{lastCopiedTokenId === token.id ? '복사됨!' : '링크 복사'}</span>
-                              </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className={`${copyButtonClasses} w-24 justify-center`}
+                                  onClick={() => handleCopyLink(token)}
+                                >
+                                  <LinkIcon className="h-4 w-4" aria-hidden="true" />
+                                  <span className="hidden sm:inline">{lastCopiedTokenId === token.id ? '복사됨!' : '링크 복사'}</span>
+                                </Button>
+                                {hoveredTokenId === token.id && (
+                                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs rounded-md p-2 whitespace-nowrap">
+                                    <div className="font-mono text-xs">{token.token}</div>
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-slate-600 text-center">{token.sentTo || '-'}</td>
                             <td className="px-4 py-3 text-center">
