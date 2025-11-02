@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolveUploadContext } from '@/lib/services/upload-context';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
     const expiresAt = context.token.expires_at;
     const expiresInSeconds = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       consultation: {
         id: context.consultation.id,
         name: context.consultation.name,
@@ -65,6 +67,13 @@ export async function GET(request: NextRequest) {
       audience: context.audience,
       allowedTemplates: context.allowedTemplates
     });
+
+    // Prevent all caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+
+    return response;
   } catch (error) {
     console.error('[upload/validate] unexpected error', error);
     return NextResponse.json({ error: '업로드 링크를 확인하는 중 오류가 발생했습니다.' }, { status: 500 });

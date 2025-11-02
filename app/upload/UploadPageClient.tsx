@@ -393,11 +393,11 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                     accept="image/*,application/pdf"
                     disabled={isDisabled}
                     className="hidden"
-                    onChange={(event) => {
-                      const selectedFiles = event.target.files;
+                    onChange={async (event) => {
+                      const selectedFiles = event.target.files ? Array.from(event.target.files) : [];
                       event.target.value = '';
-                      if (selectedFiles) {
-                        handleFilesUpload(selectedFiles, folder);
+                      if (selectedFiles.length > 0) {
+                        await handleFilesUpload(selectedFiles, folder);
                       }
                     }}
                   />
@@ -451,7 +451,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                       size="sm"
                       disabled={isDisabled}
                       className="mt-2"
-                      onClick={(event) => {
+                    onClick={(event) => {
                         event.preventDefault();
                         if (!isDisabled) {
                           document.getElementById(inputId)?.click();
