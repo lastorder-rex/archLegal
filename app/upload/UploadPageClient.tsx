@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Upload, CircleX, Trash2, Image as ImageIcon, FileText as FileTextIcon } from 'lucide-react';
+import { Upload, CircleX, Trash2, Image as ImageIcon, FileText as FileTextIcon, Loader } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateFilePreview } from '@/lib/utils/file-upload';
 
@@ -61,6 +61,10 @@ type FolderStatus = {
   uploading: boolean;
   error: string | null;
   successMessage: string | null;
+  uploadProgress?: {
+    current: number;
+    total: number;
+  };
 };
 
 type FolderStatusMap = Record<string, FolderStatus>;
@@ -280,7 +284,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
         return;
       }
 
-      setFolderStatus(folder.templateName, { uploading: true, error: null, successMessage: null });
+      setFolderStatus(folder.templateName, { uploading: true, error: null, successMessage: null, uploadProgress: { current: 0, total: 0 } });
 
       const limitedFiles = files.slice(0, slotsAvailable);
       const skippedCount = files.length - limitedFiles.length;
@@ -306,6 +310,9 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
       let successCount = 0;
       let failureMessages: string[] = [];
       let remainingSlots = slotsAvailable;
+      const totalFiles = limitedFiles.length;
+
+      setFolderStatus(folder.templateName, { uploading: true, error: null, successMessage: null, uploadProgress: { current: 0, total: totalFiles } });
 
       for (const file of limitedFiles) {
         if (remainingSlots <= 0) break;
@@ -313,9 +320,26 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
           await uploadFileToTemplate(file, folder.templateName);
           successCount += 1;
           remainingSlots -= 1;
+
+          // 진행률 업데이트
+          setFolderStatus(folder.templateName, {
+            uploading: true,
+            error: null,
+            successMessage: null,
+            uploadProgress: { current: successCount, total: totalFiles }
+          });
         } catch (error) {
           const message = error instanceof Error ? error.message : '파일 업로드에 실패했습니다.';
           failureMessages.push(message);
+
+          // 실패해도 진행률 업데이트
+          successCount += 1;
+          setFolderStatus(folder.templateName, {
+            uploading: true,
+            error: null,
+            successMessage: null,
+            uploadProgress: { current: successCount, total: totalFiles }
+          });
         }
       }
 
@@ -332,7 +356,8 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
         successMessage:
           successCount > 0
             ? `${successCount}개 파일 업로드 완료${skippedCount > 0 ? ` (${skippedCount}개 제외)` : ''}`
-            : null
+            : null,
+        uploadProgress: undefined
       });
     },
     [uploadContext?.maxFilesPerFolder, loadContext, setFolderStatus, uploadFileToTemplate]
@@ -568,8 +593,28 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                 </div>
 
                 {uploading && (
-                  <div className="text-sm text-slate-600 bg-slate-100 border border-slate-200 rounded px-3 py-2">
-                    파일을 업로드하는 중입니다. 잠시만 기다려주세요...
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm text-slate-600 bg-slate-100 border border-slate-200 rounded px-3 py-3">
+                      <Loader className="h-5 w-5 animate-spin text-primary flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="font-medium">파일을 업로드하는 중입니다</p>
+                        {status?.uploadProgress && (
+                          <p className="text-xs text-slate-500 mt-1">
+                            {status.uploadProgress.current} / {status.uploadProgress.total}개 파일
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {status?.uploadProgress && (
+                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-primary h-full transition-all duration-300 ease-out"
+                          style={{
+                            width: `${(status.uploadProgress.current / status.uploadProgress.total) * 100}%`
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
