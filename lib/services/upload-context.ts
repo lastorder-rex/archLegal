@@ -62,6 +62,7 @@ type UploadLogRow = {
   mime_type: string | null;
   uploaded_at: string;
   drive_file_id?: string | null;
+  thumbnail_url?: string | null;
 };
 
 export type UploadFolderInfo = {
@@ -397,7 +398,7 @@ async function fetchUploadLogs(
 
   let query = supabase
     .from('upload_logs')
-    .select('id, file_name, file_path, mime_type, uploaded_at, drive_file_id')
+    .select('id, file_name, file_path, mime_type, uploaded_at, drive_file_id, thumbnail_url')
     .eq('consultation_id', consultationId);
 
   if (paymentStageId) {
@@ -413,7 +414,7 @@ async function fetchUploadLogs(
   const { data, error } = await query.order('uploaded_at', { ascending: false });
 
   const sqlPreview = [
-    'SELECT id, file_name, file_path, mime_type, uploaded_at, drive_file_id',
+    'SELECT id, file_name, file_path, mime_type, uploaded_at, drive_file_id, thumbnail_url',
     'FROM upload_logs',
     sqlConditions.length > 0 ? `WHERE ${sqlConditions.join(' AND ')}` : '',
     'ORDER BY uploaded_at DESC;'

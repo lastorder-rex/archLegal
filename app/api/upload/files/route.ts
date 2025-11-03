@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 import { resolveUploadContext } from '@/lib/services/upload-context';
 import { buildDriveFileName, uploadFileToDriveFolder, deleteDriveFile } from '@/lib/services/consultation-drive-service';
+import { generateThumbnail, uploadThumbnailToStorage, deleteThumbnailFromStorage } from '@/lib/services/thumbnail-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,23 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdminClient();
     const filePath = `${targetFolder.templateName}/${finalFileName}`;
 
+    // 썸네일 생성 및 업로드 (이미지 파일만)
+    let thumbnailUrl: string | null = null;
+    if (file.type.startsWith('image/')) {
+      console.log('[upload/files] generating thumbnail', { fileName: finalFileName });
+      const thumbnailBuffer = await generateThumbnail(buffer, file.type);
+      if (thumbnailBuffer) {
+        // 한글 제거: 타임스탬프만 사용 (Supabase Storage는 ASCII만 허용)
+        const thumbnailFileName = `${Date.now()}`;
+        thumbnailUrl = await uploadThumbnailToStorage(
+          thumbnailBuffer,
+          thumbnailFileName,
+          context.consultation.id
+        );
+        console.log('[upload/files] thumbnail uploaded', { thumbnailUrl });
+      }
+    }
+
     await supabase.from('upload_tokens').update({ updated_at: new Date().toISOString() }).eq('id', context.token.id);
 
     await supabase.from('upload_logs').insert({
@@ -94,6 +112,7 @@ export async function POST(request: NextRequest) {
       mime_type: file.type || null,
       file_size: buffer.length,
       drive_file_id: driveFileId,
+      thumbnail_url: thumbnailUrl,
       ip_address: request.headers.get('x-forwarded-for') ?? null,
       user_agent: request.headers.get('user-agent') ?? null,
       uploaded_at: new Date().toISOString()
@@ -163,7 +182,7 @@ export async function DELETE(request: NextRequest) {
     const supabase = getSupabaseAdminClient();
     const { data: logRow, error: logError } = await supabase
       .from('upload_logs')
-      .select('id, consultation_id, payment_id, drive_file_id')
+      .select('id, consultation_id, payment_id, drive_file_id, thumbnail_url')
       .eq('id', uploadId)
       .maybeSingle();
 
@@ -198,6 +217,13 @@ export async function DELETE(request: NextRequest) {
         driveFileId: logRow.drive_file_id,
         tokenId: context.token.id
       });
+    }
+
+    // 썸네일 삭제
+    if (logRow.thumbnail_url) {
+      console.log('[upload/files] deleteThumbnail start', { thumbnailUrl: logRow.thumbnail_url });
+      await deleteThumbnailFromStorage(logRow.thumbnail_url);
+      console.log('[upload/files] deleteThumbnail success');
     }
 
     const { error: deleteError } = await supabase.from('upload_logs').delete().eq('id', uploadId);
