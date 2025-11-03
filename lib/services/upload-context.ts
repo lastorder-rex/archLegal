@@ -136,15 +136,7 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
     driveFolder = await fetchDriveFolder(supabase, { driveFolderId: tokenRow.drive_folder_id });
   }
 
-  console.debug('[resolveUploadContext] fetch params', {
-    consultationId: tokenRow.consultation_id,
-    paymentId: tokenRow.payment_id,
-    token: tokenRow.token,
-    tokenId: tokenRow.id
-  });
-
   const logs = await fetchUploadLogs(supabase, tokenRow.consultation_id, tokenRow.payment_id, tokenRow.token, tokenRow.id);
-  console.debug('[resolveUploadContext] logs fetched', { logCount: logs.length });
 
   const audience = normalizeAudience(tokenRow.audience);
   const allowedTemplates = resolveAllowedTemplates(tokenRow.scope, audience);
@@ -204,15 +196,6 @@ export async function resolveUploadContext(token: string): Promise<UploadContext
       };
     });
   }
-
-  const matchedUploads = folders.flatMap((folder) =>
-    folder.uploads.map((upload) => ({
-      id: upload.id,
-      filePath: upload.file_path,
-      templateName: folder.templateName
-    }))
-  );
-  console.debug('[resolveUploadContext] matched upload logs', matchedUploads);
 
   // Log unmatched files instead of adding to fallback folder
   if (remainingLogs.size > 0) {
@@ -326,9 +309,6 @@ async function _fetchUploadLogs(
   tokenValue: string,
   tokenId: string
 ): Promise<UploadLogRow[]> {
-  const escapeLiteral = (input: string) => input.replace(/'/g, "''");
-  const sqlConditions: string[] = [`consultation_id = '${escapeLiteral(consultationId)}'`];
-
   let query = supabase
     .from('upload_logs')
     .select('id, file_name, file_path, mime_type, uploaded_at')
@@ -336,13 +316,10 @@ async function _fetchUploadLogs(
 
   if (paymentStageId) {
     query = query.eq('payment_id', paymentStageId);
-    sqlConditions.push(`payment_id = '${escapeLiteral(paymentStageId)}'`);
     if (tokenValue) {
       query = query.eq('upload_token', tokenValue);
-      sqlConditions.push(`upload_token = '${escapeLiteral(tokenValue)}'`);
     } else if (tokenId) {
       query = query.eq('upload_token_id', tokenId);
-      sqlConditions.push(`upload_token_id = '${escapeLiteral(tokenId)}'`);
     }
   } else {
     const orFilters: string[] = [];
@@ -355,29 +332,10 @@ async function _fetchUploadLogs(
 
     if (orFilters.length > 0) {
       query = query.or(orFilters.join(','));
-      if (tokenValue && tokenId) {
-        sqlConditions.push(
-          `(upload_token = '${escapeLiteral(tokenValue)}' OR upload_token_id = '${escapeLiteral(tokenId)}')`
-        );
-      } else if (tokenValue) {
-        sqlConditions.push(`upload_token = '${escapeLiteral(tokenValue)}'`);
-      } else if (tokenId) {
-        sqlConditions.push(`upload_token_id = '${escapeLiteral(tokenId)}'`);
-      }
     }
   }
 
   const { data, error } = await query.order('uploaded_at', { ascending: false });
-
-  const sqlPreview = [
-    'SELECT id, file_name, file_path, mime_type, uploaded_at',
-    'FROM upload_logs',
-    sqlConditions.length > 0 ? `WHERE ${sqlConditions.join(' AND ')}` : '',
-    'ORDER BY uploaded_at DESC;'
-  ]
-    .filter(Boolean)
-    .join('\n');
-  console.debug('[resolveUploadContext] upload_logs query', sqlPreview);
 
   if (error) {
     throw error;
@@ -393,9 +351,6 @@ async function fetchUploadLogs(
   tokenValue: string,
   tokenId: string
 ): Promise<UploadLogRow[]> {
-  const escapeLiteral = (input: string) => input.replace(/'/g, "''");
-  const sqlConditions: string[] = [`consultation_id = '${escapeLiteral(consultationId)}'`];
-
   let query = supabase
     .from('upload_logs')
     .select('id, file_name, file_path, mime_type, uploaded_at, drive_file_id, thumbnail_url')
@@ -403,25 +358,13 @@ async function fetchUploadLogs(
 
   if (paymentStageId) {
     query = query.eq('payment_id', paymentStageId);
-    sqlConditions.push(`payment_id = '${escapeLiteral(paymentStageId)}'`);
   }
 
   if (tokenValue) {
     query = query.eq('upload_token', tokenValue);
-    sqlConditions.push(`upload_token = '${escapeLiteral(tokenValue)}'`);
   }
 
   const { data, error } = await query.order('uploaded_at', { ascending: false });
-
-  const sqlPreview = [
-    'SELECT id, file_name, file_path, mime_type, uploaded_at, drive_file_id, thumbnail_url',
-    'FROM upload_logs',
-    sqlConditions.length > 0 ? `WHERE ${sqlConditions.join(' AND ')}` : '',
-    'ORDER BY uploaded_at DESC;'
-  ]
-    .filter(Boolean)
-    .join('\n');
-  console.debug('[resolveUploadContext] upload_logs query', sqlPreview);
 
   if (error) {
     throw error;

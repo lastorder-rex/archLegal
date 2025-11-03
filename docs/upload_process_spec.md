@@ -44,4 +44,6 @@
 
 5. **파일 업로드**
    - `UploadPageClient`는 2MB 초과 이미지에 대해 리사이즈·재압축(HEIC/HEIF→JPEG 변환 포함) 후 FormData를 `POST /api/upload/files`로 전송해 Vercel 본문 제한을 회피.
-   - API는 토큰/템플릿/슬롯 검증 후 `uploadFileToDriveFolder`로 Google Drive에 업로드하고, 결과를 `upload_logs`에 남기며 토큰의 `updated_at`을 갱신. 삭제 요청은 동일 검증 후 Drive와 로그에서 제거.
+   - API는 토큰/템플릿/슬롯 검증 후 `uploadFileToDriveFolder`로 Google Drive에 업로드하고, 결과를 `upload_logs`에 남기며 토큰의 `updated_at`을 갱신.
+   - **썸네일 생성**: 이미지 파일인 경우 `sharp`로 200x200px JPEG 썸네일을 생성하고, Supabase Storage의 `thumbnails` 버킷(public)에 `consultations/{consultation_id}/{timestamp}.jpg` 경로로 업로드. 생성된 public URL을 `upload_logs.thumbnail_url`에 저장해 모바일 환경에서도 인증 없이 미리보기 가능.
+   - 삭제 요청(`DELETE /api/upload/files`)은 동일 검증 후 Drive 파일과 Supabase Storage 썸네일을 모두 제거하고 `upload_logs`에서 삭제.
