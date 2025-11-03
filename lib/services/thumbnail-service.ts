@@ -14,16 +14,10 @@ const STORAGE_BUCKET = 'thumbnails';
 export async function generateThumbnail(fileBuffer: Buffer, mimeType: string): Promise<Buffer | null> {
   // 이미지 파일만 썸네일 생성
   if (!mimeType.startsWith('image/')) {
-    console.log('[thumbnail-service] skipping non-image file', { mimeType });
     return null;
   }
 
   try {
-    console.log('[thumbnail-service] generating thumbnail', {
-      bufferSize: fileBuffer.length,
-      mimeType
-    });
-
     const thumbnail = await sharp(fileBuffer)
       .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
         fit: 'cover',
@@ -35,19 +29,9 @@ export async function generateThumbnail(fileBuffer: Buffer, mimeType: string): P
       })
       .toBuffer();
 
-    console.log('[thumbnail-service] thumbnail generated', {
-      originalSize: fileBuffer.length,
-      thumbnailSize: thumbnail.length
-    });
-
     return thumbnail;
   } catch (error) {
-    console.error('[thumbnail-service] FAILED to generate thumbnail', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      mimeType,
-      bufferSize: fileBuffer.length
-    });
+    console.error('[thumbnail-service] Failed to generate thumbnail:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -65,19 +49,10 @@ export async function uploadThumbnailToStorage(
   consultationId: string
 ): Promise<string | null> {
   try {
-    console.log('[thumbnail-service] uploading thumbnail to storage', {
-      fileName,
-      consultationId,
-      bufferSize: thumbnailBuffer.length,
-      bucket: STORAGE_BUCKET
-    });
-
     const supabase = getSupabaseAdminClient();
 
     // 파일 경로: consultations/{consultationId}/{fileName}.jpg
     const filePath = `consultations/${consultationId}/${fileName}.jpg`;
-
-    console.log('[thumbnail-service] uploading to path', { filePath });
 
     const { data, error } = await supabase.storage
       .from(STORAGE_BUCKET)
@@ -88,30 +63,18 @@ export async function uploadThumbnailToStorage(
       });
 
     if (error) {
-      console.error('[thumbnail-service] FAILED to upload thumbnail', {
-        error: error.message,
-        statusCode: (error as any).statusCode,
-        filePath,
-        bucket: STORAGE_BUCKET
-      });
+      console.error('[thumbnail-service] Upload failed:', error.message);
       return null;
     }
-
-    console.log('[thumbnail-service] upload successful', { data });
 
     // Public URL 생성
     const { data: publicUrlData } = supabase.storage
       .from(STORAGE_BUCKET)
       .getPublicUrl(filePath);
 
-    console.log('[thumbnail-service] public URL generated', { publicUrl: publicUrlData.publicUrl });
-
     return publicUrlData.publicUrl;
   } catch (error) {
-    console.error('[thumbnail-service] UNEXPECTED error uploading thumbnail', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    console.error('[thumbnail-service] Unexpected error:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -131,7 +94,7 @@ export async function deleteThumbnailFromStorage(thumbnailUrl: string | null): P
     // → consultations/xxx/file.jpg
     const urlParts = thumbnailUrl.split(`/${STORAGE_BUCKET}/`);
     if (urlParts.length < 2) {
-      console.warn('[thumbnail-service] invalid thumbnail URL format', thumbnailUrl);
+      console.error('[thumbnail-service] Invalid thumbnail URL format');
       return;
     }
 
@@ -142,9 +105,9 @@ export async function deleteThumbnailFromStorage(thumbnailUrl: string | null): P
       .remove([filePath]);
 
     if (error) {
-      console.error('[thumbnail-service] failed to delete thumbnail', error);
+      console.error('[thumbnail-service] Delete failed:', error.message);
     }
   } catch (error) {
-    console.error('[thumbnail-service] unexpected error deleting thumbnail', error);
+    console.error('[thumbnail-service] Unexpected error:', error instanceof Error ? error.message : String(error));
   }
 }

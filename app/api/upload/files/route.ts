@@ -66,19 +66,12 @@ export async function POST(request: NextRequest) {
     const finalFileName = buildDriveFileName(targetFolder.displayName, customerName, file.name);
     const folderId = targetFolder.folderId;
 
-    console.log('[upload/files] upload start', {
-      folderId,
-      templateName,
-      finalFileName
-    });
-
     const driveFileId = await uploadFileToDriveFolder({
       folderId,
       fileName: finalFileName,
       mimeType: file.type,
       data: buffer
     });
-    console.log('[upload/files] upload success', { folderId, driveFileId });
 
     const supabase = getSupabaseAdminClient();
     const filePath = `${targetFolder.templateName}/${finalFileName}`;
@@ -86,7 +79,6 @@ export async function POST(request: NextRequest) {
     // 썸네일 생성 및 업로드 (이미지 파일만)
     let thumbnailUrl: string | null = null;
     if (file.type.startsWith('image/')) {
-      console.log('[upload/files] generating thumbnail', { fileName: finalFileName });
       const thumbnailBuffer = await generateThumbnail(buffer, file.type);
       if (thumbnailBuffer) {
         // 한글 제거: 타임스탬프만 사용 (Supabase Storage는 ASCII만 허용)
@@ -96,7 +88,6 @@ export async function POST(request: NextRequest) {
           thumbnailFileName,
           context.consultation.id
         );
-        console.log('[upload/files] thumbnail uploaded', { thumbnailUrl });
       }
     }
 
@@ -208,22 +199,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (!context.dryRun && logRow.drive_file_id) {
-      console.log('[upload/files] deleteDriveFile start', {
-        driveFileId: logRow.drive_file_id,
-        tokenId: context.token.id
-      });
       await deleteDriveFile(logRow.drive_file_id);
-      console.log('[upload/files] deleteDriveFile success', {
-        driveFileId: logRow.drive_file_id,
-        tokenId: context.token.id
-      });
     }
 
     // 썸네일 삭제
     if (logRow.thumbnail_url) {
-      console.log('[upload/files] deleteThumbnail start', { thumbnailUrl: logRow.thumbnail_url });
       await deleteThumbnailFromStorage(logRow.thumbnail_url);
-      console.log('[upload/files] deleteThumbnail success');
     }
 
     const { error: deleteError } = await supabase.from('upload_logs').delete().eq('id', uploadId);
