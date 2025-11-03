@@ -60,6 +60,85 @@ interface UploadPageClientProps {
   token: string;
 }
 
+const IMAGE_RESIZE_THRESHOLD_BYTES = 2 * 1024 * 1024; // 2MB
+
+function deriveFileNameForMimeType(originalName: string, mimeType: string): string {
+  if (mimeType === 'image/jpeg') {
+    if (/\.(jpe?g)$/i.test(originalName)) {
+      return originalName;
+    }
+    return `${originalName.replace(/\.[^/.]+$/, '')}.jpg`;
+  }
+
+  return originalName;
+}
+
+async function resizeImage(file: File, maxWidth = 1200, quality = 0.85): Promise<File> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+
+      const targetMimeType = file.type === 'image/heic' || file.type === 'image/heif' ? 'image/jpeg' : file.type;
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const nextFileName = deriveFileNameForMimeType(file.name, targetMimeType);
+            const resizedFile = new File([blob], nextFileName, {
+              type: targetMimeType,
+              lastModified: Date.now()
+            });
+            resolve(resizedFile);
+          } else {
+            resolve(file);
+          }
+        },
+        targetMimeType,
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+
+    img.src = objectUrl;
+  });
+}
+
+async function preprocessFileForUpload(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) {
+    return file;
+  }
+
+  if (file.size <= IMAGE_RESIZE_THRESHOLD_BYTES) {
+    return file;
+  }
+
+  try {
+    return await resizeImage(file);
+  } catch (error) {
+    console.warn('[upload] failed to resize image, using original file', error);
+    return file;
+  }
+}
+
 function formatKoreanDateTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -143,10 +222,11 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
 
   const uploadSingleFile = useCallback(
     async (file: File, templateName: string) => {
+      const processedFile = await preprocessFileForUpload(file);
       const formData = new FormData();
       formData.append('token', token);
       formData.append('templateName', templateName);
-      formData.append('file', file);
+      formData.append('file', processedFile);
 
       const response = await fetch('/api/upload/files', {
         method: 'POST',
