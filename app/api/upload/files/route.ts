@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 import { resolveUploadContext } from '@/lib/services/upload-context';
 import { buildDriveFileName, uploadFileToDriveFolder, deleteDriveFile } from '@/lib/services/consultation-drive-service';
@@ -81,8 +82,8 @@ export async function POST(request: NextRequest) {
     if (file.type.startsWith('image/')) {
       const thumbnailBuffer = await generateThumbnail(buffer, file.type);
       if (thumbnailBuffer) {
-        // 한글 제거: 타임스탬프만 사용 (Supabase Storage는 ASCII만 허용)
-        const thumbnailFileName = `${Date.now()}`;
+        // 파일명 충돌 방지: 타임스탬프 + UUID 조합 (Supabase Storage는 ASCII만 허용)
+        const thumbnailFileName = `${Date.now()}-${randomUUID()}`;
         thumbnailUrl = await uploadThumbnailToStorage(
           thumbnailBuffer,
           thumbnailFileName,
@@ -137,7 +138,8 @@ export async function POST(request: NextRequest) {
               fileName: upload.file_name,
               filePath: upload.file_path,
               uploadedAt: upload.uploaded_at,
-              mimeType: upload.mime_type
+              mimeType: upload.mime_type,
+              thumbnailUrl: upload.thumbnail_url ?? null
             }))
           }
         : null
@@ -229,7 +231,8 @@ export async function DELETE(request: NextRequest) {
         fileName: upload.file_name,
         filePath: upload.file_path,
         uploadedAt: upload.uploaded_at,
-        mimeType: upload.mime_type
+        mimeType: upload.mime_type,
+        thumbnailUrl: upload.thumbnail_url ?? null
       }))
     }));
 

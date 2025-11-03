@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { randomUUID } from 'crypto';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 
 const THUMBNAIL_SIZE = 200;
@@ -54,12 +55,12 @@ export async function uploadThumbnailToStorage(
     // 파일 경로: consultations/{consultationId}/{fileName}.jpg
     const filePath = `consultations/${consultationId}/${fileName}.jpg`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
       .upload(filePath, thumbnailBuffer, {
         contentType: 'image/jpeg',
         upsert: true, // 동일 파일명 시 덮어쓰기
-        cacheControl: '31536000' // 1년
+        cacheControl: '31536000' // 1년 (썸네일은 변경되지 않으므로 장기 캐싱)
       });
 
     if (error) {
@@ -92,13 +93,18 @@ export async function deleteThumbnailFromStorage(thumbnailUrl: string | null): P
     // URL에서 파일 경로 추출
     // 예: https://.../storage/v1/object/public/thumbnails/consultations/xxx/file.jpg
     // → consultations/xxx/file.jpg
-    const urlParts = thumbnailUrl.split(`/${STORAGE_BUCKET}/`);
-    if (urlParts.length < 2) {
-      console.error('[thumbnail-service] Invalid thumbnail URL format');
+    let filePath: string;
+    try {
+      const url = new URL(thumbnailUrl);
+      const pathParts = url.pathname.split(`/${STORAGE_BUCKET}/`);
+      if (pathParts.length < 2) {
+        throw new Error('Invalid path structure');
+      }
+      filePath = pathParts[1];
+    } catch (parseError) {
+      console.error('[thumbnail-service] Failed to parse thumbnail URL:', thumbnailUrl, parseError instanceof Error ? parseError.message : String(parseError));
       return;
     }
-
-    const filePath = urlParts[1];
 
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
