@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import NextImage from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Upload, CircleX, Trash2 } from 'lucide-react';
@@ -604,23 +603,32 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                               <div className="flex-shrink-0">
                                 {filePreviews.get(upload.fileName) ? (
                                   // 방금 업로드한 파일 → 클라이언트 미리보기
-                                  <NextImage
+                                  <img
                                     src={filePreviews.get(upload.fileName)!}
                                     alt={upload.fileName}
                                     width={40}
                                     height={40}
                                     className="object-cover rounded"
-                                    unoptimized
+                                    loading="lazy"
                                   />
                                 ) : upload.thumbnailUrl && upload.mimeType?.startsWith('image/') ? (
                                   // 이전에 업로드한 이미지 파일 → 서버 썸네일
-                                  <NextImage
+                                  <img
                                     src={upload.thumbnailUrl}
                                     alt={upload.fileName}
                                     width={40}
                                     height={40}
                                     className="object-cover rounded"
-                                    unoptimized
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      // 썸네일 로딩 실패 시 아이콘으로 대체
+                                      const target = e.currentTarget;
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent) {
+                                        parent.innerHTML = `<div class="w-10 h-10 flex items-center justify-center bg-slate-200 rounded"><span class="text-lg">${getFileIcon(upload.mimeType || '')}</span></div>`;
+                                      }
+                                    }}
                                   />
                                 ) : (
                                   // 썸네일 없음 → 파일 타입 아이콘
