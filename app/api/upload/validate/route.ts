@@ -54,7 +54,10 @@ export async function GET(request: NextRequest) {
           fileName: upload.file_name,
           filePath: upload.file_path,
           mimeType: upload.mime_type,
-          uploadedAt: upload.uploaded_at
+          uploadedAt: upload.uploaded_at,
+          thumbnailUrl: upload.drive_file_id
+            ? `https://drive.google.com/thumbnail?id=${upload.drive_file_id}&sz=w200`
+            : null
         }))
       })),
       token: {
