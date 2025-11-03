@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import NextImage from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Upload, CircleX, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { generateFilePreview, getFileIcon } from '@/lib/utils/file-upload';
 
 type UploadLog = {
   id: string;
@@ -12,6 +14,7 @@ type UploadLog = {
   filePath: string | null;
   mimeType: string | null;
   uploadedAt: string;
+  preview?: string; // 클라이언트 미리보기 URL
 };
 
 type UploadFolder = {
@@ -175,6 +178,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
   const [statusMap, setStatusMap] = useState<UploadStatusMap>({});
   const [deletingUploads, setDeletingUploads] = useState<Record<string, string | null>>({});
   const [draggingTemplate, setDraggingTemplate] = useState<string | null>(null);
+  const [filePreviews, setFilePreviews] = useState<Map<string, string>>(new Map());
 
   const fetchContext = useCallback(
     async (options: { silent?: boolean } = {}) => {
@@ -269,6 +273,24 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
 
       const limitedFiles = files.slice(0, slotsAvailable);
       const skippedCount = files.length - limitedFiles.length;
+
+      // 이미지 파일 미리보기 생성
+      for (const file of limitedFiles) {
+        if (file.type.startsWith('image/')) {
+          try {
+            const preview = await generateFilePreview(file);
+            if (preview) {
+              setFilePreviews((prev) => {
+                const newMap = new Map(prev);
+                newMap.set(file.name, preview);
+                return newMap;
+              });
+            }
+          } catch (error) {
+            console.warn('Failed to generate preview for', file.name, error);
+          }
+        }
+      }
 
       let successCount = 0;
       let failureMessages: string[] = [];
@@ -576,15 +598,35 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                             key={upload.id}
                             className="bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm"
                           >
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
-                                <span className="font-medium text-slate-800 break-all sm:max-w-xs sm:truncate">
+                            <div className="flex items-center gap-3">
+                              {/* 썸네일 또는 파일 아이콘 */}
+                              <div className="flex-shrink-0">
+                                {filePreviews.get(upload.fileName) ? (
+                                  <NextImage
+                                    src={filePreviews.get(upload.fileName)!}
+                                    alt={upload.fileName}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover rounded"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 flex items-center justify-center bg-slate-200 rounded">
+                                    <span className="text-lg">{getFileIcon(upload.mimeType || '')}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* 파일 정보 */}
+                              <div className="flex flex-col flex-1 min-w-0">
+                                <span className="font-medium text-slate-800 truncate">
                                   {upload.fileName}
                                 </span>
-                                <span className="text-xs text-slate-500 whitespace-nowrap sm:text-right">
+                                <span className="text-xs text-slate-500">
                                   업로드 시각: {formatKoreanDateTime(upload.uploadedAt)}
                                 </span>
                               </div>
+
+                              {/* 삭제 버튼 */}
                               <button
                                 type="button"
                                 onClick={() => handleDeleteUpload(folder.templateName, upload.id)}
