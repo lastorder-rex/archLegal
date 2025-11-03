@@ -3,9 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Upload, CircleX, Trash2 } from 'lucide-react';
+import { Upload, CircleX, Trash2, Image as ImageIcon, FileText as FileTextIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { generateFilePreview, getFileIcon } from '@/lib/utils/file-upload';
+import { generateFilePreview } from '@/lib/utils/file-upload';
 
 type UploadLog = {
   id: string;
@@ -179,6 +179,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
   const [deletingUploads, setDeletingUploads] = useState<Record<string, string | null>>({});
   const [draggingTemplate, setDraggingTemplate] = useState<string | null>(null);
   const [filePreviews, setFilePreviews] = useState<Map<string, string>>(new Map());
+  const [failedThumbnails, setFailedThumbnails] = useState<Set<string>>(new Set());
 
   const fetchContext = useCallback(
     async (options: { silent?: boolean } = {}) => {
@@ -611,7 +612,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                                     className="object-cover rounded"
                                     loading="lazy"
                                   />
-                                ) : upload.thumbnailUrl && upload.mimeType?.startsWith('image/') ? (
+                                ) : upload.thumbnailUrl && upload.mimeType?.startsWith('image/') && !failedThumbnails.has(upload.id) ? (
                                   // 이전에 업로드한 이미지 파일 → 서버 썸네일
                                   <img
                                     src={upload.thumbnailUrl}
@@ -620,20 +621,19 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                                     height={40}
                                     className="object-cover rounded"
                                     loading="lazy"
-                                    onError={(e) => {
-                                      // 썸네일 로딩 실패 시 아이콘으로 대체
-                                      const target = e.currentTarget;
-                                      target.style.display = 'none';
-                                      const parent = target.parentElement;
-                                      if (parent) {
-                                        parent.innerHTML = `<div class="w-10 h-10 flex items-center justify-center bg-slate-200 rounded"><span class="text-lg">${getFileIcon(upload.mimeType || '')}</span></div>`;
-                                      }
+                                    onError={() => {
+                                      // 썸네일 로딩 실패 시 failedThumbnails에 추가
+                                      setFailedThumbnails((prev) => new Set(prev).add(upload.id));
                                     }}
                                   />
                                 ) : (
                                   // 썸네일 없음 → 파일 타입 아이콘
                                   <div className="w-10 h-10 flex items-center justify-center bg-slate-200 rounded">
-                                    <span className="text-lg">{getFileIcon(upload.mimeType || '')}</span>
+                                    {upload.mimeType?.startsWith('image/') ? (
+                                      <ImageIcon className="h-6 w-6 text-slate-500" />
+                                    ) : (
+                                      <FileTextIcon className="h-6 w-6 text-slate-500" />
+                                    )}
                                   </div>
                                 )}
                               </div>

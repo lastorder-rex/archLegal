@@ -22,3 +22,26 @@
 - `supportsAllDrives`, `driveId` 동적 적용으로 Drive API 호출
 - 폴더 생성 시 템플릿 목록 DB 기반, 중복명은 휴대폰 접미사로 처리
 - Dry Run 모드(`DRIVE_DRY_RUN`)는 실제 업로드 대신 로그만 남김
+
+# 결제 연계 업로드 흐름
+1. **결제 요청 생성**
+   - 관리자 API `POST /api/admin/consultations/[id]/payment-request`가 결제 단계를 `awaiting` 상태로 만들며 `ensureConsultationDriveFolder` 실행.
+   - `ensureConsultationDriveFolder`는 Google 공유드라이브에 `고객명(금액)_주소` 규칙의 루트 폴더와 템플릿별 서브폴더를 생성하고, 메타데이터를 `consultation_drive_folders` 테이블에 업서트.
+   - 중복 폴더명이 감지되면 전화번호 숫자 또는 타임스탬프를 접미사로 붙여 충돌 제거. Dry run 모드에서는 실제 드라이브 작업 없이 메타데이터만 기록.
+
+2. **결제 완료 처리**
+   - `PATCH /api/admin/payments/[id]`에서 `action=markPaid`가 호출되면 `user_payment_stages` 상태가 `paid`로 갱신되고, 완료 알림이 `payment_notifications`에 기록.
+   - 폴더 생성은 이전 단계에서 이미 완료되었으므로, 상신된 결제 단계는 이후 업로드 토큰 발급의 기준이 됨.
+
+3. **업로드 토큰 발급**
+   - 관리자가 `POST /api/admin/payments/[id]/upload-tokens` 호출 시 활성(미만료) 토큰을 정리한 뒤 새 토큰을 발행.
+   - 생성된 토큰은 `upload_tokens`에 저장되며 만료시각, audience, 허용 템플릿, 폴더 ID, 업로드 제한 등을 포함. 링크는 `/upload?token=...` 형태로 사용자에게 전달.
+   - 기존 동일 audience 토큰이 있다면 `upload_logs`의 `upload_token` 값을 새 토큰으로 재매핑해 파일 이력 일관성을 유지.
+
+4. **토큰 검증 및 컨텍스트 로딩**
+   - 사용자가 업로드 링크를 열면 `GET /api/upload/validate`가 `resolveUploadContext`를 통해 토큰 상태, 상담 정보, 결제 단계, `consultation_drive_folders.metadata`의 서브폴더 목록, `upload_logs`를 한번에 조합해 반환.
+   - 반환 데이터는 업로드 UI에서 폴더별 남은 슬롯, 업로드 내역, Dry run 표시 등에 사용.
+
+5. **파일 업로드**
+   - `UploadPageClient`는 2MB 초과 이미지에 대해 리사이즈·재압축(HEIC/HEIF→JPEG 변환 포함) 후 FormData를 `POST /api/upload/files`로 전송해 Vercel 본문 제한을 회피.
+   - API는 토큰/템플릿/슬롯 검증 후 `uploadFileToDriveFolder`로 Google Drive에 업로드하고, 결과를 `upload_logs`에 남기며 토큰의 `updated_at`을 갱신. 삭제 요청은 동일 검증 후 Drive와 로그에서 제거.
