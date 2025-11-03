@@ -436,7 +436,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                       draggingTemplate === folder.templateName ? 'border-primary bg-primary/5' : 'border-slate-300'
                     )}
                   >
-                    <Upload className="h-6 w-6 text-primary" />
+                    <Upload className="h-8 w-8 text-primary" />
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-slate-700">
                         {uploading ? '업로드 중입니다…' : '파일을 끌어다 놓거나 클릭하여 선택하세요'}
@@ -445,13 +445,13 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                         jpg, png, pdf, heic 파일 | 최대 10MB | 폴더당 {context.maxFilesPerFolder}개까지 업로드
                       </p>
                     </div>
-                    <Button
+                    {/* <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       disabled={isDisabled}
                       className="mt-2"
-                    onClick={(event) => {
+                      onClick={(event) => {
                         event.preventDefault();
                         if (!isDisabled) {
                           document.getElementById(inputId)?.click();
@@ -459,7 +459,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                       }}
                     >
                       파일 선택
-                    </Button>
+                    </Button> */}
                   </div>
                   {folder.remainingSlots <= 0 && (
                     <p className="text-xs text-amber-600">업로드 가능한 파일 수를 초과했습니다. 기존 파일을 교체하려면 관리자에게 문의해주세요.</p>
