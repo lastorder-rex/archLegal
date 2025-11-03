@@ -1,10 +1,25 @@
 import sharp from 'sharp';
-import { randomUUID } from 'crypto';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 
 const THUMBNAIL_SIZE = 200;
 const THUMBNAIL_QUALITY = 80;
 const STORAGE_BUCKET = 'thumbnails';
+
+const logError = (message: string, error: unknown) => {
+  const detail = error instanceof Error ? error.message : String(error);
+  console.error(`[thumbnail-service] ${message}:`, detail);
+};
+
+const extractStoragePath = (thumbnailUrl: string): string | null => {
+  try {
+    const url = new URL(thumbnailUrl);
+    const [, storagePath] = url.pathname.split(`/${STORAGE_BUCKET}/`);
+    return storagePath ?? null;
+  } catch (error) {
+    logError('Failed to parse thumbnail URL', error);
+    return null;
+  }
+};
 
 /**
  * 이미지 파일로부터 썸네일 생성
@@ -13,13 +28,12 @@ const STORAGE_BUCKET = 'thumbnails';
  * @returns 썸네일 버퍼 (JPEG)
  */
 export async function generateThumbnail(fileBuffer: Buffer, mimeType: string): Promise<Buffer | null> {
-  // 이미지 파일만 썸네일 생성
   if (!mimeType.startsWith('image/')) {
     return null;
   }
 
   try {
-    const thumbnail = await sharp(fileBuffer)
+    return await sharp(fileBuffer)
       .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
         fit: 'cover',
         position: 'center'
@@ -29,10 +43,8 @@ export async function generateThumbnail(fileBuffer: Buffer, mimeType: string): P
         progressive: true
       })
       .toBuffer();
-
-    return thumbnail;
   } catch (error) {
-    console.error('[thumbnail-service] Failed to generate thumbnail:', error instanceof Error ? error.message : String(error));
+    logError('Failed to generate thumbnail', error);
     return null;
   }
 }
@@ -64,18 +76,14 @@ export async function uploadThumbnailToStorage(
       });
 
     if (error) {
-      console.error('[thumbnail-service] Upload failed:', error.message);
+      logError('Upload failed', error);
       return null;
     }
 
-    // Public URL 생성
-    const { data: publicUrlData } = supabase.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(filePath);
-
-    return publicUrlData.publicUrl;
+    const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
+    return data.publicUrl;
   } catch (error) {
-    console.error('[thumbnail-service] Unexpected error:', error instanceof Error ? error.message : String(error));
+    logError('Unexpected error during upload', error);
     return null;
   }
 }
@@ -89,31 +97,17 @@ export async function deleteThumbnailFromStorage(thumbnailUrl: string | null): P
 
   try {
     const supabase = getSupabaseAdminClient();
+    const filePath = extractStoragePath(thumbnailUrl);
 
-    // URL에서 파일 경로 추출
-    // 예: https://.../storage/v1/object/public/thumbnails/consultations/xxx/file.jpg
-    // → consultations/xxx/file.jpg
-    let filePath: string;
-    try {
-      const url = new URL(thumbnailUrl);
-      const pathParts = url.pathname.split(`/${STORAGE_BUCKET}/`);
-      if (pathParts.length < 2) {
-        throw new Error('Invalid path structure');
-      }
-      filePath = pathParts[1];
-    } catch (parseError) {
-      console.error('[thumbnail-service] Failed to parse thumbnail URL:', thumbnailUrl, parseError instanceof Error ? parseError.message : String(parseError));
+    if (!filePath) {
       return;
     }
 
-    const { error } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .remove([filePath]);
-
+    const { error } = await supabase.storage.from(STORAGE_BUCKET).remove([filePath]);
     if (error) {
-      console.error('[thumbnail-service] Delete failed:', error.message);
+      logError('Delete failed', error);
     }
   } catch (error) {
-    console.error('[thumbnail-service] Unexpected error:', error instanceof Error ? error.message : String(error));
+    logError('Unexpected error during delete', error);
   }
 }
