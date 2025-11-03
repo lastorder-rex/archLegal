@@ -15,6 +15,7 @@ type UploadLog = {
   mimeType: string | null;
   uploadedAt: string;
   preview?: string; // 클라이언트 미리보기 URL
+  thumbnailUrl?: string | null; // 서버 썸네일 URL (Google Drive)
 };
 
 type UploadFolder = {
@@ -602,14 +603,27 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                               {/* 썸네일 또는 파일 아이콘 */}
                               <div className="flex-shrink-0">
                                 {filePreviews.get(upload.fileName) ? (
+                                  // 방금 업로드한 파일 → 클라이언트 미리보기
                                   <NextImage
                                     src={filePreviews.get(upload.fileName)!}
                                     alt={upload.fileName}
                                     width={40}
                                     height={40}
                                     className="object-cover rounded"
+                                    unoptimized
+                                  />
+                                ) : upload.thumbnailUrl && upload.mimeType?.startsWith('image/') ? (
+                                  // 이전에 업로드한 이미지 파일 → 서버 썸네일
+                                  <NextImage
+                                    src={upload.thumbnailUrl}
+                                    alt={upload.fileName}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover rounded"
+                                    unoptimized
                                   />
                                 ) : (
+                                  // 썸네일 없음 → 파일 타입 아이콘
                                   <div className="w-10 h-10 flex items-center justify-center bg-slate-200 rounded">
                                     <span className="text-lg">{getFileIcon(upload.mimeType || '')}</span>
                                   </div>
