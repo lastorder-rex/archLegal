@@ -186,7 +186,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [folderStatuses, setFolderStatuses] = useState<FolderStatusMap>({});
-  const [deletingUploadIds, setDeletingUploadIds] = useState<Record<string, string | null>>({});
+  const [deletingUploadIds, setDeletingUploadIds] = useState<Record<string, Set<string>>>({});
   const [draggingTemplateName, setDraggingTemplateName] = useState<string | null>(null);
   const [filePreviews, setFilePreviews] = useState<Map<string, string>>(new Map());
   const [failedThumbnailIds, setFailedThumbnailIds] = useState<Set<string>>(new Set());
@@ -367,10 +367,14 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
     const confirmDelete = window.confirm('선택한 파일을 삭제하시겠습니까?');
     if (!confirmDelete) return;
 
-    setDeletingUploadIds((prev) => ({
-      ...prev,
-      [templateName]: uploadId
-    }));
+    setDeletingUploadIds((prev) => {
+      const folderSet = prev[templateName] ? new Set(prev[templateName]) : new Set<string>();
+      folderSet.add(uploadId);
+      return {
+        ...prev,
+        [templateName]: folderSet
+      };
+    });
     setFolderStatus(templateName, { error: null, successMessage: null });
 
     try {
@@ -401,10 +405,15 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
         successMessage: null
       });
     } finally {
-      setDeletingUploadIds((prev) => ({
-        ...prev,
-        [templateName]: prev[templateName] === uploadId ? null : prev[templateName] ?? null
-      }));
+      setDeletingUploadIds((prev) => {
+        if (!prev[templateName]) return prev;
+        const folderSet = new Set(prev[templateName]);
+        folderSet.delete(uploadId);
+        return {
+          ...prev,
+          [templateName]: folderSet
+        };
+      });
     }
   };
 
@@ -493,7 +502,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
             const successMessage = status?.successMessage;
             const inputId = `upload-file-${index}`;
             const isDisabled = folder.remainingSlots <= 0 || uploading;
-            const deletingId = deletingUploadIds[folder.templateName] ?? null;
+            const deletingIds = deletingUploadIds[folder.templateName] ?? new Set<string>();
 
             return (
               <div
@@ -587,8 +596,10 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                       파일 선택
                     </Button> */}
                   </div>
-                  {folder.remainingSlots <= 0 && (
-                    <p className="text-xs text-amber-600">업로드 가능한 파일 수를 초과했습니다. 기존 파일을 교체하려면 관리자에게 문의해주세요.</p>
+                  {folder.remainingSlots <= 0 && !successMessage && (
+                    <p className="text-xs text-slate-600">
+                      폴더당 최대 {uploadContext.maxFilesPerFolder}개까지 업로드되었습니다. 추가 파일을 업로드하려면 기존 파일을 삭제해주세요.
+                    </p>
                   )}
                 </div>
 
@@ -636,7 +647,7 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
                   ) : (
                     <ul className="space-y-2">
                       {folder.uploads.map((upload) => {
-                        const isDeleting = deletingId === upload.id;
+                        const isDeleting = deletingIds.has(upload.id);
                         return (
                           <li
                             key={upload.id}
