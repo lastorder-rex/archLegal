@@ -82,7 +82,7 @@ export async function GET(
         payment_key,
         updated_at
       `)
-      .eq('user_id', consultation.user_id);
+      .eq('consultation_id', consultationId);
 
     if (userStagesError) {
       console.error('Failed to load user payment stages', userStagesError);

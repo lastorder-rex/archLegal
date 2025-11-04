@@ -33,7 +33,7 @@ export function MyPageConsultationsSection() {
     ) {
       setSelectedConsultationId(null);
     }
-    queryClient.invalidateQueries({ queryKey: ['payment-stages'] }).catch(() => undefined);
+    queryClient.invalidateQueries({ queryKey: ['payment-stages-all'] }).catch(() => undefined);
   }, [refresh, selectedConsultationId, queryClient]);
 
   useEffect(() => {
