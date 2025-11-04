@@ -75,7 +75,7 @@ export async function POST(
     const { data: userStageStatuses, error: userStageStatusError } = await supabase
       .from('user_payment_stages')
       .select('stage_template_id, status')
-      .eq('user_id', consultation.user_id);
+      .eq('consultation_id', consultationId);
 
     if (userStageStatusError) {
       console.error('Failed to fetch user stage statuses', userStageStatusError);
@@ -148,7 +148,7 @@ export async function POST(
           requested_by: adminId,
           updated_at: now
         })
-        .eq('user_id', consultation.user_id)
+        .eq('consultation_id', consultationId)
         .eq('stage_template_id', stageTemplate.id)
         .eq('status', 'locked')  // Race condition 방지: locked 상태일 때만 업데이트
         .select()
@@ -240,7 +240,7 @@ export async function POST(
     const { data: userStageRow, error: userStageFetchError } = await supabase
       .from('user_payment_stages')
       .select('status, request_amount, requested_at, requested_by, paid_at, paid_amount, payment_key, updated_at')
-      .eq('user_id', consultation.user_id)
+      .eq('consultation_id', consultationId)
       .eq('stage_template_id', stageTemplate.id)
       .single();
 
@@ -324,7 +324,7 @@ export async function DELETE(
     const { data: existingStage, error: existingStageError } = await supabase
       .from('user_payment_stages')
       .select('id, status')
-      .eq('user_id', consultation.user_id)
+      .eq('consultation_id', consultationId)
       .eq('stage_template_id', stageTemplate.id)
       .maybeSingle();
 

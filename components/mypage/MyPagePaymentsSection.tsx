@@ -27,6 +27,18 @@ function createOrderId(stageId: string) {
   return `ORD-${timePart}-${stagePart}-${randomPart}`;
 }
 
+type ConsultationWithStages = {
+  consultation: {
+    id: string;
+    nickname: string | null;
+    name: string | null;
+    address: string | null;
+    addressDetail: string | null;
+    createdAt: string;
+  };
+  stages: PaymentStage[];
+};
+
 export function MyPagePaymentsSection() {
   const { profile, fallbackEmail } = useMyPageContext();
   const queryClient = useQueryClient();
@@ -45,13 +57,13 @@ export function MyPagePaymentsSection() {
   }, [activePaymentStageId]);
 
   const {
-    data: paymentStages = [],
+    data: consultationsWithStages = [],
     refetch: refetchPaymentStages,
     isLoading: paymentStagesLoading,
     isFetching: paymentStagesFetching,
     error: paymentStagesError
-  } = useQuery<PaymentStage[]>({
-    queryKey: ['payment-stages'],
+  } = useQuery<ConsultationWithStages[]>({
+    queryKey: ['payment-stages-all'],
     queryFn: async () => {
       const response = await fetch('/api/payments/stages', { credentials: 'include' });
       if (!response.ok) {
@@ -59,8 +71,7 @@ export function MyPagePaymentsSection() {
         throw new Error(json?.error || '결제 단계 정보를 불러오지 못했습니다.');
       }
       const json = await response.json();
-      const parsed = paymentStagesResponseSchema.parse(json);
-      return parsed.stages;
+      return json.consultationsWithStages ?? [];
     },
     staleTime: 1000 * 30
   });
@@ -316,7 +327,7 @@ export function MyPagePaymentsSection() {
           amount: paymentWidgetOrder.amount
         }
       });
-      queryClient.invalidateQueries({ queryKey: ['payment-stages'] }).catch(() => undefined);
+      queryClient.invalidateQueries({ queryKey: ['payment-stages-all'] }).catch(() => undefined);
     } catch (_error) {
       const error = _error as { message?: string; code?: string } | Error;
       console.error('[payment] requestPayment failed', error);
@@ -345,6 +356,23 @@ export function MyPagePaymentsSection() {
 
   const stagesLoading = paymentStagesLoading || paymentStagesFetching;
   const stagesErrorMessage = paymentStagesError instanceof Error ? paymentStagesError.message : null;
+
+  // 상담글이 없는 경우
+  if (!stagesLoading && consultationsWithStages.length === 0) {
+    return (
+      <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <header className="space-y-2">
+          <h2 className="text-xl font-semibold">결제 내역</h2>
+          <p className="text-sm text-muted-foreground">
+            결제 내역을 확인하려면 먼저 상담 신청을 해주세요.
+          </p>
+        </header>
+        <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+          아직 등록된 상담 내역이 없습니다. 상단의 무료 상담 신청 버튼을 이용해주세요.
+        </p>
+      </section>
+    );
+  }
 
   if (stagesLoading) {
     return (
@@ -386,8 +414,28 @@ export function MyPagePaymentsSection() {
         </p>
       </header>
 
-      <div className="grid gap-4">
-        {paymentStages.map(stage => {
+      {/* 각 상담글마다 결제 단계 표시 */}
+      <div className="space-y-8">
+        {consultationsWithStages.map(({ consultation, stages }) => (
+          <div key={consultation.id} className="space-y-4">
+            {/* 상담글 헤더 */}
+            <div className="rounded-lg bg-secondary/50 p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    {consultation.address || '주소 정보 없음'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {consultation.nickname || consultation.name || '이름 없음'} • 등록일:{' '}
+                    {new Date(consultation.createdAt).toLocaleDateString('ko-KR')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 결제 단계 카드들 */}
+            <div className="grid gap-4">
+              {stages.map(stage => {
           const statusMeta = paymentStatusLabel[stage.status];
           const isDisabled = stage.disabled || stage.status === 'locked';
           const requiresAgreement = stage.status === 'awaiting' || stage.status === 'requested';
@@ -533,8 +581,11 @@ export function MyPagePaymentsSection() {
                 </div>
               ) : null}
             </article>
-          );
-        })}
+              );
+            })}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
