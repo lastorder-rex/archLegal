@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Upload, CircleX, Trash2, Image as ImageIcon, FileText as FileTextIcon, Loader } from 'lucide-react';
+import { Upload, CircleX, Trash2, Image as ImageIcon, FileText as FileTextIcon, Loader, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateFilePreview } from '@/lib/utils/file-upload';
 
@@ -421,7 +421,10 @@ export default function UploadPageClient({ token }: UploadPageClientProps) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
         <div className="bg-white border border-slate-200 rounded-lg shadow-sm px-6 py-8 text-center">
-          <p className="text-lg font-medium text-slate-700">업로드 링크를 확인하는 중입니다...</p>
+          <p className="text-lg font-medium text-slate-700 flex items-center justify-center gap-2">
+            <Search className="h-6 w-6 text-primary" aria-hidden="true" />
+            업로드 링크를 확인하는 중입니다...
+          </p>
         </div>
       </main>
     );
