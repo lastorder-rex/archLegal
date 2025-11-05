@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
         paid_at,
         payment_key,
         updated_at,
-        stage_template:payment_stage_templates(id, stage_order, code, title),
         consultation:consultations(id, name, phone, address, address_detail)
       `,
         { count: 'exact' }
@@ -58,16 +57,47 @@ export async function GET(request: NextRequest) {
       query = query.eq('stage_template_id', stageTemplateId);
     }
 
-    if (consultationName) {
-      query = query.ilike('consultations.name', `%${consultationName}%`);
-    }
+    // 조인된 consultations 테이블 필터링을 위해 먼저 해당 consultation_id들을 가져옴
+    let consultationIds: string[] | null = null;
 
-    if (consultationPhone) {
-      query = query.ilike('consultations.phone', `%${consultationPhone}%`);
-    }
+    if (consultationName || consultationPhone || consultationAddress) {
+      let consultationQuery = supabase
+        .from('consultations')
+        .select('id');
 
-    if (consultationAddress) {
-      query = query.ilike('consultations.address', `%${consultationAddress}%`);
+      if (consultationName) {
+        consultationQuery = consultationQuery.ilike('name', `%${consultationName}%`);
+      }
+
+      if (consultationPhone) {
+        consultationQuery = consultationQuery.ilike('phone', `%${consultationPhone}%`);
+      }
+
+      if (consultationAddress) {
+        consultationQuery = consultationQuery.ilike('address', `%${consultationAddress}%`);
+      }
+
+      const { data: consultations, error: consultationError } = await consultationQuery;
+
+      if (consultationError) {
+        console.error('[admin/payments] consultation filter error', consultationError);
+        return NextResponse.json({ error: '상담 정보 조회 중 오류가 발생했습니다.' }, { status: 500 });
+      }
+
+      consultationIds = (consultations ?? []).map(c => c.id);
+
+      // 매칭되는 상담이 없으면 빈 결과 반환
+      if (consultationIds.length === 0) {
+        return NextResponse.json({
+          payments: [],
+          page,
+          limit,
+          total: 0
+        });
+      }
+
+      // consultation_id로 필터링
+      query = query.in('consultation_id', consultationIds);
     }
 
     if (requestedFrom) {
@@ -125,7 +155,6 @@ export async function GET(request: NextRequest) {
         paidAt: row.paid_at,
         paymentKey: row.payment_key,
         updatedAt: row.updated_at,
-        stageTemplate: row.stage_template ?? null,
         consultation: row.consultation ?? null,
         driveFolder: folderInfo
       };
