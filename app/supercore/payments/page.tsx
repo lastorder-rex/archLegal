@@ -27,13 +27,6 @@ interface PaymentRow {
   paidAt: string | null;
   paymentKey: string | null;
   updatedAt: string | null;
-  stageTemplate: {
-    id: string;
-    stage_order?: number;
-    stageOrder?: number;
-    code: string;
-    title: string;
-  } | null;
   consultation: {
     id: string;
     name: string | null;
@@ -67,9 +60,7 @@ interface PaymentsResponse {
 const statusOptions = [
   { value: 'all', label: '전체' },
   { value: 'awaiting', label: '결제 대기' },
-  { value: 'requested', label: '요청 완료' },
-  { value: 'paid', label: '결제 완료' },
-  { value: 'locked', label: '대기중(비활성)' }
+  { value: 'paid', label: '결제 완료' }
 ];
 
 const statusLabelMap: Record<string, string> = {
