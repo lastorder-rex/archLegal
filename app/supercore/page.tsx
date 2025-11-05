@@ -290,14 +290,21 @@ export default function SupercorePage() {
             </Button>
           </div>
 
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <CreditCard className="w-5 h-5 text-slate-400" />
-              <h3 className="font-semibold text-slate-400">결제 관리</h3>
+              <CreditCard className="w-5 h-5 text-purple-900" />
+              <h3 className="font-semibold text-purple-900">결제 관리</h3>
             </div>
-            <p className="text-sm text-slate-400">
-              준비 중입니다.
+            <p className="text-sm text-purple-700">
+              결제 단계 상태와 문서 폴더를 확인하고 관리합니다.
             </p>
+            <Button
+              onClick={() => router.push('/supercore/payments')}
+              variant="outline"
+              className="mt-3 w-full"
+            >
+              바로가기
+            </Button>
           </div>
         </div>
       </div>

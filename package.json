@@ -27,6 +27,7 @@
     "clsx": "^2.1.1",
     "flatpickr": "^4.6.13",
     "googleapis": "^164.1.0",
+    "lineicons-react": "^2.0.0",
     "lucide-react": "^0.544.0",
     "next": "14.2.5",
     "node-telegram-bot-api": "^0.66.0",

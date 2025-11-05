@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check, X, Link as LinkIcon, Unplug } from 'lucide-react';
+import { CreditCardMultiple, Comment1, GoogleDrive, Link2AngularRight } from 'lineicons-react';
 
 interface DriveFolderChildSummary {
   id: string | null;
@@ -105,6 +106,17 @@ function formatDateTime(value: string | null) {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function formatDateTimeWithoutYear(value: string | null) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${month}-${day} ${hours}:${minutes}`;
 }
 
 function formatAmount(value: number | null) {
@@ -405,9 +417,6 @@ export default function AdminPaymentDetailPage() {
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Button variant="ghost" onClick={() => router.push('/supercore/payments')}>
-              ← 목록으로
-            </Button>
             <h1 className="text-2xl font-semibold text-slate-900 mt-2">
               결제 단계 상세
             </h1>
@@ -436,7 +445,10 @@ export default function AdminPaymentDetailPage() {
         ) : (
           <div className="space-y-6">
             <section className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">결제 정보</h2>
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                <CreditCardMultiple className="inline h-5 w-5 mr-2 align-text-bottom" aria-hidden />
+                결제 정보
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600">
                 <div>
                   <span className="font-semibold text-slate-800">결제 단계</span>
@@ -511,7 +523,10 @@ export default function AdminPaymentDetailPage() {
             </section>
 
             <section className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">상담 정보</h2>
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                <Comment1 className="inline h-5 w-5 mr-2 align-text-bottom" aria-hidden />
+                상담 정보
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600">
                 <div>
                   <span className="font-semibold text-slate-800">고객명</span>
@@ -536,7 +551,10 @@ export default function AdminPaymentDetailPage() {
             </section>
 
             <section className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">문서 폴더 정보</h2>
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                <GoogleDrive className="inline h-5 w-5 mr-2 align-text-bottom" aria-hidden />
+                문서 폴더 정보
+              </h2>
               {payment.driveFolder ? (
                 <div className="space-y-4 text-sm text-slate-600">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -654,7 +672,10 @@ export default function AdminPaymentDetailPage() {
             <section className="bg-white border border-slate-200 rounded-lg p-6">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">업로드 링크</h2>
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    <Link2AngularRight className="inline h-5 w-5 mr-2 align-text-bottom" aria-hidden />
+                    업로드 링크
+                  </h2>
                   <p className="text-sm text-slate-500">고객 또는 현장실사 직원을 위한 업로드 링크를 생성하고 관리합니다.</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -687,7 +708,7 @@ export default function AdminPaymentDetailPage() {
                       <th className="px-4 py-3 text-center">용도</th>
                       <th className="px-4 py-3 text-center">만료</th>
                       <th className="px-4 py-3 text-center">링크</th>
-                      <th className="px-4 py-3 text-center">전송 대상</th>
+                      <th className="px-4 py-3 text-center hidden sm:table-cell">전송 대상</th>
                       <th className="px-4 py-3 text-center">동작</th>
                     </tr>
                   </thead>
@@ -702,7 +723,7 @@ export default function AdminPaymentDetailPage() {
                       </tr>
                     ) : (
                       uploadTokens.map((token) => {
-                        const expires = formatDateTime(token.expiresAt);
+                        const expires = formatDateTimeWithoutYear(token.expiresAt);
                         const audienceLabel = token.audience === 'staff' ? '현장실사' : '고객';
                         const statusLabel = token.status === 'expired' ? '만료' : token.status === 'revoked' ? '취소됨' : '활성';
                         const isExpiredLike = token.status === 'expired' || token.status === 'revoked';
@@ -743,7 +764,7 @@ export default function AdminPaymentDetailPage() {
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-slate-600 text-center">{token.sentTo || '-'}</td>
+                            <td className="px-4 py-3 text-slate-600 text-center hidden sm:table-cell">{token.sentTo || '-'}</td>
                             <td className="px-4 py-3 text-center">
                               <Button
                                 type="button"
@@ -767,6 +788,18 @@ export default function AdminPaymentDetailPage() {
             </section>
           </div>
         )}
+
+        {/* Bottom actions */}
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 px-6 sm:w-auto"
+            onClick={() => router.push('/supercore/payments')}
+          >
+            목록으로
+          </Button>
+        </div>
       </div>
     </SupercoreLayout>
   );
