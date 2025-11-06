@@ -49,14 +49,31 @@ export function AddressSection({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="addressDetail">상세 주소 (선택)</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="addressDetail">상세 주소 (선택)</Label>
+          <span
+            className={`text-xs ${
+              (formData.addressDetail?.length ?? 0) >= 100
+                ? 'text-destructive font-semibold'
+                : (formData.addressDetail?.length ?? 0) >= 90
+                  ? 'text-amber-600 font-medium'
+                  : 'text-muted-foreground'
+            }`}
+          >
+            {formData.addressDetail?.length ?? 0} / 100자
+          </span>
+        </div>
         <Input
           id="addressDetail"
           value={formData.addressDetail || ''}
           onChange={(e) => onInputChange('addressDetail', e.target.value)}
           placeholder="동/호수, 건물명 등 상세 주소를 입력해주세요"
+          maxLength={100}
           error={!!errors.addressDetail}
         />
+        <p className="text-xs text-muted-foreground">
+          최대 100자까지 입력 가능합니다. 한글, 영문, 숫자, 공백, 하이픈(-), 쉼표(,), 괄호()만 입력 가능합니다.
+        </p>
         {errors.addressDetail && <p className="text-sm text-destructive">{errors.addressDetail}</p>}
       </div>
 

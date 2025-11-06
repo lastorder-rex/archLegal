@@ -123,6 +123,14 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
         } else {
           next.message = '';
         }
+      } else if (field === 'addressDetail') {
+        if ((processedValue?.length ?? 0) > 100) {
+          next.addressDetail = '상세 주소는 100글자 이하로 입력해주세요';
+        } else if ((processedValue?.length ?? 0) >= 90) {
+          next.addressDetail = ''; // 경고는 UI에 색상으로만 표시
+        } else {
+          next.addressDetail = '';
+        }
       } else {
         next[field] = '';
       }
