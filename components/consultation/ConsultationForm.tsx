@@ -117,6 +117,12 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
         } else {
           next.email = '';
         }
+      } else if (field === 'addressDetail') {
+        if ((processedValue?.length ?? 0) > 100) {
+          next.addressDetail = '상세 주소는 100자 이하로 입력해주세요';
+        } else {
+          next.addressDetail = '';
+        }
       } else if (field === 'message') {
         if ((processedValue?.length ?? 0) > 1000) {
           next.message = '상담 내용은 1000글자 이하로 입력해주세요';
@@ -235,6 +241,10 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
 
     if (!formData.address || !formData.addressCode) {
       newErrors.address = '주소를 선택해주세요.';
+    }
+
+    if (formData.addressDetail && formData.addressDetail.length > 100) {
+      newErrors.addressDetail = '상세 주소는 100자 이하로 입력해주세요.';
     }
 
     if (!formData.message || formData.message.trim().length === 0) {

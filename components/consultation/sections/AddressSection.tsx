@@ -54,10 +54,23 @@ export function AddressSection({
           id="addressDetail"
           value={formData.addressDetail || ''}
           onChange={(e) => onInputChange('addressDetail', e.target.value)}
-          placeholder="동/호수, 건물명 등 상세 주소를 입력해주세요"
+          placeholder="동/호수, 건물명 등 상세 주소를 입력해주세요 (최대 100글자)"
           error={!!errors.addressDetail}
         />
-        {errors.addressDetail && <p className="text-sm text-destructive">{errors.addressDetail}</p>}
+        <div className="flex justify-between text-xs">
+          <span className={errors.addressDetail ? 'text-destructive' : 'text-muted-foreground'}>
+            {errors.addressDetail}
+          </span>
+          <span
+            className={
+              (formData.addressDetail || '').length > 100
+                ? 'text-destructive'
+                : 'text-muted-foreground'
+            }
+          >
+            {(formData.addressDetail || '').length}/100
+          </span>
+        </div>
       </div>
 
       {selectedAddress && (
