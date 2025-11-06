@@ -10,20 +10,41 @@ interface Admin {
   username: string;
 }
 
+interface StageTemplate {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  stage_order: number;
+}
+
 interface Consultation {
   id: string;
   name: string;
   phone: string;
-  email: string | null;
   address: string;
   address_detail: string | null;
-  main_purps: string;
-  message: string | null;
-  created_at: string;
-  attachments: any[];
 }
 
-export default function UserConsultationsPage() {
+interface Payment {
+  id: string;
+  user_id: string;
+  consultation_id: string | null;
+  stage_template_id: string;
+  status: string;
+  request_amount: number | null;
+  requested_at: string | null;
+  requested_by: string | null;
+  paid_amount: number | null;
+  paid_at: string | null;
+  payment_key: string | null;
+  created_at: string;
+  updated_at: string;
+  stage_template: StageTemplate | null;
+  consultation: Consultation | null;
+}
+
+export default function UserPaymentsPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.userId as string;
@@ -31,42 +52,37 @@ export default function UserConsultationsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [admin, setAdmin] = useState<Admin | null>(null);
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [isLoadingConsultations, setIsLoadingConsultations] = useState(false);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [userEmail, setUserEmail] = useState('');
 
   const itemsPerPage = 15;
 
-  const loadConsultations = useCallback(async (page = 1) => {
-    setIsLoadingConsultations(true);
+  const loadPayments = useCallback(async (page = 1) => {
+    setIsLoadingPayments(true);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: itemsPerPage.toString(),
       });
 
-      const response = await fetch(`/api/admin/users/${userId}/consultations?${params.toString()}`, {
+      const response = await fetch(`/api/admin/users/${userId}/payments?${params.toString()}`, {
         credentials: 'include'
       });
 
       if (response.ok) {
         const data = await response.json();
-        setConsultations(data.consultations || []);
+        setPayments(data.payments || []);
         setTotalCount(data.total || 0);
         setCurrentPage(page);
-
-        if (data.consultations && data.consultations.length > 0 && data.consultations[0].email) {
-          setUserEmail(data.consultations[0].email);
-        }
       } else {
-        console.error('Failed to load consultations');
+        console.error('Failed to load payments');
       }
     } catch (error) {
-      console.error('Load consultations error:', error);
+      console.error('Load payments error:', error);
     } finally {
-      setIsLoadingConsultations(false);
+      setIsLoadingPayments(false);
     }
   }, [itemsPerPage, userId]);
 
@@ -80,7 +96,7 @@ export default function UserConsultationsPage() {
         const data = await response.json();
         setAdmin(data.admin);
         setIsAuthenticated(true);
-        await loadConsultations();
+        await loadPayments();
       } else {
         router.push('/supercore');
       }
@@ -90,13 +106,14 @@ export default function UserConsultationsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [loadConsultations, router]);
+  }, [loadPayments, router]);
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  const formatDateTime = (dateString: string) => {
+  const formatDateTime = (dateString: string | null) => {
+    if (!dateString) return '-';
     const date = new Date(dateString);
     const year = date.getFullYear().toString().slice(-2);
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -104,6 +121,33 @@ export default function UserConsultationsPage() {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}`;
+  };
+
+  const formatAmount = (amount: number | null) => {
+    if (amount === null) return '-';
+    return `${amount.toLocaleString()}원`;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const statusMap: Record<string, string> = {
+      'locked': '잠금',
+      'unlocked': '대기중',
+      'requested': '요청됨',
+      'paid': '완료',
+      'cancelled': '취소'
+    };
+    return statusMap[status] || status;
+  };
+
+  const getStatusColor = (status: string) => {
+    const colorMap: Record<string, string> = {
+      'locked': 'text-slate-500',
+      'unlocked': 'text-blue-600',
+      'requested': 'text-yellow-600',
+      'paid': 'text-green-600',
+      'cancelled': 'text-red-600'
+    };
+    return colorMap[status] || 'text-slate-600';
   };
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -117,26 +161,26 @@ export default function UserConsultationsPage() {
   }
 
   return (
-    <SupercoreLayout title={`회원 상담 내역${userEmail ? ` (${userEmail})` : ''}`}>
+    <SupercoreLayout title={`회원 결제 내역`}>
       <div className="space-y-6">
         {/* Results */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200">
           <div className="p-6 border-b border-slate-200">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-900">
-                상담 요청 목록 <span className="text-sm text-slate-600 font-normal">({totalCount}건)</span>
+                결제 목록 <span className="text-sm text-slate-600 font-normal">({totalCount}건)</span>
               </h2>
             </div>
           </div>
 
           <div className="p-6">
-            {isLoadingConsultations ? (
+            {isLoadingPayments ? (
               <div className="text-center py-12 text-slate-600">
-                상담 내역을 불러오는 중...
+                결제 내역을 불러오는 중...
               </div>
-            ) : consultations.length === 0 ? (
+            ) : payments.length === 0 ? (
               <div className="text-center py-12 text-slate-600">
-                상담 요청이 없습니다.
+                결제 내역이 없습니다.
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -144,19 +188,22 @@ export default function UserConsultationsPage() {
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        접수일시
+                        요청일시
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        이름
+                        단계
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        연락처
+                        상태
                       </th>
                       <th className="hidden md:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        주소
+                        상담 정보
                       </th>
-                      <th className="hidden lg:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        첨부파일
+                      <th className="hidden lg:table-cell px-4 py-3 text-right text-sm font-semibold text-slate-900">
+                        요청금액
+                      </th>
+                      <th className="hidden lg:table-cell px-4 py-3 text-right text-sm font-semibold text-slate-900">
+                        결제금액
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
                         관리
@@ -164,39 +211,46 @@ export default function UserConsultationsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {consultations.map((consultation) => (
+                    {payments.map((payment) => (
                       <tr
-                        key={consultation.id}
+                        key={payment.id}
                         className="hover:bg-slate-50 cursor-pointer"
-                        onClick={() => router.push(`/supercore/consultations/${consultation.id}`)}
+                        onClick={() => router.push(`/supercore/payments/${payment.id}`)}
                       >
                         <td className="px-4 py-3 text-sm text-slate-600">
-                          {formatDateTime(consultation.created_at)}
+                          {formatDateTime(payment.requested_at)}
                         </td>
                         <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                          {consultation.name}
+                          {payment.stage_template?.title || '-'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600">
-                          {consultation.phone}
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`font-semibold ${getStatusColor(payment.status)}`}>
+                            {getStatusLabel(payment.status)}
+                          </span>
                         </td>
                         <td className="hidden md:table-cell px-4 py-3 text-sm text-slate-600">
-                          <div className="max-w-xs truncate" title={consultation.address}>
-                            {consultation.address}
-                          </div>
-                          {consultation.address_detail && (
-                            <div className="text-xs text-slate-500">
-                              {consultation.address_detail}
+                          {payment.consultation ? (
+                            <div>
+                              <div className="font-medium">{payment.consultation.name}</div>
+                              <div className="text-xs text-slate-500">{payment.consultation.phone}</div>
                             </div>
+                          ) : (
+                            '-'
                           )}
                         </td>
-                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600">
-                          {consultation.attachments?.length || 0}개
+                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600 text-right">
+                          {formatAmount(payment.request_amount)}
+                        </td>
+                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-right">
+                          <span className={payment.paid_amount ? 'text-green-600 font-semibold' : 'text-slate-600'}>
+                            {formatAmount(payment.paid_amount)}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/supercore/consultations/${consultation.id}`);
+                              router.push(`/supercore/payments/${payment.id}`);
                             }}
                             size="sm"
                             variant="primary"
@@ -213,12 +267,12 @@ export default function UserConsultationsPage() {
             )}
 
             {/* Pagination */}
-            {!isLoadingConsultations && totalPages > 1 && (
+            {!isLoadingPayments && totalPages > 1 && (
               <div className="mt-6 flex items-center justify-center gap-2">
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => loadConsultations(currentPage - 1)}
+                  onClick={() => loadPayments(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
                   이전
@@ -242,7 +296,7 @@ export default function UserConsultationsPage() {
                         key={pageNum}
                         variant="primary"
                         size="sm"
-                        onClick={() => loadConsultations(pageNum)}
+                        onClick={() => loadPayments(pageNum)}
                         className="w-10"
                       >
                         {pageNum}
@@ -254,7 +308,7 @@ export default function UserConsultationsPage() {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => loadConsultations(currentPage + 1)}
+                  onClick={() => loadPayments(currentPage + 1)}
                   disabled={currentPage === totalPages}
                 >
                   다음

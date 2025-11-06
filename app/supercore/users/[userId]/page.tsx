@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import { Button } from '@/components/ui/button';
+import { Comment1, CreditCardMultiple } from 'lineicons-react';
 
 interface UserDetail {
   id: string;
@@ -29,6 +30,7 @@ interface UserDetailResponse {
     consultation_count: number;
     payment_count: number;
     last_consultation_at: string | null;
+    last_payment_at: string | null;
   };
 }
 
@@ -195,7 +197,10 @@ export default function UserDetailPage() {
                 }}
               >
                 <div className="p-6">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">상담 요청</p>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    <Comment1 className="inline h-5 w-5 mr-2 align-text-bottom" aria-hidden />
+                    상담 요청
+                  </p>
                   <p className="mt-2 text-3xl font-bold text-slate-900">
                     {stats?.consultation_count ?? 0}건
                   </p>
@@ -204,14 +209,30 @@ export default function UserDetailPage() {
                   </p>
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-                <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">결제</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">
-                  {stats?.payment_count ?? 0}건
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  결제 기능 준비 중
-                </p>
+              <div
+                className="rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-primary hover:shadow"
+                role="button"
+                tabIndex={0}
+                onClick={() => router.push(`/supercore/users/${userId}/payments`)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    router.push(`/supercore/users/${userId}/payments`);
+                  }
+                }}
+              >
+                <div className="p-6">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    <CreditCardMultiple className="inline h-5 w-5 mr-2 align-text-bottom" aria-hidden />
+                    결제
+                  </p>
+                  <p className="mt-2 text-3xl font-bold text-slate-900">
+                    {stats?.payment_count ?? 0}건
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    최근 결제일: {formatDateTime(stats?.last_payment_at ?? null)}
+                  </p>
+                </div>
               </div>
             </div>
 

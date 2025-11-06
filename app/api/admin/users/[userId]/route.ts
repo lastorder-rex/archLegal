@@ -74,6 +74,31 @@ export async function GET(
       console.error('Last consultation error:', lastConsultationError);
     }
 
+    // Get payment count (paid only)
+    const { count: paymentCount, error: paymentCountError } = await supabaseAdmin
+      .from('user_payment_stages')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .not('paid_at', 'is', null);
+
+    if (paymentCountError) {
+      console.error('Payment count error:', paymentCountError);
+    }
+
+    // Get last payment date (paid only)
+    const { data: lastPayment, error: lastPaymentError } = await supabaseAdmin
+      .from('user_payment_stages')
+      .select('paid_at')
+      .eq('user_id', userId)
+      .not('paid_at', 'is', null)
+      .order('paid_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastPaymentError) {
+      console.error('Last payment error:', lastPaymentError);
+    }
+
     return NextResponse.json({
       user: {
         id: publicUser.auth_id,
@@ -94,8 +119,9 @@ export async function GET(
       },
       stats: {
         consultation_count: consultationCount ?? 0,
-        payment_count: 0,
-        last_consultation_at: lastConsultation?.created_at ?? null
+        payment_count: paymentCount ?? 0,
+        last_consultation_at: lastConsultation?.created_at ?? null,
+        last_payment_at: lastPayment?.paid_at ?? null
       }
     });
   } catch (error) {
