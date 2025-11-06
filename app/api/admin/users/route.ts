@@ -104,6 +104,24 @@ export async function GET(request: NextRequest) {
       consultationCountMap[userId] = (consultationCountMap[userId] || 0) + 1;
     });
 
+    // Get payment counts for each user (paid only)
+    const { data: paymentCounts, error: paymentCountError } = await supabaseAdmin
+      .from('user_payment_stages')
+      .select('user_id')
+      .in('user_id', authIds)
+      .not('paid_at', 'is', null);
+
+    if (paymentCountError) {
+      console.error('Payment count error:', paymentCountError);
+    }
+
+    // Count payments per user
+    const paymentCountMap: Record<string, number> = {};
+    paymentCounts?.forEach(payment => {
+      const userId = payment.user_id;
+      paymentCountMap[userId] = (paymentCountMap[userId] || 0) + 1;
+    });
+
     // Format user data
     const users = publicUsers.map(user => ({
       id: user.auth_id,
@@ -114,7 +132,7 @@ export async function GET(request: NextRequest) {
       created_at: user.created_at,
       last_sign_in_at: authUsersMap[user.auth_id]?.last_sign_in_at || null,
       consultation_count: consultationCountMap[user.auth_id] || 0,
-      payment_count: 0 // TODO: Implement payment counting when payment feature is ready
+      payment_count: paymentCountMap[user.auth_id] || 0
     }));
 
     return NextResponse.json({
