@@ -239,6 +239,8 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
 
     if (!formData.message || formData.message.trim().length === 0) {
       newErrors.message = '상담 요청사항을 입력해주세요.';
+    } else if (formData.message.length > 1000) {
+      newErrors.message = '상담 내용은 1000글자 이하로 입력해주세요.';
     }
 
     // 필수값 오류가 있으면 먼저 처리
