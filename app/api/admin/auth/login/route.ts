@@ -88,6 +88,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // rex 계정 전용: 한국 IP만 허용
+    if (body.username === 'rex') {
+      const country = request.headers.get('x-vercel-ip-country');
+      // 로컬 개발 환경에서는 국가 헤더가 없을 수 있으므로 null 체크
+      if (country && country !== 'KR') {
+        return NextResponse.json(
+          { error: '접근이 제한되었습니다. 한국에서만 로그인할 수 있습니다.' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Initialize Supabase client with service role (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {

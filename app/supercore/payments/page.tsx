@@ -299,7 +299,7 @@ export default function AdminPaymentsPage() {
                 placeholder="휴대폰 번호 일부"
               />
             </div>
-            <div className="space-y-2 md:col-span-2 lg:col-span-3">
+            <div className="space-y-2">
               <Label htmlFor="address">주소</Label>
               <Input
                 id="address"
