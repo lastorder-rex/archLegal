@@ -6,3 +6,6 @@ out
 playwright-report
 *.csv
 *.pdf
+
+# Claude settings (contains sensitive tokens)
+.claude/settings.local.json
