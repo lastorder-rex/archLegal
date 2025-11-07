@@ -1,12 +1,16 @@
-export const metadata = {
+import type { Metadata } from 'next';
+import { SiteFooter } from '@/components/layout/SiteFooter';
+
+export const metadata: Metadata = {
   title: '이용약관 - ArchLegal',
   description: 'ArchLegal 서비스 이용약관',
 };
 
 export default function TermsOfServicePage() {
   return (
-    <main className="bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-4 py-16 space-y-8">
+    <div className="flex min-h-screen flex-col bg-background">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 text-foreground">
+        <div className="space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">이용약관</h1>
           <p className="text-muted-foreground">
@@ -118,9 +122,11 @@ export default function TermsOfServicePage() {
             <p>본 약관에 관한 문의는 서비스 내 문의 채널 또는 support@archlegal.co.kr 로 연락해 주세요.</p>
           </div>
 
-          
+
         </section>
-      </div>
-    </main>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }
