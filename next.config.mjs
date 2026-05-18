@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/check',
+        destination: '/legalization-check.html',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
