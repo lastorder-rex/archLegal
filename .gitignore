@@ -6,6 +6,14 @@ out
 playwright-report
 *.csv
 *.pdf
+*.tsbuildinfo
+
+# Local tool configuration
+.mcp.json
+.vscode/mcp.json
+
+# Supabase local temp files
+supabase/.temp/
 
 # Claude settings (contains sensitive tokens)
 .claude/settings.local.json

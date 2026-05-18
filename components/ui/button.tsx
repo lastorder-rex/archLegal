@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { Slot } from '@radix-ui/react-slot';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'outline' | 'sidebar-primary' | 'ghost';
+  variant?: 'primary' | 'outline' | 'sidebar-primary' | 'ghost' | 'destructive';
   size?: 'sm' | 'default' | 'lg';
   asChild?: boolean;
 };
@@ -18,6 +18,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ? 'bg-primary text-primary-foreground hover:opacity-85 focus-visible:ring-primary'
         : variant === 'sidebar-primary'
         ? 'bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] hover:opacity-85 focus-visible:ring-[hsl(var(--sidebar-primary))]'
+        : variant === 'destructive'
+        ? 'bg-destructive text-destructive-foreground hover:opacity-85 focus-visible:ring-destructive'
         : variant === 'ghost'
         ? 'bg-transparent text-primary hover:bg-primary/10 focus-visible:ring-primary focus-visible:ring-opacity-40'
         : 'border border-primary bg-background text-primary hover:bg-primary hover:bg-opacity-20 hover:text-white focus-visible:ring-primary focus-visible:ring-opacity-40 border-opacity-40';

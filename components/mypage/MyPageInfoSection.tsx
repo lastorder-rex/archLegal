@@ -16,6 +16,7 @@ import {
 } from '@/lib/validations/user';
 import { useMyPageContext } from '@/components/mypage/MyPageContext';
 import type { UserProfile } from '@/types/profile';
+import { handleUserLogout } from '@/lib/auth/logout';
 
 type FormState = {
   legalName: string;
@@ -50,6 +51,9 @@ export function MyPageInfoSection() {
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [withdrawConfirmed, setWithdrawConfirmed] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
 
   useEffect(() => {
     setFormState(initialFormState);
@@ -156,83 +160,153 @@ export function MyPageInfoSection() {
     [formState.birthDate, formState.contactPhone, formState.email, formState.legalName, router, setProfile]
   );
 
+  const handleWithdraw = useCallback(async () => {
+    if (withdrawSubmitting || !withdrawConfirmed) {
+      return;
+    }
+    setWithdrawSubmitting(true);
+    setWithdrawError(null);
+    try {
+      const response = await fetch('/api/users/withdraw', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
+        throw new Error(data?.error || '회원 탈퇴에 실패했습니다.');
+      }
+      await handleUserLogout(router);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '회원 탈퇴 처리 중 오류가 발생했습니다.';
+      setWithdrawError(message);
+    } finally {
+      setWithdrawSubmitting(false);
+    }
+  }, [router, withdrawConfirmed, withdrawSubmitting]);
+
   return (
-    <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <header className="space-y-1">
-        <h2 className="text-xl font-semibold">회원 정보</h2>
-        <p className="text-sm text-muted-foreground">연락 가능한 이름과 휴대폰 번호를 확인하고 필요하면 수정해주세요.</p>
-      </header>
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="legalName" required>
-              이름
-            </Label>
-            <Input
-              id="legalName"
-              value={formState.legalName}
-              onChange={event => handleChange('legalName', event.target.value)}
-              placeholder="이름을 입력하세요"
-            />
-            {errors.legalName ? <p className="text-sm text-destructive">{errors.legalName}</p> : null}
+    <div className="space-y-6">
+      <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <header className="space-y-1">
+          <h2 className="text-xl font-semibold">회원 정보</h2>
+          <p className="text-sm text-muted-foreground">연락 가능한 이름과 휴대폰 번호를 확인하고 필요하면 수정해주세요.</p>
+        </header>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="legalName" required>
+                이름
+              </Label>
+              <Input
+                id="legalName"
+                value={formState.legalName}
+                onChange={event => handleChange('legalName', event.target.value)}
+                placeholder="이름을 입력하세요"
+              />
+              {errors.legalName ? <p className="text-sm text-destructive">{errors.legalName}</p> : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactPhone" required>
+                휴대폰 번호
+              </Label>
+              <Input
+                id="contactPhone"
+                type="tel"
+                value={formState.contactPhone}
+                onChange={event => handleChange('contactPhone', event.target.value)}
+                onBlur={handlePhoneBlur}
+                placeholder="010-1234-5678"
+              />
+              {errors.contactPhone ? <p className="text-sm text-destructive">{errors.contactPhone}</p> : null}
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="contactPhone" required>
-              휴대폰 번호
-            </Label>
-            <Input
-              id="contactPhone"
-              type="tel"
-              value={formState.contactPhone}
-              onChange={event => handleChange('contactPhone', event.target.value)}
-              onBlur={handlePhoneBlur}
-              placeholder="010-1234-5678"
-            />
-            {errors.contactPhone ? <p className="text-sm text-destructive">{errors.contactPhone}</p> : null}
-          </div>
-        </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="birthDate" required>
-              생년월일
-            </Label>
-            <DateInput
-              id="birthDate"
-              required
-              value={formState.birthDate}
-              onChange={date => handleChange('birthDate', date)}
-              maxDate={new Date().toISOString().split('T')[0]}
-              placeholder="YYYY-MM-DD"
-            />
-            {errors.birthDate ? (
-              <p className="text-sm text-destructive">{errors.birthDate}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">YYYY-MM-DD 형식으로 입력해주세요.</p>
-            )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="birthDate" required>
+                생년월일
+              </Label>
+              <DateInput
+                id="birthDate"
+                required
+                value={formState.birthDate}
+                onChange={date => handleChange('birthDate', date)}
+                maxDate={new Date().toISOString().split('T')[0]}
+                placeholder="YYYY-MM-DD"
+              />
+              {errors.birthDate ? (
+                <p className="text-sm text-destructive">{errors.birthDate}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">YYYY-MM-DD 형식으로 입력해주세요.</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">이메일 (선택)</Label>
+              <Input
+                id="email"
+                value={formState.email}
+                onChange={event => handleChange('email', event.target.value)}
+                placeholder="이메일을 입력하세요"
+              />
+              {errors.email ? <p className="text-sm text-destructive">{errors.email}</p> : null}
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">이메일 (선택)</Label>
-            <Input
-              id="email"
-              value={formState.email}
-              onChange={event => handleChange('email', event.target.value)}
-              placeholder="이메일을 입력하세요"
-            />
-            {errors.email ? <p className="text-sm text-destructive">{errors.email}</p> : null}
-          </div>
-        </div>
 
-        {serverError ? <p className="text-sm text-destructive">{serverError}</p> : null}
-        {successMessage ? <p className="text-sm text-emerald-600">{successMessage}</p> : null}
+          {serverError ? <p className="text-sm text-destructive">{serverError}</p> : null}
+          {successMessage ? <p className="text-sm text-emerald-600">{successMessage}</p> : null}
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={submitting}>
+              {submitting ? '저장 중...' : '회원정보 저장'}
+            </Button>
+            <p className="text-xs text-muted-foreground">수정 내용은 상담 요청 시 바로 적용됩니다.</p>
+          </div>
+        </form>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <header className="space-y-1">
+          <h2 className="text-xl font-semibold">회원 탈퇴</h2>
+          <p className="text-sm text-muted-foreground">
+            탈퇴 전에 아래 주의사항을 확인해주세요. 결제 이력이 있는 경우 계정은 비활성화 처리 후 재가입 절차를 통해 이용할 수 있습니다.
+          </p>
+        </header>
+
+        <ul className="space-y-2 rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">
+          <li>• 현재 사용 중인 계정 정보는 회원 탈퇴 후 복구가 불가합니다.</li>
+          <li>• 진행 중인 거래건이 있거나 페널티 조치 중인 경우 탈퇴 신청이 불가합니다.</li>
+          <li>• 탈퇴 후 회원님의 정보는 전자상거래 소비자보호법에 의거한 개인정보처리방침에 따라 관리됩니다.</li>
+        </ul>
+
+        <label className="flex items-start gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={withdrawConfirmed}
+            onChange={event => {
+              setWithdrawConfirmed(event.target.checked);
+              setWithdrawError(null);
+            }}
+          />
+          <span className="text-foreground">주의사항을 모두 확인하였습니다.</span>
+        </label>
+
+        {withdrawError ? <p className="text-sm text-destructive">{withdrawError}</p> : null}
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" disabled={submitting}>
-            {submitting ? '저장 중...' : '회원정보 저장'}
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleWithdraw}
+            disabled={!withdrawConfirmed || withdrawSubmitting}
+          >
+            {withdrawSubmitting ? '탈퇴 처리 중...' : '회원 탈퇴하기'}
           </Button>
-          <p className="text-xs text-muted-foreground">수정 내용은 상담 요청 시 바로 적용됩니다.</p>
+          <p className="text-xs text-muted-foreground">
+            결제 이력이 없는 경우 모든 정보가 삭제되며, 결제 이력이 있는 경우 계정은 비활성화됩니다.
+          </p>
         </div>
-      </form>
-    </section>
+      </section>
+    </div>
   );
 }

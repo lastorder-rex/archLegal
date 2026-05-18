@@ -15,16 +15,25 @@ type PaymentWidget = Awaited<ReturnType<TossPayments['widgets']>>;
 
 type PaymentOrderState = {
   stageId: string;
+  consultationId: string;
+  uniqueStageKey: string;
   orderId: string;
   orderName: string;
   amount: number;
 };
 
-function createOrderId(stageId: string) {
+function createOrderId(stageId: string, consultationId?: string) {
   const timePart = Date.now().toString(36).toUpperCase();
-  const stagePart = stageId.replace(/[^A-Z0-9]/gi, '').slice(0, 6).toUpperCase() || 'STAGE';
+  const sanitize = (value: string, fallback: string) => {
+    const cleaned = value.replace(/[^A-Z0-9]/gi, '').slice(0, 6).toUpperCase();
+    return cleaned.length > 0 ? cleaned : fallback;
+  };
+  const stagePart = sanitize(stageId, 'STAGE');
+  const consultationPart = consultationId ? sanitize(consultationId, 'CONSULT') : null;
   const randomPart = Math.random().toString(36).slice(-6).toUpperCase();
-  return `ORD-${timePart}-${stagePart}-${randomPart}`;
+  return consultationPart
+    ? `ORD-${timePart}-${stagePart}-${consultationPart}-${randomPart}`
+    : `ORD-${timePart}-${stagePart}-${randomPart}`;
 }
 
 type ConsultationWithStages = {
@@ -93,7 +102,8 @@ export function MyPagePaymentsSection() {
     locked: { text: '활성화 대기', className: 'bg-slate-200 text-slate-700' },
     requested: { text: '결제 요청됨', className: 'bg-blue-50 text-blue-700 border border-blue-200' },
     awaiting: { text: '결제 대기', className: 'bg-amber-50 text-amber-700 border border-amber-200' },
-    paid: { text: '결제 완료', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' }
+    paid: { text: '결제 완료', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+    canceled: { text: '결제 취소됨', className: 'bg-red-50 text-red-700 border border-red-200' }
   };
 
   const resetPaymentWidget = useCallback((stageId?: string, options?: { preserveActive?: boolean; preserveError?: boolean }) => {
@@ -186,29 +196,39 @@ export function MyPagePaymentsSection() {
   );
 
   const handlePaymentStart = useCallback(
-    async (stage: PaymentStage) => {
+    async (stage: PaymentStage, consultationId: string, uniqueStageKey: string) => {
+      if (stage.status === 'paid') {
+        setPaymentWidgetError('이미 결제 완료된 단계입니다.');
+        return;
+      }
+
+      if (stage.status === 'canceled') {
+        setPaymentWidgetError('취소된 결제 단계입니다. 새로운 상담을 신청해주세요.');
+        return;
+      }
+
       if (stage.disabled || stage.status === 'locked') {
         return;
       }
 
       const requiresAgreement = stage.status === 'awaiting' || stage.status === 'requested';
       if (requiresAgreement) {
-        const ageConfirmed = ageConfirmations[stage.id] ?? false;
-        const agreementChecked = paymentAgreements[stage.id] ?? false;
+        const ageConfirmed = ageConfirmations[uniqueStageKey] ?? false;
+        const agreementChecked = paymentAgreements[uniqueStageKey] ?? false;
 
         if (!ageConfirmed) {
           const ageCheck = validateAgeRequirement();
           setAgeErrors(prev => ({
             ...prev,
-            [stage.id]: ageCheck.valid ? '만 14세 이상임을 체크한 뒤 진행해주세요.' : ageCheck.message ?? '만 14세 이상이 아닙니다.'
+            [uniqueStageKey]: ageCheck.valid ? '만 14세 이상임을 체크한 뒤 진행해주세요.' : ageCheck.message ?? '만 14세 이상이 아닙니다.'
           }));
           setPaymentWidgetError(ageCheck.valid ? '만 14세 이상임을 체크해주세요.' : ageCheck.message ?? '만 14세 이상이 아닙니다.');
           return;
         } else {
           setAgeErrors(prev => {
-            if (!prev[stage.id]) return prev;
+            if (!prev[uniqueStageKey]) return prev;
             const next = { ...prev };
-            next[stage.id] = null;
+            next[uniqueStageKey] = null;
             return next;
           });
         }
@@ -239,8 +259,8 @@ export function MyPagePaymentsSection() {
 
       resetPaymentWidget();
 
-      setActivePaymentStageId(stage.id);
-      activePaymentStageRef.current = stage.id;
+      setActivePaymentStageId(uniqueStageKey);
+      activePaymentStageRef.current = uniqueStageKey;
       setPaymentWidgetLoading(true);
       setPaymentWidgetError(null);
 
@@ -259,17 +279,19 @@ export function MyPagePaymentsSection() {
         await widget.setAmount({ value: payableAmount, currency: 'KRW' });
 
         await widget.renderPaymentMethods({
-          selector: `#payment-widget-${stage.id}`,
+          selector: `#payment-widget-${uniqueStageKey}`,
           variantKey: 'DEFAULT'
         });
         await widget.renderAgreement({
-          selector: `#payment-agreement-${stage.id}`,
+          selector: `#payment-agreement-${uniqueStageKey}`,
           variantKey: 'AGREEMENT'
         });
 
         setPaymentWidgetOrder({
           stageId: stage.id,
-          orderId: createOrderId(stage.id),
+          consultationId,
+          uniqueStageKey,
+          orderId: createOrderId(stage.id, consultationId),
           orderName: stage.title,
           amount: payableAmount
         });
@@ -283,7 +305,7 @@ export function MyPagePaymentsSection() {
         const code = (error as any)?.code;
         setPaymentWidgetOrder(null);
         setPaymentWidgetError(code ? `${message} (코드: ${code})` : message);
-        resetPaymentWidget(stage.id, { preserveActive: true, preserveError: true });
+        resetPaymentWidget(uniqueStageKey, { preserveActive: true, preserveError: true });
       } finally {
         setPaymentWidgetLoading(false);
       }
@@ -303,7 +325,7 @@ export function MyPagePaymentsSection() {
     if (
       !paymentWidgetRef.current ||
       !paymentWidgetOrder ||
-      paymentWidgetOrder.stageId !== activePaymentStageRef.current
+      paymentWidgetOrder.uniqueStageKey !== activePaymentStageRef.current
     ) {
       setPaymentWidgetError('결제 정보를 불러온 뒤 다시 시도해주세요.');
       return;
@@ -324,7 +346,9 @@ export function MyPagePaymentsSection() {
         successUrl,
         failUrl,
         metadata: {
-          amount: paymentWidgetOrder.amount
+          amount: paymentWidgetOrder.amount,
+          stageTemplateId: paymentWidgetOrder.stageId,
+          consultationId: paymentWidgetOrder.consultationId
         }
       });
       queryClient.invalidateQueries({ queryKey: ['payment-stages-all'] }).catch(() => undefined);
@@ -436,17 +460,23 @@ export function MyPagePaymentsSection() {
             {/* 결제 단계 카드들 */}
             <div className="grid gap-4">
               {stages.map(stage => {
+          // 상담글별로 고유한 키 생성 (consultation.id + stage.id)
+          const uniqueStageKey = `${consultation.id}-${stage.id}`;
           const statusMeta = paymentStatusLabel[stage.status];
-          const isDisabled = stage.disabled || stage.status === 'locked';
+          const isPaid = stage.status === 'paid';
+          const isCanceled = stage.status === 'canceled';
+          const isDisabled = stage.disabled || stage.status === 'locked' || isPaid || isCanceled;
           const requiresAgreement = stage.status === 'awaiting' || stage.status === 'requested';
-          const isAgreed = paymentAgreements[stage.id] ?? false;
-          const isAgeConfirmed = ageConfirmations[stage.id] ?? false;
-          const ageError = ageErrors[stage.id] ?? null;
-          const isCurrentStageActive = activePaymentStageId === stage.id;
+          const isAgreed = paymentAgreements[uniqueStageKey] ?? false;
+          const isAgeConfirmed = ageConfirmations[uniqueStageKey] ?? false;
+          const ageError = ageErrors[uniqueStageKey] ?? null;
+          const isCurrentStageActive = activePaymentStageId === uniqueStageKey;
           const isCurrentStageLoading = paymentWidgetLoading && isCurrentStageActive;
           const isButtonDisabled =
             isDisabled || (requiresAgreement && (!isAgreed || !isAgeConfirmed)) || isCurrentStageLoading;
-          const canSubmitPayment = paymentWidgetOrder?.stageId === stage.id && !paymentWidgetLoading;
+          const canSubmitPayment =
+            paymentWidgetOrder?.uniqueStageKey === uniqueStageKey && !paymentWidgetLoading && !isPaid;
+          const buttonLabel = isPaid ? '결제 완료' : isCanceled ? '취소됨' : stage.nextActionLabel ?? '상세보기';
           const agreementContent = (
             <>
               본 결제는 양성화 관련 전문 용역의 단계별 비용 결제임을 이해하고, 제공 범위·금액·환불 규정을 확인했습니다.(필수){' '}
@@ -476,6 +506,17 @@ export function MyPagePaymentsSection() {
                       )}
                     >
                       {statusMeta.text}
+                      {isCanceled && stage.canceledAt ? (
+                        <span className="ml-1">
+                          ({new Date(stage.canceledAt).toLocaleString('ko-KR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })})
+                        </span>
+                      ) : null}
                     </span>
                   </div>
                   {stage.description ? (
@@ -505,9 +546,11 @@ export function MyPagePaymentsSection() {
                   <p>
                     {stage.status === 'paid'
                       ? '결제가 완료되었습니다. 추가 안내는 담당자가 별도로 연락드립니다.'
-                      : stage.status === 'locked'
-                        ? '관리자가 결제를 활성화하면 웹 알림과 함께 진행 가능해집니다.'
-                        : '결제를 진행하면 서비스가 다음 단계로 이동합니다.'}
+                      : stage.status === 'canceled'
+                        ? '관리자에 의해 결제가 취소되었습니다. 새로운 상담 신청이 필요한 경우 담당자에게 문의해주세요.'
+                        : stage.status === 'locked'
+                          ? '관리자가 결제를 활성화하면 웹 알림과 함께 진행 가능해집니다.'
+                          : '결제를 진행하면 서비스가 다음 단계로 이동합니다.'}
                   </p>
                   {requiresAgreement ? (
                     <div className="flex flex-col gap-2">
@@ -516,7 +559,7 @@ export function MyPagePaymentsSection() {
                           type="checkbox"
                           className="mt-0.5 h-4 w-4 rounded border border-border accent-[hsl(var(--border))] focus-visible:outline-none focus-visible:ring-0"
                           checked={isAgeConfirmed}
-                          onChange={event => handleAgeConfirmationToggle(stage.id, event.target.checked)}
+                          onChange={event => handleAgeConfirmationToggle(uniqueStageKey, event.target.checked)}
                           disabled={isDisabled}
                         />
                         <span className="leading-snug">만 14세 이상입니다.(필수)</span>
@@ -527,7 +570,7 @@ export function MyPagePaymentsSection() {
                           type="checkbox"
                           className="mt-0.5 h-4 w-4 rounded border border-border accent-[hsl(var(--border))] focus-visible:outline-none focus-visible:ring-0"
                           checked={isAgreed}
-                          onChange={event => handlePaymentAgreementToggle(stage.id, event.target.checked)}
+                          onChange={event => handlePaymentAgreementToggle(uniqueStageKey, event.target.checked)}
                           disabled={isDisabled}
                         />
                         <span className="leading-snug">{agreementContent}</span>
@@ -543,10 +586,10 @@ export function MyPagePaymentsSection() {
                   type="button"
                   variant={isDisabled ? 'outline' : 'primary'}
                   disabled={isButtonDisabled}
-                  onClick={() => handlePaymentStart(stage)}
+                  onClick={() => handlePaymentStart(stage, consultation.id, uniqueStageKey)}
                   aria-busy={isCurrentStageLoading}
                 >
-                  {isCurrentStageLoading ? '결제 준비 중...' : stage.nextActionLabel ?? '상세보기'}
+                  {isCurrentStageLoading ? '결제 준비 중...' : buttonLabel}
                 </Button>
               </div>
 
@@ -559,17 +602,17 @@ export function MyPagePaymentsSection() {
                   )}
                   <div className="space-y-4">
                     <div
-                      id={`payment-widget-${stage.id}`}
+                      id={`payment-widget-${uniqueStageKey}`}
                       className="min-h-[220px] rounded-lg border border-border bg-background p-4"
                     />
-                    <div id={`payment-agreement-${stage.id}`} className="space-y-2" />
+                    <div id={`payment-agreement-${uniqueStageKey}`} className="space-y-2" />
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePaymentWidgetClose(stage.id)}
+                      onClick={() => handlePaymentWidgetClose(uniqueStageKey)}
                       disabled={paymentWidgetLoading}
                     >
                       닫기

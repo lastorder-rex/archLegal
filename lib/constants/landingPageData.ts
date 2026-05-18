@@ -9,7 +9,7 @@
 export const interestItems = [
   {
     title: '시행 기간',
-    highlight: '2026년 한시 시행 (예정)',
+    highlight: '2026년 한시 시행',
     description: '정부 계획안에 따르면 1년 한시 시행이 추진됩니다. 기간 내 신청을 준비해야 합니다.'
   },
   {

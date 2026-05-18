@@ -78,7 +78,8 @@ const statusLabelMap: Record<string, string> = {
   awaiting: '결제 대기',
   requested: '요청됨',
   paid: '결제 완료',
-  locked: '잠금'
+  locked: '잠금',
+  canceled: '결제취소'
 };
 
 interface UploadTokenRow {
@@ -231,92 +232,45 @@ export default function AdminPaymentDetailPage() {
     checkAuth();
   }, [checkAuth]);
 
-  const handleMarkPaid = async () => {
+  const handleCancelPayment = async () => {
     if (!paymentId) return;
     if (!payment) return;
 
-    const confirmed = window.confirm('해당 결제 단계를 "결제 완료" 상태로 변경하시겠습니까?');
+    const cancelReason = window.prompt('결제 취소 사유를 입력해주세요:');
+    if (!cancelReason || cancelReason.trim() === '') {
+      alert('취소 사유를 입력해야 합니다.');
+      return;
+    }
+
+    const confirmed = window.confirm(`결제를 취소하시겠습니까?\n\n취소 사유: ${cancelReason}\n\n※ 취소된 결제는 복구할 수 없습니다.`);
     if (!confirmed) return;
 
     setIsActionLoading(true);
     try {
-      const paidAmountValue = paidAmountInput.trim() !== '' ? Number(paidAmountInput) : undefined;
-      const payload = {
-        action: 'markPaid',
-        paidAmount: Number.isFinite(paidAmountValue) ? paidAmountValue : undefined,
-        paymentKey: paymentKeyInput.trim() !== '' ? paymentKeyInput.trim() : undefined
-      };
-
-      const response = await fetch(`/api/admin/payments/${paymentId}`, {
-        method: 'PATCH',
+      const response = await fetch(`/api/admin/payments/${paymentId}/cancel`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ cancelReason: cancelReason.trim() })
       });
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        alert(data.error || '결제 완료 처리 중 오류가 발생했습니다.');
+        alert(data.error || '결제 취소 중 오류가 발생했습니다.');
         return;
       }
 
-      setPayment(data.payment);
-      if (data.payment?.paidAmount !== null) {
-        setPaidAmountInput(String(data.payment.paidAmount));
-      }
-      if (data.payment?.paymentKey) {
-        setPaymentKeyInput(data.payment.paymentKey);
-      }
-      await loadUploadTokens();
+      alert('결제가 취소되었습니다.');
+      // Reload payment data
+      await loadPaymentDetail();
     } catch (error) {
-      console.error('결제 완료 처리 오류', error);
-      alert('결제 완료 처리 중 오류가 발생했습니다.');
+      console.error('결제 취소 오류', error);
+      alert('결제 취소 중 오류가 발생했습니다.');
     } finally {
       setIsActionLoading(false);
     }
   };
 
-  const handleReopen = async () => {
-    if (!paymentId) return;
-    if (!payment) return;
-
-    const confirmed = window.confirm('결제 완료 상태를 해제하고 다시 결제 대기 상태로 변경할까요?');
-    if (!confirmed) return;
-
-    setIsActionLoading(true);
-    try {
-      const payload = {
-        action: 'reopen',
-        reason: reopenReason.trim() || undefined
-      };
-
-      const response = await fetch(`/api/admin/payments/${paymentId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        alert(data.error || '결제 단계를 재오픈하는 중 오류가 발생했습니다.');
-        return;
-      }
-
-      setPayment(data.payment);
-      if (data.payment?.requestAmount !== null) {
-        setPaidAmountInput(String(data.payment.requestAmount));
-      } else {
-        setPaidAmountInput('');
-      }
-      await loadUploadTokens();
-    } catch (error) {
-      console.error('결제 재오픈 오류', error);
-      alert('결제 단계를 재오픈하는 중 오류가 발생했습니다.');
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
 
   const handleCreateUploadToken = async (audience: 'customer' | 'staff') => {
     if (!paymentId) return;
@@ -424,14 +378,13 @@ export default function AdminPaymentDetailPage() {
           </div>
           {payment && (
             <div className="flex flex-wrap gap-2">
-              {payment.status !== 'paid' && (
-                <Button onClick={handleMarkPaid} disabled={isActionLoading}>
-                  결제 완료 처리
-                </Button>
-              )}
-              {payment.status === 'paid' && (
-                <Button variant="outline" onClick={handleReopen} disabled={isActionLoading}>
-                  결제 단계 재오픈
+              {payment.status === 'paid' && payment.paymentKey && (
+                <Button
+                  variant="destructive"
+                  onClick={handleCancelPayment}
+                  disabled={isActionLoading}
+                >
+                  결제취소하기
                 </Button>
               )}
             </div>

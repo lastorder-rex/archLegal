@@ -359,7 +359,14 @@ API 문서, 기능 명세, 설정 가이드 등
 
 ### 4. 결제 (Payment)
 - **API**: `app/api/payments/`
-- **컴포넌트**: `components/landing/Pricing.tsx`
+- **주요 API 엔드포인트**
+  - `app/api/payments/confirm/route.ts` : Toss 결제 승인
+  - `app/api/payments/stages/route.ts` : 사용자 결제 단계 조회
+  - `app/api/payments/webhook/route.ts` : Toss 웹훅(취소/부분취소) 수신
+- **컴포넌트**
+  - `components/landing/Pricing.tsx`
+  - `components/mypage/MyPagePaymentsSection.tsx` : 마이페이지 결제 위젯/단계 관리
+  - `components/mypage/MyPagePaymentSuccess.tsx` : 결제 성공 후 승인 확인 UI
 - **통합**: TossPay SDK (package.json)
 
 ### 5. 관리자 기능 (Admin)

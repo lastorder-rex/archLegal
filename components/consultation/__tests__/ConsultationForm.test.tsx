@@ -235,8 +235,7 @@ describe('ConsultationForm', () => {
       } as Response;
     });
 
-    // @ts-expect-error assign mock fetch for test
-    globalThis.fetch = fetchMock;
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     render(<ConsultationForm user={baseUser} profile={baseProfile} />);
 
@@ -296,8 +295,7 @@ describe('ConsultationForm', () => {
       } as Response;
     });
 
-    // @ts-expect-error assign mock fetch for test
-    globalThis.fetch = fetchMock;
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     render(<ConsultationForm user={baseUser} profile={baseProfile} />);
 

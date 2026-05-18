@@ -11,4 +11,8 @@ export type UserProfile = {
   consent_privacy_at: string | null;
   contact_phone_verified_at: string | null;
   birth_date: string | null;
+  account_status?: 'active' | 'withdrawn' | 'blocked';
+  withdrawn_at?: string | null;
+  blocked_at?: string | null;
+  blocked_reason?: string | null;
 };

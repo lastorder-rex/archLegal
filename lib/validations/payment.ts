@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const paymentStageStatusSchema = z.enum(['locked', 'requested', 'awaiting', 'paid']);
+export const paymentStageStatusSchema = z.enum(['locked', 'requested', 'awaiting', 'paid', 'canceled']);
 
 export const paymentStageSchema = z.object({
   id: z.string(),
@@ -16,6 +16,7 @@ export const paymentStageSchema = z.object({
   paidAt: z.string().nullable(),
   paidAmount: z.number().nullable(),
   paymentKey: z.string().nullable().optional(),
+  canceledAt: z.string().nullable().optional(),
   updatedAt: z.string().nullable().optional(),
   nextActionLabel: z.string().nullable().optional(),
   disabled: z.boolean().optional()

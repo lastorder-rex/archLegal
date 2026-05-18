@@ -71,12 +71,10 @@ jest.mock('@/lib/utils/file-upload', () => ({
 }));
 
 if (typeof global.confirm !== 'function') {
-  // @ts-expect-error add confirm to jsdom global
   global.confirm = () => true;
 }
 
 if (typeof global.alert !== 'function') {
-  // @ts-expect-error add alert to jsdom global
   global.alert = () => {};
 }
 
@@ -154,10 +152,8 @@ describe('ConsultationHistoryPage', () => {
       throw new Error(`Unhandled fetch call: ${url}`);
     });
 
-    // @ts-expect-error assign mock fetch
-    globalThis.fetch = fetchMock;
-    // @ts-expect-error ensure window fetch mocked
-    window.fetch = fetchMock;
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    window.fetch = fetchMock as unknown as typeof fetch;
 
     const { Wrapper, queryClient } = createQueryWrapper();
 
@@ -223,10 +219,8 @@ describe('ConsultationHistoryPage', () => {
       throw new Error(`Unhandled fetch call: ${url}`);
     });
 
-    // @ts-expect-error assign mock fetch
-    globalThis.fetch = fetchMock;
-    // @ts-expect-error ensure window fetch mocked
-    window.fetch = fetchMock;
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    window.fetch = fetchMock as unknown as typeof fetch;
 
     jest.spyOn(global, 'confirm').mockReturnValue(true);
 

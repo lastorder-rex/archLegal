@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '세션이 만료되었습니다. 다시 로그인해주세요.' }, { status: 401 });
     }
 
-    // 사용자의 모든 상담글 조회 (최신순)
-    const { data: consultations, error: consultationsError } = await supabase
+    // 사용자의 모든 상담글 조회
+    const { data: allConsultations, error: consultationsError } = await supabase
       .from('consultations')
       .select('id, nickname, name, address, address_detail, created_at')
       .eq('user_id', session.user.id)
@@ -31,9 +31,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '상담 내역을 불러올 수 없습니다.' }, { status: 500 });
     }
 
-    if (!consultations || consultations.length === 0) {
+    if (!allConsultations || allConsultations.length === 0) {
       return NextResponse.json({ consultationsWithStages: [] });
     }
+
+    const allConsultationIds = allConsultations.map(c => c.id);
+
+    // 결제 단계가 있는 상담글 ID 조회
+    const { data: userStagesForIds, error: userStagesIdsError } = await supabase
+      .from('user_payment_stages')
+      .select('consultation_id')
+      .in('consultation_id', allConsultationIds);
+
+    if (userStagesIdsError) {
+      console.error('[payments/stages] failed to load user stage ids', userStagesIdsError);
+      return NextResponse.json({ error: '결제 정보를 불러올 수 없습니다.' }, { status: 500 });
+    }
+
+    // 결제 단계가 있는 상담글 ID 추출
+    const consultationIdsWithPayments = new Set((userStagesForIds ?? []).map(s => s.consultation_id));
+
+    if (consultationIdsWithPayments.size === 0) {
+      return NextResponse.json({ consultationsWithStages: [] });
+    }
+
+    // 결제 단계가 있는 상담글만 필터링
+    const consultations = allConsultations.filter(c => consultationIdsWithPayments.has(c.id));
 
     // 결제 단계 템플릿 조회
     const { data: stageTemplates, error: stageTemplateError } = await supabase
@@ -51,7 +74,7 @@ export async function GET(request: NextRequest) {
     const consultationIds = consultations.map(c => c.id);
     const { data: allUserStages, error: userStagesError } = await supabase
       .from('user_payment_stages')
-      .select('consultation_id, stage_template_id, status, request_amount, requested_at, paid_at, paid_amount, payment_key, updated_at')
+      .select('consultation_id, stage_template_id, status, request_amount, requested_at, paid_at, paid_amount, payment_key, canceled_at, updated_at')
       .in('consultation_id', consultationIds);
 
     if (userStagesError) {
@@ -104,6 +127,7 @@ export async function GET(request: NextRequest) {
           paidAt: matched?.paid_at ?? null,
           paidAmount,
           paymentKey: matched?.payment_key ?? null,
+          canceledAt: matched?.canceled_at ?? null,
           updatedAt: matched?.updated_at ?? template.updated_at ?? null,
           nextActionLabel,
           disabled

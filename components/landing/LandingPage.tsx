@@ -4,7 +4,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type MouseEvent,
   type ReactNode
@@ -16,6 +15,7 @@ import Link from 'next/link';
 import {
   ArrowBigDownDash,
   ArrowBigUpDash,
+  Bell,
   BookUp,
   CheckLine,
   Handshake,
@@ -35,7 +35,6 @@ import { CTAButton } from '../ui/cta-button';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { ConsultationModal } from './ConsultationModal';
-import { AccessCodeModal } from './AccessCodeModal';
 import { AboutModal } from './AboutModal';
 import { LoginModal } from './LoginModal';
 import { InfoCard } from './InfoCard';
@@ -53,9 +52,16 @@ import {
 } from '@/lib/constants/landingPageData';
 
 type NavigationItem =
-  | { label: string; type: 'modal'; icon?: ReactNode }
-  | { label: string; type: 'link'; href: string; icon?: ReactNode }
-  | { label: string; type: 'anchor'; target: string; icon?: ReactNode };
+  | { label: string; type: 'modal'; icon?: ReactNode; requiresAuth?: boolean }
+  | { label: string; type: 'link'; href: string; icon?: ReactNode; requiresAuth?: boolean }
+  | { label: string; type: 'anchor'; target: string; icon?: ReactNode; requiresAuth?: boolean }
+  | { label: string; type: 'notification'; icon?: ReactNode; requiresAuth?: boolean };
+
+type PaymentNoticeItem = {
+  address: string;
+  count: number;
+  latestAt: string | null;
+};
 
 const navigationItems: NavigationItem[] = [
   {
@@ -68,15 +74,25 @@ const navigationItems: NavigationItem[] = [
     type: 'link',
     href: '/press',
     icon: <Newspaper className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '마이페이지',
+    type: 'link',
+    href: '/mypage',
+    icon: <UserRoundCog className="h-4 w-4" aria-hidden />,
+    requiresAuth: true
+  },
+  {
+    label: '결제 알림',
+    type: 'notification',
+    icon: <Bell className="h-4 w-4" aria-hidden />,
+    requiresAuth: true
   }
 ];
 
 type DesireIconKey = (typeof desireItems)[number]['icon'];
 type TimelineIconKey = (typeof timelineItems)[number]['icon'];
 
-// TODO(temporary-review-gate): Remove access gating once external review is complete.
-const ACCESS_PASSWORD = 'welcome2025!';
-const ACCESS_STORAGE_KEY = 'archlegal:access-granted';
 // TODO(daily-notice): Remove once service notice popup is no longer needed.
 const DAILY_NOTICE_STORAGE_KEY = 'archlegal:daily-notice-dismissed-date';
 
@@ -127,13 +143,14 @@ export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isAboutModalOpen, setAboutModalOpen] = useState(false);
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-  const [isAccessModalOpen, setAccessModalOpen] = useState(false);
-  const [hasAccess, setHasAccess] = useState(false);
   // TODO(daily-notice): Remove once service notice popup is no longer needed.
   const [isNoticeOpen, setNoticeOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isNavOpen, setNavOpen] = useState(false);
-  const pendingActionRef = useRef<(() => void) | null>(null);
+  const [isPaymentNoticeOpen, setPaymentNoticeOpen] = useState(false);
+  const [paymentNoticeItems, setPaymentNoticeItems] = useState<PaymentNoticeItem[]>([]);
+  const [paymentNoticeOverflow, setPaymentNoticeOverflow] = useState(0);
+  const [paymentNoticeError, setPaymentNoticeError] = useState<string | null>(null);
   const supabase = createClientComponentClient();
   const router = useRouter();
   // TODO(daily-notice): Remove once service notice popup is no longer needed.
@@ -173,51 +190,80 @@ export function LandingPage() {
   }, [supabase]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
+    let cancelled = false;
 
-    const stored = window.localStorage.getItem(ACCESS_STORAGE_KEY);
-    if (stored === 'true') {
-      setHasAccess(true);
-    }
-  }, []);
+    const loadPaymentPreview = async () => {
+      if (!sessionUser) {
+        setPaymentNoticeItems([]);
+        setPaymentNoticeOverflow(0);
+        setPaymentNoticeError(null);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/payments/stages', { credentials: 'include' });
+        if (!response.ok) {
+          throw new Error('결제 정보를 불러오지 못했습니다.');
+        }
+        const json = await response.json();
+
+        const consultations: Array<{
+          consultation?: { address?: string | null };
+          stages?: Array<{ status?: string; requestedAt?: string | null; updatedAt?: string | null; paidAt?: string | null }>;
+        }> = json?.consultationsWithStages ?? [];
+
+        const pending: PaymentNoticeItem[] = consultations
+          .reduce<PaymentNoticeItem[]>((acc, item) => {
+            const address = item.consultation?.address ?? '주소 미입력';
+            const stages = (item.stages ?? []).filter(
+              stage => stage.status !== 'paid' && stage.status !== 'canceled'
+            );
+            if (!stages.length) {
+              return acc;
+            }
+            const latestAt =
+              stages
+                .map(stage => stage.requestedAt ?? stage.updatedAt ?? stage.paidAt ?? null)
+                .filter((v): v is string => Boolean(v))
+                .sort((a, b) => (a > b ? -1 : 1))[0] ?? null;
+            acc.push({ address, count: stages.length, latestAt });
+            return acc;
+          }, [])
+          .sort((a, b) => {
+            if (a.latestAt && b.latestAt) {
+              return a.latestAt > b.latestAt ? -1 : 1;
+            }
+            if (a.latestAt) return -1;
+            if (b.latestAt) return 1;
+            return 0;
+          });
+
+        if (!cancelled) {
+          setPaymentNoticeItems(pending.slice(0, 3));
+          setPaymentNoticeOverflow(Math.max(pending.length - 3, 0));
+          setPaymentNoticeError(null);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPaymentNoticeItems([]);
+          setPaymentNoticeOverflow(0);
+          setPaymentNoticeError('결제 내역을 불러오지 못했습니다.');
+        }
+      }
+    };
+
+    loadPaymentPreview();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionUser]);
 
   const handleLogout = useCallback(async () => {
     setSessionUser(null);
     setLoginModalOpen(false);
     await handleUserLogout(router);
   }, [router]);
-
-  const requestAccess = useCallback(
-    (action: () => void) => {
-      if (hasAccess) {
-        action();
-        return;
-      }
-
-      pendingActionRef.current = action;
-      setAccessModalOpen(true);
-    },
-    [hasAccess]
-  );
-
-  const handleAccessSuccess = useCallback(() => {
-    setHasAccess(true);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(ACCESS_STORAGE_KEY, 'true');
-    }
-    setAccessModalOpen(false);
-    pendingActionRef.current?.();
-    pendingActionRef.current = null;
-  }, []);
-
-  const handleAccessModalClose = useCallback(() => {
-    setAccessModalOpen(false);
-    pendingActionRef.current = null;
-  }, []);
-
-  const validateAccessCode = useCallback((code: string) => code === ACCESS_PASSWORD, []);
 
   useEffect(() => {
     // TODO(daily-notice): Remove once service notice popup is no longer needed.
@@ -271,12 +317,6 @@ export function LandingPage() {
       <ConsultationModal open={isModalOpen} onClose={() => setModalOpen(false)} />
       <LoginModal open={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
       <AboutModal open={isAboutModalOpen} onClose={() => setAboutModalOpen(false)} faqs={fullFaqs} />
-      <AccessCodeModal
-        open={isAccessModalOpen}
-        onClose={handleAccessModalClose}
-        onSuccess={handleAccessSuccess}
-        validateCode={validateAccessCode}
-      />
       {isNoticeOpen ? (
         // TODO(daily-notice): Remove once service notice popup is no longer needed.
         <div
@@ -333,6 +373,9 @@ export function LandingPage() {
             <div className="flex items-center gap-3">
               <nav className="hidden items-center gap-6 text-base font-medium text-white/80 lg:flex">
                 {navigationItems.map(item => {
+                  if (item.requiresAuth && !sessionUser) {
+                    return null;
+                  }
                   const icon = item.icon;
                   if (item.type === 'modal') {
                     return (
@@ -359,6 +402,54 @@ export function LandingPage() {
                       </Link>
                     );
                   }
+                  if (item.type === 'notification') {
+                    return (
+                      <div
+                        key={item.label}
+                        className="relative flex items-center"
+                        onMouseEnter={() => setPaymentNoticeOpen(true)}
+                        onMouseLeave={() => setPaymentNoticeOpen(false)}
+                      >
+                        <Link
+                          href="/mypage/payments"
+                          className="flex items-center gap-1 p-0 text-white opacity-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.65)] transition hover:text-white"
+                          aria-label="결제 알림"
+                        >
+                          {icon}
+                          {paymentNoticeItems.length > 0 || paymentNoticeOverflow > 0 ? (
+                            <span className="text-sm">
+                              ({paymentNoticeItems.reduce((sum, item) => sum + item.count, 0) + paymentNoticeOverflow})
+                            </span>
+                          ) : null}
+                        </Link>
+                        {isPaymentNoticeOpen ? (
+                          <div className="absolute right-0 top-11 w-64 rounded-xl border border-white/15 bg-slate-900/90 p-3 text-sm text-white shadow-lg backdrop-blur">
+                            {paymentNoticeError ? (
+                              <p className="font-semibold">{paymentNoticeError}</p>
+                            ) : paymentNoticeItems.length ? (
+                              <div className="space-y-2">
+                                {paymentNoticeItems.map((item, index) => (
+                                  <div key={`${item.address}-${index}`} className="space-y-0.5">
+                                    <p className="font-semibold leading-tight">{item.address}</p>
+                                    <p className="text-xs text-white/70 leading-tight">결제 {item.count}건 대기</p>
+                                  </div>
+                                ))}
+                                {paymentNoticeOverflow > 0 ? (
+                                  <p className="text-xs text-white/60">외 {paymentNoticeOverflow}건 대기 중</p>
+                                ) : null}
+                                <p className="text-xs text-white/70">클릭하면 결제 내역으로 이동합니다.</p>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="font-semibold">결제 내역이 없습니다.</p>
+                                <p className="mt-1 text-xs text-white/70">클릭하면 결제 내역으로 이동합니다.</p>
+                              </>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  }
                   return (
                     <a
                       key={item.target}
@@ -371,18 +462,10 @@ export function LandingPage() {
                     </a>
                   );
                 })}
-{sessionUser ? (
-  <Link href="/mypage" className="transition hover:text-white">
-    <span className="inline-flex items-center gap-2">
-      <UserRoundCog className="h-4 w-4" aria-hidden />
-      마이페이지
-    </span>
-  </Link>
-) : null}
                 <AuthButton
                   sessionUser={sessionUser}
                   size="desktop"
-                  onLogin={() => requestAccess(() => setLoginModalOpen(true))}
+                  onLogin={() => setLoginModalOpen(true)}
                   onLogout={handleLogout}
                 />
                 <ThemeToggle />
@@ -391,7 +474,7 @@ export function LandingPage() {
                 <AuthButton
                   sessionUser={sessionUser}
                   size="mobile"
-                  onLogin={() => requestAccess(() => setLoginModalOpen(true))}
+                  onLogin={() => setLoginModalOpen(true)}
                   onLogout={handleLogout}
                 />
                 <ThemeToggle />
@@ -414,6 +497,10 @@ export function LandingPage() {
                     </SheetHeader>
                     <nav className="mt-10 flex flex-col gap-6 text-lg font-medium">
                       {navigationItems.map(item => {
+                        if (item.requiresAuth && !sessionUser) {
+                          return null;
+                        }
+                        const icon = item.icon;
                         if (item.type === 'modal') {
                           return (
                             <button
@@ -423,9 +510,9 @@ export function LandingPage() {
                                 setAboutModalOpen(true);
                                 setNavOpen(false);
                               }}
-                          className="flex items-center gap-3 bg-transparent text-left transition hover:text-primary focus:outline-none"
-                          >
-                              {item.icon ?? <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />}
+                              className="flex items-center gap-3 bg-transparent text-left transition hover:text-primary focus:outline-none"
+                            >
+                              {icon ?? <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />}
                               <span>{item.label}</span>
                             </button>
                           );
@@ -438,8 +525,25 @@ export function LandingPage() {
                               onClick={() => setNavOpen(false)}
                               className="flex items-center gap-3 transition hover:text-primary"
                             >
-                              {item.icon ?? <Newspaper className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />}
+                              {icon ?? <Newspaper className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />}
                               <span>{item.label}</span>
+                            </Link>
+                          );
+                        }
+                        if (item.type === 'notification') {
+                          const totalCount = paymentNoticeItems.reduce((sum, item) => sum + item.count, 0) + paymentNoticeOverflow;
+                          return (
+                            <Link
+                              key={item.label}
+                              href="/mypage/payments"
+                              onClick={() => setNavOpen(false)}
+                              className="flex items-center gap-3 transition hover:text-primary"
+                            >
+                              {icon ?? <Bell className="h-6 w-6" aria-hidden />}
+                              <span>
+                                {item.label}
+                                {totalCount > 0 ? ` (${totalCount})` : ''}
+                              </span>
                             </Link>
                           );
                         }
@@ -450,30 +554,18 @@ export function LandingPage() {
                             onClick={event => handleSectionNavigate(event, item.target)}
                             className="flex items-center gap-3 transition hover:text-primary"
                           >
-                            {item.icon}
+                            {icon}
                             <span>{item.label}</span>
                           </a>
                         );
                       })}
-{sessionUser ? (
-  <Link
-    href="/mypage"
-    onClick={() => setNavOpen(false)}
-    className="flex items-center gap-3 transition hover:text-primary"
-  >
-    <UserRoundCog className="h-6 w-6" aria-hidden />
-    <span>마이페이지</span>
-  </Link>
-                      ) : null}
                       <div className="mt-8 space-y-4 border-t border-border pt-6">
                         <button
                           type="button"
-                          onClick={() =>
-                            requestAccess(() => {
-                              setModalOpen(true);
-                              setNavOpen(false);
-                            })
-                          }
+                          onClick={() => {
+                            setModalOpen(true);
+                            setNavOpen(false);
+                          }}
                           className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
                         >
                           무료 상담 신청
@@ -510,8 +602,13 @@ export function LandingPage() {
               지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
-              <CTAButton className="sm:w-auto" onClick={() => requestAccess(() => setModalOpen(true))}>
+              <CTAButton className="sm:w-auto" onClick={() => setModalOpen(true)}>
                 무료 상담 신청
+              </CTAButton>
+              <CTAButton tone="secondary" className="sm:w-auto" asChild>
+                <Link href="/legalization-check.html" target="_blank" rel="noopener noreferrer">
+                  자가진단 하기
+                </Link>
               </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
                 <Link href="/procedure">절차 자세히 보기</Link>
@@ -698,7 +795,7 @@ export function LandingPage() {
                 <CTAButton
                   tone="secondary"
                   className="sm:w-auto hover:bg-[#ffeb00] hover:text-black focus-visible:ring-[#ffeb00]"
-                  onClick={() => requestAccess(() => setModalOpen(true))}
+                  onClick={() => setModalOpen(true)}
                 >
                   문의 남기기
                 </CTAButton>

@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta property="og:title" content="인터월드엔지니어링 건축사사무소 | 건축물 양성화 자가진단" />
+  <meta property="og:description" content="특정건축물 정리에 관한 특별조치법 기준으로 양성화 가능성을 간단히 확인하세요." />
+  <meta property="og:type" content="website" />
+  <title>건축물 양성화 자가진단 | 인터월드엔지니어링 건축사사무소</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Style Guide Tokens */
+    :root {
+      --background: hsl(0 0% 100%);
+      --foreground: hsl(0 0% 20%);
+      --card: hsl(0 0% 100%);
+      --card-foreground: hsl(0 0% 15%);
+      --popover: hsl(0 0% 100%);
+      --popover-foreground: hsl(0 0% 15%);
+      --primary: hsl(222 73% 56%);
+      --primary-foreground: hsl(0 0% 100%);
+      --secondary: hsl(220 14% 96%);
+      --secondary-foreground: hsl(215 14% 34%);
+      --muted: hsl(210 12% 86%);
+      --muted-foreground: hsl(215 12% 32%);
+      --accent: hsl(208 46% 89%);
+      --accent-foreground: hsl(224 64% 33%);
+      --destructive: hsl(0 72% 51%);
+      --destructive-foreground: hsl(0 0% 100%);
+      --border: hsl(210 12% 80%);
+      --input: hsl(210 12% 96%);
+      --ring: hsl(222 73% 56%);
+      --chart-1: hsl(222 73% 56%);
+      --chart-2: hsl(208 46% 54%);
+      --chart-3: hsl(200 46% 48%);
+      --chart-4: hsl(188 44% 42%);
+      --chart-5: hsl(180 40% 38%);
+      --sidebar: hsl(220 14% 96%);
+      --sidebar-foreground: hsl(0 0% 20%);
+      --sidebar-primary: hsl(14 73% 55%);
+      --sidebar-primary-foreground: hsl(0 0% 100%);
+      --sidebar-accent: hsl(208 46% 89%);
+      --sidebar-accent-foreground: hsl(224 64% 33%);
+      --sidebar-border: hsl(210 12% 80%);
+      --sidebar-ring: hsl(222 73% 56%);
+      --font-sans: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-serif: Georgia, serif;
+      --font-mono: Menlo, monospace;
+      --radius: 0.75rem;
+      --shadow-x: 0px;
+      --shadow-y: 2px;
+      --shadow-blur: 0px;
+      --shadow-spread: 0px;
+      --shadow-opacity: 0;
+      --shadow-color: rgba(29,161,242,0.15);
+      --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+      --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+      --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+      --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+      --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+      --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+      --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+      --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+      --tracking-normal: 0em;
+      --spacing: 0.25rem;
+
+      --radius-sm: calc(var(--radius) - 4px);
+      --radius-md: calc(var(--radius) - 2px);
+      --radius-lg: var(--radius);
+      --radius-xl: calc(var(--radius) + 4px);
+      --success: var(--chart-2);
+      --success-foreground: oklch(1 0 0);
+      --warning: var(--chart-3);
+      --warning-foreground: oklch(0.1884 0.0128 248.5103);
+    }
+
+    .dark {
+      --background: hsl(222 40% 12%);
+      --foreground: hsl(210 40% 96%);
+      --card: hsl(222 21% 21%);
+      --card-foreground: hsl(210 32% 92%);
+      --popover: hsl(220 32% 16%);
+      --popover-foreground: hsl(210 32% 92%);
+      --primary: hsl(14 73% 55%);
+      --primary-foreground: hsl(0 0% 100%);
+      --secondary: hsl(220 24% 20%);
+      --secondary-foreground: hsl(210 40% 94%);
+      --muted: hsl(220 22% 24%);
+      --muted-foreground: hsl(220 18% 72%);
+      --accent: hsl(216 38% 28%);
+      --accent-foreground: hsl(210 40% 96%);
+      --destructive: hsl(356 72% 61%);
+      --destructive-foreground: hsl(210 40% 96%);
+      --border: hsl(218 24% 28%);
+      --input: hsl(218 24% 28%);
+      --ring: hsl(14 73% 55%);
+      --chart-1: hsl(222 73% 60%);
+      --chart-2: hsl(200 60% 60%);
+      --chart-3: hsl(40 90% 55%);
+      --chart-4: hsl(140 60% 48%);
+      --chart-5: hsl(350 70% 60%);
+      --sidebar: hsl(220 24% 20%);
+      --sidebar-foreground: hsl(210 40% 96%);
+      --sidebar-primary: hsl(14 73% 55%);
+      --sidebar-primary-foreground: hsl(0 0% 100%);
+      --sidebar-accent: hsl(216 38% 28%);
+      --sidebar-accent-foreground: hsl(210 40% 96%);
+      --sidebar-border: hsl(218 24% 28%);
+      --sidebar-ring: hsl(14 73% 55%);
+      --shadow-color: rgba(29,161,242,0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--foreground);
+      background:
+        radial-gradient(circle at top left, color-mix(in oklch, var(--primary) 18%, transparent), transparent 34rem),
+        radial-gradient(circle at 85% 10%, color-mix(in oklch, var(--chart-2) 16%, transparent), transparent 30rem),
+        var(--background);
+      font-family: var(--font-sans);
+      letter-spacing: 0;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 14px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      margin-bottom: 22px;
+      border: 1px solid color-mix(in oklch, var(--border) 82%, transparent);
+      border-radius: var(--radius-xl);
+      background: color-mix(in oklch, var(--popover) 86%, transparent);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 12px 40px color-mix(in oklch, var(--foreground) 8%, transparent);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in oklch, var(--primary) 18%, var(--border));
+      background: var(--popover);
+      font-weight: 800;
+      box-shadow: 0 8px 22px color-mix(in oklch, var(--foreground) 10%, transparent);
+      flex: 0 0 auto;
+    }
+
+    .dark .brand-mark {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--primary), color-mix(in oklch, var(--primary) 72%, var(--chart-2)));
+      box-shadow: 0 12px 28px color-mix(in oklch, var(--primary) 22%, transparent);
+    }
+
+    .brand-mark img {
+      display: block;
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.18;
+      min-width: 0;
+    }
+
+    .brand-title strong {
+      font-size: 14px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-title span {
+      font-size: 11px;
+      color: color-mix(in oklch, var(--foreground) 62%, transparent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .ghost-btn,
+    .primary-btn,
+    .secondary-btn,
+    .danger-btn {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+      min-height: 42px;
+    }
+
+    .ghost-btn {
+      color: var(--foreground);
+      background: color-mix(in oklch, var(--background) 88%, transparent);
+    }
+
+    .ghost-btn:hover {
+      border-color: color-mix(in oklch, var(--primary) 44%, var(--border));
+      background: var(--accent);
+    }
+
+    .primary-btn {
+      color: var(--primary-foreground);
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--primary), color-mix(in oklch, var(--primary) 80%, var(--chart-2)));
+      box-shadow: 0 16px 40px color-mix(in oklch, var(--primary) 26%, transparent);
+    }
+
+    .primary-btn:hover,
+    .secondary-btn:hover,
+    .danger-btn:hover,
+    .option-card:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary-btn:active,
+    .secondary-btn:active,
+    .danger-btn:active,
+    .ghost-btn:active,
+    .option-card:active {
+      transform: translateY(0) scale(.99);
+    }
+
+    .secondary-btn {
+      color: var(--secondary-foreground);
+      border-color: transparent;
+      background: var(--secondary);
+    }
+
+    .danger-btn {
+      color: var(--destructive-foreground);
+      border-color: transparent;
+      background: var(--destructive);
+    }
+
+    .view {
+      display: none;
+      animation: fadeUp .38s ease both;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(320px, .92fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .hero-card,
+    .panel,
+    .mini-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      background: color-mix(in oklch, var(--card) 92%, var(--background));
+      box-shadow: 0 18px 60px color-mix(in oklch, var(--foreground) 8%, transparent);
+    }
+
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(26px, 5vw, 54px);
+      min-height: 590px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      isolation: isolate;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: -120px -80px auto auto;
+      width: 360px;
+      height: 360px;
+      border-radius: 50%;
+      background: color-mix(in oklch, var(--primary) 22%, transparent);
+      filter: blur(6px);
+      z-index: -1;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      left: -80px;
+      bottom: -110px;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: color-mix(in oklch, var(--chart-2) 18%, transparent);
+      z-index: -1;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in oklch, var(--primary) 18%, var(--border));
+      color: var(--primary);
+      background: color-mix(in oklch, var(--accent) 82%, transparent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .eyebrow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--chart-2);
+      box-shadow: 0 0 0 5px color-mix(in oklch, var(--chart-2) 14%, transparent);
+    }
+
+    h1 {
+      margin: 18px 0 16px;
+      max-width: 720px;
+      font-size: clamp(34px, 6vw, 66px);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      max-width: 680px;
+      margin: 0 0 28px;
+      color: color-mix(in oklch, var(--foreground) 70%, transparent);
+      font-size: clamp(15px, 2.1vw, 19px);
+      letter-spacing: 0;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 24px 0 0;
+    }
+
+    .hero-actions .primary-btn,
+    .hero-actions .secondary-btn {
+      min-height: 52px;
+      padding: 13px 18px;
+      font-size: 15px;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 34px;
+    }
+
+    .metric {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklch, var(--popover) 62%, transparent);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      color: color-mix(in oklch, var(--foreground) 60%, transparent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .panel-title h2,
+    .panel-title h3 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #e8f0fe;
+      color: var(--accent-foreground);
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .dark .pill {
+      background: var(--accent);
+    }
+
+    .check-list,
+    .plain-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .check-list li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      align-items: start;
+      color: color-mix(in oklch, var(--foreground) 72%, transparent);
+      font-size: 14px;
+    }
+
+    .check-list li::before {
+      content: "✓";
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      color: var(--primary-foreground);
+      background: var(--primary);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .process {
+      display: grid;
+      gap: 10px;
+    }
+
+    .process-step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklch, var(--background) 70%, transparent);
+      border: 1px solid var(--border);
+    }
+
+    .process-step b {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      color: var(--primary);
+      background: var(--accent);
+      font-size: 13px;
+    }
+
+    .process-step strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .process-step span {
+      color: color-mix(in oklch, var(--foreground) 62%, transparent);
+      font-size: 12px;
+    }
+
+    .notice {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklch, var(--chart-3) 14%, var(--background));
+      border: 1px solid color-mix(in oklch, var(--chart-3) 36%, var(--border));
+      color: color-mix(in oklch, var(--foreground) 80%, transparent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .diagnosis-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 336px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .quiz-card {
+      min-height: 620px;
+      overflow: hidden;
+    }
+
+    .quiz-header {
+      padding: 22px 24px 18px;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in oklch, var(--popover) 72%, transparent);
+    }
+
+    .quiz-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .progress-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: color-mix(in oklch, var(--foreground) 62%, transparent);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .progress-track {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--muted);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--primary), var(--chart-2));
+      transition: width .28s ease;
+    }
+
+    .question-body {
+      padding: 28px 24px 24px;
+    }
+
+    .question-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--primary);
+      background: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 16px;
+    }
+
+    .question-title {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(24px, 4.4vw, 42px);
+      line-height: 1.16;
+      letter-spacing: 0;
+      white-space: pre-line;
+    }
+
+    .question-desc {
+      margin: 14px 0 22px;
+      max-width: 740px;
+      color: color-mix(in oklch, var(--foreground) 66%, transparent);
+      font-size: 15px;
+      white-space: pre-line;
+    }
+
+    .hint-box {
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid color-mix(in oklch, var(--primary) 16%, var(--border));
+      background: #e8f0fe;
+      font-size: 13px;
+      color: color-mix(in oklch, var(--foreground) 76%, transparent);
+      white-space: pre-line;
+    }
+
+    .dark .hint-box {
+      background: color-mix(in oklch, var(--accent) 58%, transparent);
+    }
+
+    .option-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .option-grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .option-card {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-height: 104px;
+      padding: 17px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      color: var(--foreground);
+      background: color-mix(in oklch, var(--background) 74%, var(--popover));
+      text-align: left;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+      box-shadow: 0 12px 36px color-mix(in oklch, var(--foreground) 5%, transparent);
+    }
+
+    .option-card:hover {
+      border-color: color-mix(in oklch, var(--primary) 56%, var(--border));
+      box-shadow: 0 14px 46px color-mix(in oklch, var(--primary) 13%, transparent);
+    }
+
+    .option-card[data-tone="yes"] .option-icon,
+    .option-card[data-tone="ok"] .option-icon {
+      color: #ffffff;
+      background: #2563eb;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
+    }
+
+    .option-card[data-tone="no"] .option-icon,
+    .option-card[data-tone="danger"] .option-icon {
+      color: #ffffff;
+      background: #dc2626;
+      box-shadow: 0 8px 20px rgba(220, 38, 38, 0.24);
+    }
+
+    .option-card[data-tone="warn"] .option-icon {
+      color: #1f2937;
+      background: #fbbf24;
+      box-shadow: 0 8px 20px rgba(251, 191, 36, 0.26);
+    }
+
+    .option-card[data-tone="unknown"] .option-icon {
+      color: #ffffff;
+      background: #64748b;
+      box-shadow: 0 8px 20px rgba(100, 116, 139, 0.24);
+    }
+
+    .dark .option-card[data-tone="yes"] .option-icon,
+    .dark .option-card[data-tone="ok"] .option-icon {
+      color: #ffffff;
+      background: #3b82f6;
+      box-shadow: 0 8px 22px rgba(59, 130, 246, 0.34);
+    }
+
+    .dark .option-card[data-tone="no"] .option-icon,
+    .dark .option-card[data-tone="danger"] .option-icon {
+      color: #ffffff;
+      background: #ef4444;
+      box-shadow: 0 8px 22px rgba(239, 68, 68, 0.3);
+    }
+
+    .dark .option-card[data-tone="warn"] .option-icon {
+      color: #111827;
+      background: #fbbf24;
+      box-shadow: 0 8px 22px rgba(251, 191, 36, 0.3);
+    }
+
+    .dark .option-card[data-tone="unknown"] .option-icon {
+      color: #ffffff;
+      background: #64748b;
+      box-shadow: 0 8px 22px rgba(100, 116, 139, 0.34);
+    }
+
+    .option-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      color: var(--primary-foreground);
+      background: var(--primary);
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .option-content strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .option-content span {
+      display: block;
+      color: color-mix(in oklch, var(--foreground) 60%, transparent);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .quiz-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 18px 24px 24px;
+      border-top: 1px solid var(--border);
+      background: color-mix(in oklch, var(--card) 76%, transparent);
+    }
+
+    .law-ref {
+      color: color-mix(in oklch, var(--foreground) 56%, transparent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .side-card {
+      position: sticky;
+      top: 96px;
+      overflow: hidden;
+    }
+
+    .summary-card {
+      padding: 18px;
+    }
+
+    .summary-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .summary-empty {
+      color: color-mix(in oklch, var(--foreground) 55%, transparent);
+      font-size: 13px;
+    }
+
+    .answer-log {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+      max-height: 430px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .log-item {
+      padding: 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: color-mix(in oklch, var(--card) 92%, var(--background));
+    }
+
+    .log-item span {
+      display: block;
+      color: color-mix(in oklch, var(--foreground) 58%, transparent);
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .log-item strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .result-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .result-hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(24px, 4vw, 38px);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      background: color-mix(in oklch, var(--result-color, var(--primary)) 20%, transparent);
+      box-shadow: 0 18px 60px color-mix(in oklch, var(--foreground) 8%, transparent);
+    }
+
+    .result-hero::after {
+      content: "";
+      position: absolute;
+      right: -90px;
+      top: -120px;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: color-mix(in oklch, var(--popover) 72%, transparent);
+    }
+
+    .result-chip {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: var(--primary-foreground);
+      background: var(--result-color, var(--primary));
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .result-title {
+      position: relative;
+      z-index: 1;
+      margin: 16px 0 10px;
+      font-size: clamp(28px, 5vw, 52px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .result-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 740px;
+      color: color-mix(in oklch, var(--foreground) 68%, transparent);
+      font-size: 16px;
+      white-space: pre-line;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .result-box {
+      padding: 18px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      background: color-mix(in oklch, var(--popover) 72%, transparent);
+    }
+
+    .result-box h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .result-box ul {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      display: grid;
+      gap: 9px;
+      color: color-mix(in oklch, var(--foreground) 70%, transparent);
+      font-size: 13px;
+    }
+
+    .result-box li {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 8px;
+    }
+
+    .result-box li::before {
+      content: "•";
+      color: var(--primary);
+      font-weight: 900;
+    }
+
+    .contact-card {
+      position: sticky;
+      top: 96px;
+      padding: 20px;
+      border-radius: var(--radius-xl);
+      border: 1px solid color-mix(in oklch, var(--primary) 20%, var(--border));
+      background: color-mix(in oklch, var(--popover) 82%, var(--card));
+      box-shadow: 0 18px 60px color-mix(in oklch, var(--foreground) 8%, transparent);
+    }
+
+    .contact-card h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .contact-card p {
+      margin: 0 0 16px;
+      color: color-mix(in oklch, var(--foreground) 62%, transparent);
+      font-size: 13px;
+    }
+
+    .contact-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .phone-card {
+      display: grid;
+      gap: 4px;
+      padding: 14px;
+      border: 1px solid color-mix(in oklch, var(--primary) 20%, var(--border));
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklch, var(--accent) 54%, var(--background));
+    }
+
+    .phone-card span {
+      color: color-mix(in oklch, var(--foreground) 62%, transparent);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .phone-card strong {
+      color: var(--foreground);
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .phone-card small {
+      color: color-mix(in oklch, var(--foreground) 58%, transparent);
+      font-size: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 80;
+      transform: translateX(-50%) translateY(130%);
+      width: min(480px, calc(100% - 32px));
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      color: hsl(0 0% 100%);
+      background: hsl(0 0% 20%);
+      box-shadow: 0 18px 50px color-mix(in oklch, var(--foreground) 28%, transparent);
+      font-size: 13px;
+      font-weight: 800;
+      transition: transform .25s ease;
+    }
+
+    .dark .toast {
+      color: var(--secondary-foreground);
+      background: var(--secondary);
+      box-shadow: 0 18px 50px color-mix(in oklch, var(--background) 52%, transparent);
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .diagnosis-layout,
+      .result-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-card {
+        min-height: auto;
+      }
+
+      .side-card,
+      .contact-card {
+        position: static;
+      }
+
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell {
+        width: min(100% - 18px, 1180px);
+        padding-top: 10px;
+      }
+
+      .topbar {
+        top: 8px;
+        border-radius: var(--radius-lg);
+      }
+
+      .brand-title span {
+        display: none;
+      }
+
+      .top-actions .ghost-btn {
+        width: 42px;
+        padding-inline: 0;
+      }
+
+      .top-actions .ghost-btn .label-text {
+        display: none;
+      }
+
+      .metric-row,
+      .option-grid,
+      .option-grid.three {
+        grid-template-columns: 1fr;
+      }
+
+      .quiz-header,
+      .question-body,
+      .quiz-footer,
+      .panel,
+      .summary-card,
+      .contact-card {
+        padding-inline: 16px;
+      }
+
+      .quiz-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .quiz-footer .ghost-btn,
+      .quiz-footer .danger-btn {
+        width: 100%;
+      }
+
+      .hero-actions .primary-btn,
+      .hero-actions .secondary-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <img src="/docu/archlegal-fa-p-transparent.png" alt="ArchLegal" />
+        </div>
+        <div class="brand-title">
+          <strong>인터월드엔지니어링 건축사사무소</strong>
+          <span>특정건축물 정리에 관한 특별조치법 자가진단</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="ghost-btn" type="button" onclick="toggleTheme()">☾ <span class="label-text">다크</span></button>
+        <button class="primary-btn" type="button" onclick="jumpToContact()">상담 연결</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="view active" id="view-landing">
+        <div class="hero-grid">
+          <article class="hero-card">
+            <div>
+              <div class="eyebrow"><span class="eyebrow-dot"></span> 2026년 특별조치법 대비 · 1분 자가진단</div>
+              <h1>우리 건물,<br>양성화 가능성이<br>있는지 먼저 확인하세요.</h1>
+              <p class="hero-copy">
+                불법·무허가·준공미필·무단 용도변경 건축물이 법안 요건에 들어오는지 O/X와 간단한 객관식으로 확인합니다.
+                결과가 애매한 경우 바로 인터월드엔지니어링 건축사사무소 상담으로 연결됩니다.
+              </p>
+              <div class="hero-actions">
+                <button class="primary-btn" type="button" onclick="startDiagnosis()">자가진단 시작하기 →</button>
+                <button class="secondary-btn" type="button" onclick="scrollToInfo()">대상 요건 보기</button>
+              </div>
+            </div>
+            <div class="metric-row" aria-label="핵심 조건">
+              <div class="metric"><strong>2023.12.31</strong><span>이전 사실상 완공</span></div>
+              <div class="metric"><strong>주거 50%+</strong><span>주거용 특정건축물</span></div>
+              <div class="metric"><strong>18개월</strong><span>시행 후 한시 신청</span></div>
+            </div>
+          </article>
+
+          <aside class="side-stack" id="info-section">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>먼저 확인할 대상 요건</h2>
+                <span class="pill">법안 기준</span>
+              </div>
+              <ul class="check-list">
+                <li>건축허가·신고 없이 지었거나 대수선한 건축물</li>
+                <li>허가·신고는 했지만 사용승인을 받지 못한 건축물</li>
+                <li>용도변경 허가·신고 없이 주택으로 사용 중인 건축물</li>
+                <li>연면적의 50% 이상이 주거용인 건축물</li>
+                <li>다세대·단독·다가구·근린생활시설→주택 유형에 해당하는 건축물</li>
+              </ul>
+            </section>
+
+            <section class="panel">
+              <div class="panel-title">
+                <h3>진단 후 진행 흐름</h3>
+                <span class="pill">Lead Flow</span>
+              </div>
+              <div class="process">
+                <div class="process-step"><b>1</b><div><strong>자가진단</strong><span>면적·완공일·구역·소방 조건 확인</span></div></div>
+                <div class="process-step"><b>2</b><div><strong>상담 접수</strong><span>주소와 위반 내용을 남겨 전문가 검토</span></div></div>
+                <div class="process-step"><b>3</b><div><strong>현장·서류 검토</strong><span>건축물대장, 토지이용계획, 현장조사</span></div></div>
+                <div class="process-step"><b>4</b><div><strong>신고 준비</strong><span>설계도서·현장조사서 작성 및 관할청 신고</span></div></div>
+              </div>
+            </section>
+
+            <div class="notice">
+              <span>⚠️</span>
+              <span>자가진단은 영업·상담용 1차 필터입니다. 최종 가능 여부는 법 시행령, 지자체 조례, 토지이용계획확인서, 건축물 현장조사 결과에 따라 달라질 수 있습니다.</span>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-quiz">
+        <div class="diagnosis-layout">
+          <article class="panel quiz-card">
+            <div class="quiz-header">
+              <div class="quiz-topline">
+                <span class="pill" id="quiz-badge">자가진단</span>
+                <div class="progress-meta"><span id="step-label">1 / 10</span><span id="progress-percent">0%</span></div>
+              </div>
+              <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+            </div>
+            <div class="question-body" id="question-body">
+              <div class="question-badge" id="question-badge">START</div>
+              <h2 class="question-title" id="question-title"></h2>
+              <p class="question-desc" id="question-desc"></p>
+              <div class="hint-box" id="question-hint"></div>
+              <div class="option-grid" id="option-grid"></div>
+            </div>
+            <div class="quiz-footer">
+              <div class="law-ref" id="law-ref">근거 조항</div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="ghost-btn" type="button" onclick="goBack()">← 이전</button>
+                <button class="danger-btn" type="button" onclick="restart()">처음으로</button>
+              </div>
+            </div>
+          </article>
+
+          <aside class="panel side-card summary-card">
+            <h3>응답 요약</h3>
+            <div id="summary-empty" class="summary-empty">선택한 답변이 여기에 쌓입니다. 애매한 항목은 ‘모름/확인 필요’를 선택해도 상담으로 연결됩니다.</div>
+            <div class="answer-log" id="answer-log"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-result">
+        <div class="result-layout">
+          <div>
+            <article class="result-hero" id="result-hero">
+              <div class="result-chip" id="result-chip">결과</div>
+              <h2 class="result-title" id="result-title"></h2>
+              <p class="result-copy" id="result-copy"></p>
+            </article>
+
+            <div class="result-grid">
+              <section class="result-box">
+                <h3>다음 액션</h3>
+                <ul id="action-list"></ul>
+              </section>
+              <section class="result-box">
+                <h3>확인 필요 서류</h3>
+                <ul id="document-list"></ul>
+              </section>
+              <section class="result-box">
+                <h3>진단 요약</h3>
+                <ul id="result-summary-list"></ul>
+              </section>
+              <section class="result-box">
+                <h3>주의사항</h3>
+                <ul id="caution-list"></ul>
+              </section>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+              <button class="secondary-btn" type="button" onclick="copySummary()">진단 결과 복사</button>
+              <button class="ghost-btn" type="button" onclick="restart()">다시 진단하기</button>
+            </div>
+          </div>
+
+          <aside class="contact-card" id="contact-card">
+            <div class="pill" style="margin-bottom:12px;">인터월드 상담 연결</div>
+            <h2>전문가가 확인하면<br>놓치는 조건이 줄어듭니다.</h2>
+            <p>진단 결과를 복사한 뒤 아래 번호로 연락하면 확인해야 할 항목을 빠르게 이어서 상담할 수 있습니다.</p>
+            <div class="contact-actions">
+              <div class="phone-card">
+                <span>상담 휴대폰</span>
+                <strong>010-8742-1008</strong>
+                <small>평일 09:00-18:00 상담팀 연결</small>
+              </div>
+              <a class="primary-btn" href="tel:01087421008" style="display:flex; align-items:center; justify-content:center; text-decoration:none;">
+                전화 상담 연결
+              </a>
+              <button class="secondary-btn" type="button" onclick="copySummary()">
+                진단 결과 복사
+              </button>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const TYPE_LABEL = {
+      multi: "다세대주택",
+      single: "단독주택",
+      dagagu: "다가구주택",
+      near: "근린생활시설 → 주택",
+      unknown: "유형 모름 / 기타"
+    };
+
+    const TYPE_AREA_NEXT = {
+      multi: "area_multi",
+      single: "area_single",
+      dagagu: "area_dagagu",
+      near: "near_use",
+      unknown: "area_unknown"
+    };
+
+    const QUESTIONS = {
+      type: {
+        badge: "건축물 유형",
+        title: "확인하려는 건축물 유형을 선택해주세요.",
+        desc: "법안상 핵심 대상은 다세대주택, 단독주택, 다가구주택, 근린생활시설 허가 후 사실상 주택으로 사용 중인 건축물입니다.",
+        hint: "정확히 모르겠다면 ‘유형 모름/기타’를 선택하세요. 상담 단계에서 건축물대장 기준으로 다시 분류합니다.",
+        law: "제3조제1항제1호·제2호·제3호",
+        options: [
+          { label: "다세대주택", detail: "빌라·다세대, 세대별 구분등기", icon: "🏢", value: "multi", tone: "yes", next: "violation" },
+          { label: "단독주택", detail: "일반 단독주택, 다가구 제외", icon: "🏠", value: "single", tone: "yes", next: "violation" },
+          { label: "다가구주택", detail: "원룸·다가구, 건물 전체 단일 소유", icon: "🏘", value: "dagagu", tone: "yes", next: "violation" },
+          { label: "근린 → 주택", detail: "상가·근생 허가 후 실제 주거 사용", icon: "🏪", value: "near", tone: "warn", next: "violation", flag: "근린생활시설의 실제 주택 사용 여부 확인 필요" },
+          { label: "유형 모름 / 기타", detail: "건축물대장 확인 필요", icon: "?", value: "unknown", tone: "unknown", next: "violation", flag: "건축물 유형 확인 필요" }
+        ]
+      },
+      violation: {
+        badge: "위반 유형",
+        title: "이 건물은 허가 없이 지었거나, 사용승인을 받지 못했거나, 허가 없이 용도를 바꾼 건물인가요?",
+        desc: "정상 허가와 사용승인이 모두 끝난 건물은 ‘양성화’ 대상이 아니라 이미 합법 건축물입니다.",
+        hint: "예: 무허가 증축, 옥탑·베란다 무단 증축, 준공필증 없음, 근생을 주택으로 사용, 방쪼개기 등",
+        law: "제2조제1항제1호",
+        options: [
+          { label: "예, 위반 내용이 있습니다", detail: "무허가·미신고·준공미필·무단 용도변경", icon: "O", tone: "yes", next: "residential" },
+          { label: "아니오, 정상 건물입니다", detail: "허가와 사용승인이 모두 완료됨", icon: "X", tone: "no", result: "legal" },
+          { label: "잘 모르겠습니다", detail: "건축물대장·위반 고지서 확인 필요", icon: "?", tone: "unknown", next: "residential", flag: "위반 유형 서류 확인 필요" }
+        ]
+      },
+      residential: {
+        badge: "주거 비율",
+        title: "건물 전체 연면적의 50% 이상이 주거용으로 사용되고 있나요?",
+        desc: "이 법안은 ‘주거용 특정건축물’을 중심으로 적용됩니다. 실제 사용 상태가 중요합니다.",
+        hint: "주택으로 쓰는 방·세대·가구 면적이 절반 이상인지 확인하세요. 근린생활시설도 실제 주거 사용이 50% 이상인지 봅니다.",
+        law: "제2조제1항제2호",
+        options: [
+          { label: "예, 주거가 50% 이상입니다", detail: "주거용 특정건축물 가능성 있음", icon: "O", tone: "yes", next: "completed" },
+          { label: "아니오, 주거가 50% 미만입니다", detail: "원칙적으로 대상 가능성이 낮음", icon: "X", tone: "danger", result: "not_residential" },
+          { label: "모르겠습니다", detail: "현장·도면 기준으로 확인 필요", icon: "?", tone: "unknown", next: "completed", flag: "주거용 연면적 50% 이상 여부 확인 필요" }
+        ]
+      },
+      completed: {
+        badge: "완공 시점",
+        title: "2023년 12월 31일 당시 사실상 완공된 건축물인가요?",
+        desc: "법안 적용 기준일 이후에 지어진 건축물은 이번 특별조치법 대상에서 제외됩니다.",
+        hint: "골조·지붕·외벽 등 건축물이 사실상 완성되어 사용 가능했는지가 핵심입니다. 사진, 전입, 수도·전기 사용 내역 등이 보조 자료가 될 수 있습니다.",
+        law: "제3조제1항 본문",
+        options: [
+          { label: "예, 2023년 말 이전 완공", detail: "기준일 요건 충족 가능", icon: "O", tone: "yes", next: "prior_approval" },
+          { label: "아니오, 2024년 이후 완공", detail: "이번 법안 대상 아님", icon: "X", tone: "danger", result: "too_late" },
+          { label: "모르겠습니다", detail: "완공 입증자료 확인 필요", icon: "?", tone: "unknown", next: "prior_approval", flag: "2023.12.31 이전 사실상 완공 입증 필요" }
+        ]
+      },
+      prior_approval: {
+        badge: "과거 특별조치법",
+        title: "과거 특별조치법으로 이미 사용승인을 받았고, 그 이후 소유권 변동이 없나요?",
+        desc: "두 조건이 모두 맞으면 이번 법 적용 대상에서 제외됩니다.",
+        hint: "예전 ‘준공미필 기존 건축물’ 또는 ‘특정건축물’ 특별조치법으로 사용승인을 받았는지 건축물대장에서 확인하세요.",
+        law: "제3조제3항",
+        options: [
+          { label: "예, 둘 다 해당합니다", detail: "과거 승인 + 소유권 변동 없음", icon: "X", tone: "danger", result: "already_approved" },
+          { label: "아니오", detail: "처음 신청이거나 소유자가 바뀜", icon: "O", tone: "yes", next: state => TYPE_AREA_NEXT[state.type || "unknown"] },
+          { label: "모르겠습니다", detail: "건축물대장 이력 확인 필요", icon: "?", tone: "unknown", next: state => TYPE_AREA_NEXT[state.type || "unknown"], flag: "과거 특별조치법 사용승인 및 소유권 변동 이력 확인 필요" }
+        ]
+      },
+      area_multi: {
+        badge: "면적 기준",
+        title: "다세대주택의 세대당 전용면적이 85㎡ 이하인가요?",
+        desc: "불법 증축·대수선으로 사용승인을 받지 못한 부분도 포함해 판단해야 합니다.",
+        hint: "세대당 85㎡는 약 25.7평입니다. 전용면적과 위반 증축분을 함께 봐야 합니다.",
+        law: "제3조제1항제1호",
+        options: [
+          { label: "예, 85㎡ 이하", detail: "다세대 면적 요건 충족 가능", icon: "O", tone: "yes", next: "zone" },
+          { label: "아니오, 85㎡ 초과", detail: "면적 초과로 대상 아님", icon: "X", tone: "danger", result: "area_over" },
+          { label: "모르겠습니다", detail: "건축물대장·도면 확인 필요", icon: "?", tone: "unknown", next: "zone", flag: "다세대 세대당 전용면적 85㎡ 이하 여부 확인 필요" }
+        ]
+      },
+      area_single: {
+        badge: "면적 기준",
+        title: "단독주택의 전체 연면적은 어느 범위인가요?",
+        desc: "다가구주택은 별도 기준을 적용합니다. 불법 증축·대수선 부분도 포함해 계산합니다.",
+        hint: "165㎡는 약 50평, 330㎡는 약 100평입니다. 165㎡ 초과 330㎡ 이하는 지자체 조례 확인이 필요합니다.",
+        law: "제3조제1항제2호가목 및 단서",
+        options: [
+          { label: "165㎡ 이하", detail: "원칙 요건 충족 가능", icon: "O", tone: "yes", next: "zone" },
+          { label: "165㎡ 초과 330㎡ 이하", detail: "지자체 조례 확인 필요", icon: "!", tone: "warn", next: "zone", flag: "단독주택 165㎡ 초과 330㎡ 이하: 관할 지자체 조례 확인 필요" },
+          { label: "330㎡ 초과", detail: "면적 초과로 대상 아님", icon: "X", tone: "danger", result: "area_over" },
+          { label: "모르겠습니다", detail: "연면적 산정 필요", icon: "?", tone: "unknown", next: "zone", flag: "단독주택 연면적 산정 필요" }
+        ]
+      },
+      area_dagagu: {
+        badge: "면적 기준",
+        title: "다가구주택의 전체 연면적이 660㎡ 이하인가요?",
+        desc: "불법 증축·대수선 부분 중 사용승인을 받지 못한 부분도 포함해 계산합니다.",
+        hint: "660㎡는 약 200평입니다. 원룸 건물·다가구 건물은 건물 전체 연면적 기준으로 봅니다.",
+        law: "제3조제1항제2호나목",
+        options: [
+          { label: "예, 660㎡ 이하", detail: "다가구 면적 요건 충족 가능", icon: "O", tone: "yes", next: "zone" },
+          { label: "아니오, 660㎡ 초과", detail: "면적 초과로 대상 아님", icon: "X", tone: "danger", result: "area_over" },
+          { label: "모르겠습니다", detail: "건축물대장·현황도 확인 필요", icon: "?", tone: "unknown", next: "zone", flag: "다가구주택 연면적 660㎡ 이하 여부 확인 필요" }
+        ]
+      },
+      near_use: {
+        badge: "근린 → 주택",
+        title: "근린생활시설로 허가받은 부분이 2023년 12월 31일 이전부터 사실상 주택으로 사용됐나요?",
+        desc: "근린생활시설을 주택으로 사용한 경우에는 기준일 이전부터 주거 사용이 있었는지가 중요합니다.",
+        hint: "전입세대, 임대차계약, 수도·전기 사용, 내부 구조 등이 실제 주거 사용을 판단하는 자료가 될 수 있습니다.",
+        law: "제3조제1항제3호 단서",
+        options: [
+          { label: "예, 기준일 이전부터 주거 사용", detail: "계속 확인 진행", icon: "O", tone: "yes", next: "area_unknown" },
+          { label: "아니오, 2024년 이후 주거 사용", detail: "이번 법안 대상 아님", icon: "X", tone: "danger", result: "too_late_use" },
+          { label: "모르겠습니다", detail: "주거 사용 입증 필요", icon: "?", tone: "unknown", next: "area_unknown", flag: "근린생활시설의 2023.12.31 이전 주거 사용 입증 필요" }
+        ]
+      },
+      area_unknown: {
+        badge: "면적 기준",
+        title: "건물의 실제 주택 형태와 면적이 법안 기준 안에 들어올 가능성이 있나요?",
+        desc: "다세대는 세대당 85㎡ 이하, 단독은 원칙 165㎡ 이하, 다가구는 660㎡ 이하가 핵심 기준입니다.",
+        hint: "유형이 불확실한 경우 상담에서 건축물대장과 현황을 기준으로 다세대·단독·다가구 중 어느 기준을 적용할지 먼저 확인해야 합니다.",
+        law: "제3조제1항제1호·제2호·제3호",
+        options: [
+          { label: "예, 기준 안일 것 같습니다", detail: "계속 확인 진행", icon: "O", tone: "yes", next: "zone", flag: "건축물 유형별 면적 기준 최종 확인 필요" },
+          { label: "아니오, 기준 초과입니다", detail: "면적 초과 가능성 높음", icon: "X", tone: "danger", result: "area_over" },
+          { label: "모르겠습니다", detail: "도면·건축물대장 필요", icon: "?", tone: "unknown", next: "zone", flag: "건축물 유형 및 면적 기준 확인 필요" }
+        ]
+      },
+      zone: {
+        badge: "적용 제외 구역",
+        title: "건물이 다음 구역이나 부지에 있나요?",
+        desc: "도시·군계획시설 부지, 개발제한구역, 군사시설보호구역, 접도구역, 도시개발구역, 정비구역, 보전산지, 상습재해구역 등은 원칙적으로 적용 제외입니다.",
+        hint: "토지이용계획확인서에서 확인할 수 있습니다. 모르면 ‘모르겠습니다’를 선택하세요.",
+        law: "제3조제2항",
+        options: [
+          { label: "아니오, 해당 없습니다", detail: "구역 제외 리스크 낮음", icon: "O", tone: "yes", next: "land" },
+          { label: "예, 해당 구역입니다", detail: "예외 가능성 확인 필요", icon: "!", tone: "warn", next: "zone_exception", flag: "적용 제외 구역 또는 예외 적용 여부 확인 필요" },
+          { label: "모르겠습니다", detail: "토지이용계획확인서 필요", icon: "?", tone: "unknown", next: "land", flag: "토지이용계획확인서로 적용 제외 구역 여부 확인 필요" }
+        ]
+      },
+      zone_exception: {
+        badge: "구역 예외",
+        title: "해당 구역이라면 예외 적용 가능성이 있나요?",
+        desc: "그린벨트·군사보호구역은 지정 전 건축 등 예외가 있고, 도시개발구역·정비구역은 사업 지장 여부가 중요합니다. 접도구역·보전산지 등은 더 엄격합니다.",
+        hint: "정확한 구역명과 지정일, 사업 지장 여부를 알아야 합니다. 모르면 전문가 검토로 넘기는 것이 안전합니다.",
+        law: "제3조제2항 각 호 단서",
+        options: [
+          { label: "예외 가능성이 있습니다", detail: "지정 전 건축 또는 사업 지장 없음", icon: "O", tone: "yes", next: "land", flag: "적용 제외 구역 예외 사유 입증 필요" },
+          { label: "예외가 어려운 구역입니다", detail: "접도구역·보전산지·도시계획시설 등", icon: "X", tone: "danger", result: "excluded_zone" },
+          { label: "모르겠습니다", detail: "전문가 검토 필요", icon: "?", tone: "unknown", next: "land", flag: "적용 제외 구역 예외 가능성 검토 필요" }
+        ]
+      },
+      land: {
+        badge: "대지 권한",
+        title: "건물이 서 있는 땅은 본인 소유이거나 사용 승낙을 받은 땅인가요?",
+        desc: "자기 소유 대지, 사용 승낙 받은 타인 소유 대지, 처분 제한이 없는 국유지·공유지 등이어야 합니다.",
+        hint: "집합건물 공용부분을 변경한 경우에는 집합건물법상 결의 증명도 필요할 수 있습니다.",
+        law: "제6조제1항제1호",
+        options: [
+          { label: "예, 권한이 있습니다", detail: "대지 요건 충족 가능", icon: "O", tone: "yes", next: "road_safety" },
+          { label: "아니오, 허락 없는 타인 토지입니다", detail: "양성화 어려움", icon: "X", tone: "danger", result: "land_issue" },
+          { label: "모르겠습니다", detail: "등기·동의서 확인 필요", icon: "?", tone: "unknown", next: "road_safety", flag: "대지 소유권 또는 사용승낙 확인 필요" }
+        ]
+      },
+      road_safety: {
+        badge: "도로·안전·일조",
+        title: "도로, 구조안전, 위생, 방화, 일조권, 도시계획사업에 현저한 지장이 없나요?",
+        desc: "법안은 건축법상 일부 도로 기준을 완화하더라도 안전·방화·일조·도시계획상 현저한 지장은 없어야 한다고 봅니다.",
+        hint: "도로 최소 너비, 건축선, 이격, 구조안전, 방화, 민원 가능성 등은 현장조사에서 확인해야 합니다.",
+        law: "제6조제1항제2호",
+        options: [
+          { label: "예, 큰 문제 없습니다", detail: "계속 확인 진행", icon: "O", tone: "yes", next: "increase" },
+          { label: "문제가 있을 수 있습니다", detail: "전문가 검토 필요", icon: "!", tone: "warn", next: "increase", flag: "도로·구조안전·방화·일조권 등 현장 검토 필요" },
+          { label: "모르겠습니다", detail: "현장조사 필요", icon: "?", tone: "unknown", next: "increase", flag: "도로·안전·일조 등 법정 검토 필요" }
+        ]
+      },
+      increase: {
+        badge: "추가 강화 조건",
+        title: "위반 내용이 세대·가구·호수 증가 또는 근린생활시설을 주택으로 바꾼 경우인가요?",
+        desc: "방쪼개기, 세대수 증가, 근생→주택은 소방·피난·주차 조건을 더 엄격하게 확인해야 합니다.",
+        hint: "단순 베란다·옥탑 증축과 달리, 거주 세대 수가 늘어난 경우에는 소방시설과 주차 문제가 핵심 리스크가 됩니다.",
+        law: "제6조제1항제3호·제7조제1항 단서",
+        options: [
+          { label: "예, 해당합니다", detail: "소방·주차 조건 확인", icon: "O", tone: "warn", next: "fire", flag: "세대·가구·호수 증가 또는 근린→주택에 따른 강화 조건 확인 필요" },
+          { label: "아니오", detail: "일반 조건으로 계속 진행", icon: "X", tone: "yes", next: "fines" },
+          { label: "모르겠습니다", detail: "위반 내용 확인 필요", icon: "?", tone: "unknown", next: "fire", flag: "세대·가구·호수 증가 여부 확인 필요" }
+        ]
+      },
+      fire: {
+        badge: "소방·피난",
+        title: "소방·피난 시설을 갖추었거나 보완할 수 있나요?",
+        desc: "세대·가구·호수 증가 또는 근린→주택은 건축법상 피난·방화 기준과 소방시설 기준을 준수해야 합니다.",
+        hint: "비상구, 피난계단, 방화문, 경보·소화설비, 스프링클러 등은 건물 현황별로 달라집니다.",
+        law: "제6조제1항제3호",
+        options: [
+          { label: "예, 갖추었거나 보완 가능", detail: "계속 확인 진행", icon: "O", tone: "yes", next: "parking", flag: "소방·피난 시설 적합성 최종 확인 필요" },
+          { label: "아니오, 보완이 어렵습니다", detail: "승인 리스크 큼", icon: "!", tone: "warn", next: "parking", flag: "소방·피난 시설 보완 가능성 선검토 필요" },
+          { label: "모르겠습니다", detail: "소방·건축사 검토 필요", icon: "?", tone: "unknown", next: "parking", flag: "소방·피난 시설 현장 검토 필요" }
+        ]
+      },
+      parking: {
+        badge: "주차장",
+        title: "세대수 증가 또는 근린→주택으로 인해 필요한 주차장 설치·비용 납부를 검토했나요?",
+        desc: "일반적인 사용승인 특례와 달리, 세대·가구·호수 증가 또는 근린→주택은 주차장 설치나 비용 납부가 필요할 수 있습니다.",
+        hint: "전세사기피해자가 매수한 피해주택 등은 예외가 있고, 지자체 조례로 완화·면제 가능성이 있습니다.",
+        law: "제7조제1항·제2항·제3항",
+        options: [
+          { label: "예, 검토했습니다", detail: "계속 진행", icon: "O", tone: "yes", next: "fines", flag: "주차장 설치 또는 비용 납부 최종 확인 필요" },
+          { label: "아니오", detail: "비용·조례 검토 필요", icon: "!", tone: "warn", next: "fines", flag: "주차장 설치·비용 납부·조례 완화 여부 확인 필요" },
+          { label: "전세사기 피해주택입니다", detail: "예외 가능성 있음", icon: "★", tone: "yes", next: "fines", flag: "전세사기피해주택 주차장 특례 확인 필요" },
+          { label: "모르겠습니다", detail: "관할 지자체 기준 확인 필요", icon: "?", tone: "unknown", next: "fines", flag: "주차장 기준 및 지자체 조례 확인 필요" }
+        ]
+      },
+      fines: {
+        badge: "체납·과태료",
+        title: "이행강제금 또는 과태료 체납이 없거나, 1년 이내 납부할 수 있나요?",
+        desc: "사용승인 조건에는 과태료와 이행강제금 체납이 없어야 한다는 요건이 있습니다. 다만 1년 이내 납부 조건으로 승인 가능성이 있습니다.",
+        hint: "이행강제금 부과 이력이 없어도 법안상 과태료가 산정될 수 있습니다. ‘5회분’ 산정과 기납부 차감 여부는 관할청 확인이 필요합니다.",
+        law: "제6조제1항제4호·제9조",
+        options: [
+          { label: "체납 없음", detail: "승인 조건 충족 가능", icon: "O", tone: "yes", result: "pass" },
+          { label: "있지만 1년 이내 납부 가능", detail: "조건부 승인 가능성", icon: "!", tone: "warn", result: "review", flag: "이행강제금·과태료 1년 이내 납부 조건 확인 필요" },
+          { label: "체납 있고 납부 어렵습니다", detail: "승인 조건 충족 어려움", icon: "X", tone: "danger", result: "fine_issue" },
+          { label: "모르겠습니다", detail: "관할청 납부 이력 확인 필요", icon: "?", tone: "unknown", result: "review", flag: "이행강제금·과태료 체납 및 산정금액 확인 필요" }
+        ]
+      }
+    };
+
+    const RESULT_TEMPLATES = {
+      pass: {
+        status: "high",
+        color: "var(--success)",
+        chip: "가능성 높음",
+        title: "양성화 신청 가능성이 높습니다.",
+        copy: "입력한 답변 기준으로는 핵심 결격 사유가 발견되지 않았습니다. 다만 실제 신청 전에는 건축사 현장조사, 설계도서, 토지이용계획, 관할청 심의 기준을 확인해야 합니다.",
+        actions: ["건축물대장·토지이용계획확인서 준비", "건축사 현장조사 및 위반 면적 산정", "설계도서·현장조사서 작성", "관할 시·군·구청 신고 및 건축위원회 심의 준비"],
+        cautions: ["자가진단 결과는 법적 효력이 없습니다.", "법 공포일·시행령·관할 지자체 조례에 따라 세부 요건이 달라질 수 있습니다."]
+      },
+      review: {
+        status: "review",
+        color: "var(--warning)",
+        chip: "전문가 확인 필요",
+        title: "신청 가능성은 있으나, 확인 항목이 있습니다.",
+        copy: "일부 답변이 ‘모름’ 또는 ‘조례·소방·주차·구역 검토 필요’에 해당합니다. 이런 케이스는 바로 탈락시키기보다 서류와 현장 상태를 확인해야 합니다.",
+        actions: ["확인 필요 항목을 기준으로 상담 접수", "토지이용계획확인서·건축물대장 확인", "현장 사진과 위반 고지서 준비", "조례·소방·주차 기준 검토"],
+        cautions: ["확인 항목이 해결되면 신청 가능성이 높아질 수 있습니다.", "적용 제외 구역과 소방·주차는 상담 전환 가치가 큰 항목입니다."]
+      },
+      legal: {
+        status: "info",
+        color: "var(--primary)",
+        chip: "양성화 대상 아님",
+        title: "이미 정상 사용승인된 건물일 수 있습니다.",
+        copy: "허가와 사용승인이 모두 완료된 건물은 ‘불법건축물 양성화’ 대상이 아닙니다. 건축물대장 표시와 실제 현황이 일치하는지 확인해보세요.",
+        actions: ["건축물대장과 실제 현황 비교", "추가 증축·용도변경이 있었는지 확인"],
+        cautions: ["건축물대장에는 정상이나 실제 위반이 있다면 다시 진단해야 합니다."]
+      },
+      not_residential: {
+        status: "fail",
+        color: "var(--destructive)",
+        chip: "대상 가능성 낮음",
+        title: "주거용 비율 요건을 충족하기 어렵습니다.",
+        copy: "입력 기준으로는 연면적의 50% 이상이 주거용인 ‘주거용 특정건축물’ 요건을 충족하기 어렵습니다.",
+        actions: ["실제 주거 사용 면적 재산정", "건축물대장과 현황 확인", "다른 인허가 정리 방법 상담"],
+        cautions: ["실제 사용 면적이 다르면 결과가 달라질 수 있습니다."]
+      },
+      too_late: {
+        status: "fail",
+        color: "var(--destructive)",
+        chip: "대상 아님",
+        title: "2024년 이후 완공 건물은 대상이 아닙니다.",
+        copy: "법안은 2023년 12월 31일 당시 사실상 완공된 주거용 특정건축물을 대상으로 합니다.",
+        actions: ["정식 인허가·사용승인 절차 검토", "위반 내용별 시정 가능성 상담"],
+        cautions: ["완공 시점을 입증할 자료가 있다면 재검토할 수 있습니다."]
+      },
+      already_approved: {
+        status: "fail",
+        color: "var(--destructive)",
+        chip: "적용 제외",
+        title: "과거 특별조치법 적용 이력으로 제외될 수 있습니다.",
+        copy: "과거 특별조치법으로 사용승인을 받았고 이후 소유권 변동이 없다면 이번 법 적용 대상에서 제외됩니다.",
+        actions: ["건축물대장 사용승인 이력 확인", "소유권 변동 이력 확인", "소유권 변동이 있었다면 재상담"],
+        cautions: ["두 조건이 모두 충족되는지 정확히 확인해야 합니다."]
+      },
+      area_over: {
+        status: "fail",
+        color: "var(--destructive)",
+        chip: "면적 초과",
+        title: "법안상 면적 기준을 초과합니다.",
+        copy: "선택한 유형의 면적 기준을 넘는 경우 이번 특별조치법으로 양성화하기 어렵습니다.",
+        actions: ["실제 위반 면적 재산정", "전용면적·연면적 기준 구분", "다른 정리 절차 상담"],
+        cautions: ["불법 증축·대수선 부분도 포함해 산정해야 합니다."]
+      },
+      too_late_use: {
+        status: "fail",
+        color: "var(--destructive)",
+        chip: "주거 사용 시점 미충족",
+        title: "근린생활시설의 주거 사용 시점 요건을 충족하기 어렵습니다.",
+        copy: "근린생활시설 허가 후 사실상 주택으로 사용한 건축물은 2023년 12월 31일 이전부터 주택으로 사용된 경우에 한정됩니다.",
+        actions: ["주거 사용 개시일 입증자료 확인", "전입·임대차·전기수도 사용 내역 확인"],
+        cautions: ["실제 주거 사용 입증 자료가 있으면 상담에서 재검토할 수 있습니다."]
+      },
+      excluded_zone: {
+        status: "fail",
+        color: "var(--destructive)",
+        chip: "적용 제외 구역",
+        title: "적용 제외 구역으로 신청이 어려울 수 있습니다.",
+        copy: "도시·군계획시설 부지, 접도구역, 보전산지 등은 예외가 매우 제한적입니다. 구역 종류에 따라 결과가 달라집니다.",
+        actions: ["토지이용계획확인서 발급", "구역 지정일과 예외 사유 확인", "관할청 사전 상담"],
+        cautions: ["그린벨트·군사보호구역·정비구역은 예외 가능성도 있어 세부 검토가 필요합니다."]
+      },
+      land_issue: {
+        status: "fail",
+        color: "var(--destructive)",
+        chip: "대지 권한 문제",
+        title: "대지 사용 권한이 없어 양성화가 어렵습니다.",
+        copy: "남의 땅에 허락 없이 지은 건축물은 사용승인 요건을 충족하기 어렵습니다.",
+        actions: ["토지 소유자 사용승낙 가능성 확인", "등기부등본 및 대지권 확인", "국유지·공유지라면 처분 제한 확인"],
+        cautions: ["사용승낙을 받을 수 있으면 결과가 달라질 수 있습니다."]
+      },
+      fine_issue: {
+        status: "fail",
+        color: "var(--destructive)",
+        chip: "체납 문제",
+        title: "체납 해결 없이는 사용승인이 어렵습니다.",
+        copy: "이행강제금 또는 과태료 체납이 있고 1년 이내 납부가 어렵다면 사용승인 조건을 충족하기 어렵습니다.",
+        actions: ["체납 금액 확인", "분납·납부 가능성 상담", "관할청 납부 조건 확인"],
+        cautions: ["1년 이내 납부 조건으로 승인 가능성이 있는지 확인하세요."]
+      }
+    };
+
+    const DEFAULT_DOCS = ["건축물대장", "토지이용계획확인서", "등기부등본 또는 사용승낙서", "위반건축물 고지서 또는 이행강제금 부과 내역", "현장 사진 및 기존 도면"];
+
+    const state = {
+      current: "type",
+      type: null,
+      history: [],
+      flags: [],
+      finalResult: null
+    };
+
+    function showView(id) {
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function startDiagnosis() {
+      state.current = "type";
+      state.type = null;
+      state.history = [];
+      state.flags = [];
+      state.finalResult = null;
+      renderQuestion();
+      showView("view-quiz");
+    }
+
+    function restart() {
+      state.current = "type";
+      state.type = null;
+      state.history = [];
+      state.flags = [];
+      state.finalResult = null;
+      showView("view-landing");
+      renderLog();
+    }
+
+    function scrollToInfo() {
+      document.getElementById("info-section").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function jumpToContact() {
+      if (document.getElementById("view-result").classList.contains("active")) {
+        document.getElementById("contact-card").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      showToast("자가진단 결과 화면에서 상담 폼이 함께 표시됩니다. 먼저 진단을 진행해주세요.");
+      startDiagnosis();
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle("dark");
+    }
+
+    function getProgress() {
+      const total = 11;
+      const done = Math.min(state.history.length, total);
+      return Math.round((done / total) * 100);
+    }
+
+    function renderQuestion() {
+      const q = QUESTIONS[state.current];
+      if (!q) return;
+
+      document.getElementById("quiz-badge").textContent = q.badge;
+      document.getElementById("question-badge").textContent = q.badge;
+      document.getElementById("question-title").textContent = q.title;
+      document.getElementById("question-desc").textContent = q.desc;
+      document.getElementById("question-hint").textContent = q.hint;
+      document.getElementById("law-ref").textContent = "근거: " + q.law;
+
+      const pct = getProgress();
+      document.getElementById("progress-fill").style.width = Math.max(6, pct) + "%";
+      document.getElementById("progress-percent").textContent = pct + "%";
+      document.getElementById("step-label").textContent = `${Math.min(state.history.length + 1, 11)} / 11`;
+
+      const grid = document.getElementById("option-grid");
+      grid.innerHTML = "";
+      grid.className = "option-grid" + (q.options.length === 3 ? " three" : "");
+      q.options.forEach((option, index) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "option-card";
+        btn.dataset.tone = option.tone || "yes";
+        btn.innerHTML = `
+          <span class="option-icon">${option.icon || index + 1}</span>
+          <span class="option-content">
+            <strong>${option.label}</strong>
+            <span>${option.detail || ""}</span>
+          </span>
+        `;
+        btn.onclick = () => answer(option);
+        grid.appendChild(btn);
+      });
+
+      renderLog();
+    }
+
+    function answer(option) {
+      const q = QUESTIONS[state.current];
+      if (state.current === "type") state.type = option.value;
+      if (option.flag && !state.flags.includes(option.flag)) state.flags.push(option.flag);
+
+      state.history.push({
+        id: state.current,
+        question: q.title,
+        label: option.label,
+        law: q.law,
+        flag: option.flag || null,
+        typeLabel: state.current === "type" ? TYPE_LABEL[option.value] : null
+      });
+
+      if (option.result) {
+        renderResult(option.result);
+        showView("view-result");
+        return;
+      }
+
+      let next = typeof option.next === "function" ? option.next(state) : option.next;
+      state.current = next;
+      renderQuestion();
+    }
+
+    function goBack() {
+      if (!state.history.length) {
+        showView("view-landing");
+        return;
+      }
+
+      const last = state.history.pop();
+      if (last.flag) {
+        const index = state.flags.lastIndexOf(last.flag);
+        if (index >= 0) state.flags.splice(index, 1);
+      }
+
+      if (last.id === "type") state.type = null;
+      state.current = last.id;
+      renderQuestion();
+    }
+
+    function renderLog() {
+      const log = document.getElementById("answer-log");
+      const empty = document.getElementById("summary-empty");
+      if (!log || !empty) return;
+      log.innerHTML = "";
+      empty.classList.toggle("hidden", state.history.length > 0);
+      state.history.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "log-item";
+        div.innerHTML = `<span>${String(index + 1).padStart(2, "0")} · ${item.law}</span><strong>${item.typeLabel || item.label}</strong>`;
+        log.appendChild(div);
+      });
+    }
+
+    function pickResultTemplate(resultId) {
+      if (resultId === "pass" && state.flags.length > 0) return RESULT_TEMPLATES.review;
+      return RESULT_TEMPLATES[resultId] || RESULT_TEMPLATES.review;
+    }
+
+    function renderResult(resultId) {
+      const template = pickResultTemplate(resultId);
+      state.finalResult = template;
+
+      const hero = document.getElementById("result-hero");
+      hero.style.setProperty("--result-color", template.color);
+      document.getElementById("result-chip").textContent = template.chip;
+      document.getElementById("result-title").textContent = template.title;
+      document.getElementById("result-copy").textContent = template.copy;
+
+      fillList("action-list", template.actions);
+      fillList("document-list", DEFAULT_DOCS);
+      fillList("caution-list", template.cautions);
+
+      const summary = [];
+      const type = state.history.find(h => h.id === "type");
+      if (type) summary.push("건축물 유형: " + (type.typeLabel || type.label));
+      summary.push("응답 수: " + state.history.length + "개");
+      if (state.flags.length) summary.push("확인 필요: " + state.flags.length + "개");
+      else summary.push("확인 필요 플래그 없음");
+      state.flags.slice(0, 5).forEach(flag => summary.push(flag));
+      fillList("result-summary-list", summary);
+
+      const memo = document.querySelector("textarea[name='memo']");
+      if (memo) memo.value = makeSummaryText();
+    }
+
+    function fillList(id, items) {
+      const el = document.getElementById(id);
+      el.innerHTML = "";
+      items.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        el.appendChild(li);
+      });
+    }
+
+    function makeSummaryText() {
+      const type = state.history.find(h => h.id === "type");
+      const lines = [];
+      lines.push("[건축물 양성화 자가진단 결과]");
+      lines.push("결과: " + (state.finalResult ? state.finalResult.title : "미완료"));
+      if (type) lines.push("건축물 유형: " + (type.typeLabel || type.label));
+      lines.push("");
+      lines.push("[응답 내역]");
+      state.history.forEach((item, index) => {
+        lines.push(`${index + 1}. ${item.question} → ${item.typeLabel || item.label}`);
+      });
+      if (state.flags.length) {
+        lines.push("");
+        lines.push("[확인 필요 항목]");
+        state.flags.forEach((flag, index) => lines.push(`${index + 1}. ${flag}`));
+      }
+      return lines.join("\n");
+    }
+
+    function copySummary() {
+      const text = makeSummaryText();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => showToast("진단 결과가 복사되었습니다."));
+      } else {
+        showToast("브라우저에서 복사를 지원하지 않습니다. 메모 영역의 내용을 직접 복사해주세요.");
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+  </script>
+</body>
+</html>

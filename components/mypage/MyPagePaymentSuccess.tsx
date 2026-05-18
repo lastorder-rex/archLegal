@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 
 type PaymentSuccessProps = {
@@ -13,6 +14,7 @@ type PaymentSuccessProps = {
 type ConfirmStatus = 'idle' | 'pending' | 'success' | 'error';
 
 export function MyPagePaymentSuccess({ orderId, paymentKey, amount }: PaymentSuccessProps) {
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<ConfirmStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -70,13 +72,17 @@ export function MyPagePaymentSuccess({ orderId, paymentKey, amount }: PaymentSuc
       }
     }
 
-    
     confirmPayment();
 
     return () => {
       controller.abort();
     };
   }, [orderId, paymentKey, parsedAmount]);
+
+  useEffect(() => {
+    if (status !== 'success') return;
+    queryClient.invalidateQueries({ queryKey: ['payment-stages-all'] }).catch(() => undefined);
+  }, [queryClient, status]);
 
   return (
     <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
