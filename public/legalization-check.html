@@ -117,6 +117,10 @@
 
     * {
       box-sizing: border-box;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
     }
 
     html {
@@ -1835,6 +1839,31 @@
       }
     }
 
+    function installCopyProtection() {
+      const blockEvent = event => {
+        event.preventDefault();
+        return false;
+      };
+
+      const handleKeyDown = event => {
+        const key = event.key.toLowerCase();
+        if ((event.ctrlKey || event.metaKey) && ["a", "c", "x", "v"].includes(key)) {
+          event.preventDefault();
+          return false;
+        }
+
+        if (event.key === "F12" || ((event.ctrlKey || event.metaKey) && event.shiftKey && key === "i")) {
+          event.preventDefault();
+          return false;
+        }
+      };
+
+      ["contextmenu", "copy", "cut", "paste", "selectstart", "dragstart"].forEach(type => {
+        document.addEventListener(type, blockEvent);
+      });
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
     function showToast(message) {
       const toast = document.getElementById("toast");
       toast.textContent = message;
@@ -1842,6 +1871,8 @@
       clearTimeout(showToast.timer);
       showToast.timer = setTimeout(() => toast.classList.remove("show"), 3000);
     }
+
+    installCopyProtection();
   </script>
 </body>
 </html>
