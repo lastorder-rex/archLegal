@@ -4,7 +4,7 @@ import { HouseHeart } from 'lucide-react';
 const PDF_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/interword_process.pdf';
 
 export const metadata = {
-  title: '양성화 절차 안내 | 인건(仁建)',
+  title: '양성화 절차 안내 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
   description: '위반 건축물 양성화의 전체 절차와 단계별 가이드를 확인하실 수 있습니다.'
 };
 

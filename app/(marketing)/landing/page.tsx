@@ -4,8 +4,8 @@ import type { Metadata } from 'next';
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: '위반 건축물 양성화 솔루션 | 인건(仁建) - 건축물 합법화 전문',
-  description: '전국 147,726동의 위반 건축물 합법화를 위한 전문 솔루션. 이행강제금 감경, 건축물대장 정리, 공공기관 협의 대행까지 원스톱 서비스. 2026년 특별조치법 적용 전 골든타임을 놓치지 마세요.',
+  title: '인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
+  description: '양성화닷컴으로도 연결되는 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
   keywords: [
     '위반 건축물',
     '건축물 양성화',
@@ -23,16 +23,16 @@ export const metadata: Metadata = {
     '건축 컨설팅'
   ],
   openGraph: {
-    title: '위반,불법 건축물 양성화 솔루션 | 인건(仁建)',
-    description: '전국 147,726동의 위반 건축물 합법화. 사전 진단부터 사후 모니터링까지 전 과정 솔루션 제공.',
+    title: '인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
+    description: '양성화닷컴으로도 연결되는 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
     type: 'website',
     locale: 'ko_KR',
-    siteName: '인건',
+    siteName: '인건 양성화.com',
   },
   twitter: {
     card: 'summary_large_image',
-    title: '위반, 불법 건축물 양성화 솔루션 | 인건(仁建)',
-    description: '이행강제금 감경, 건축물 합법화 원스톱 서비스. 2026년 특별조치법 적용 전 골든타임.',
+    title: '인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
+    description: '양성화닷컴으로도 연결되는 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
   },
   alternates: {
     canonical: 'https://www.archlegal.co.kr/landing',

@@ -4,7 +4,7 @@ import { HouseHeart } from 'lucide-react';
 const PDF_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/company-interview.pdf';
 
 export const metadata = {
-  title: '언론보도 | Interworld',
+  title: '언론보도 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
   description: 'Interworld의 언론보도 자료를 확인하실 수 있습니다.'
 };
 

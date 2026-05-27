@@ -24,6 +24,7 @@ export function SiteFooter() {
              
               <div className="space-y-1 leading-relaxed">
                 <p> &copy; {currentYear} ArchLegal. All rights reserved.</p>
+                <p>양성화.com은 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스로 연결됩니다.</p>
                 <p>사업자등록번호: 120-81-59920 | 
                 대표: 김형준 |
                 호스팅서비스: (주) 인터월드엔지니어링건축사사무소 </p>
