@@ -4,8 +4,8 @@ import { HouseHeart } from 'lucide-react';
 const PDF_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/company-interview.pdf';
 
 export const metadata = {
-  title: '언론보도 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
-  description: 'Interworld의 언론보도 자료를 확인하실 수 있습니다.'
+  title: '언론보도 | 양성화.com - 인건(仁建)',
+  description: '양성화.com과 인건(仁建)의 언론보도 자료를 확인하실 수 있습니다.'
 };
 
 export default function PressPage() {
@@ -17,7 +17,7 @@ export default function PressPage() {
             href="/"
             className="text-sm font-semibold uppercase tracking-[0.25em] text-muted-foreground transition hover:text-primary"
           >
-            Interworld
+            양성화.com
           </Link>
           <nav className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
             <Link

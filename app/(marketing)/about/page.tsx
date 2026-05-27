@@ -3,7 +3,7 @@ import { AboutContent } from '@/components/landing/AboutContent';
 import { fullFaqs } from '@/lib/constants/landingPageData';
 
 export const metadata: Metadata = {
-  title: '우리의 역할 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
+  title: '우리의 역할 | 양성화.com - 인건(仁建)',
   description:
     'ArchLegal은 위반 건축물 양성화를 통해 법적 리스크와 재산 손실을 줄이는 전문 컨설팅을 제공합니다. 시장 현황과 솔루션을 확인하세요.'
 };

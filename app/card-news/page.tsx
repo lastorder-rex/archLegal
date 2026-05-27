@@ -7,11 +7,11 @@ import { SiteFooter } from '@/components/layout/SiteFooter';
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: '양성화 카드뉴스 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
-  description: '위반건축물 양성화 절차와 특정건축물 정리 특별조치법의 핵심 확인사항을 카드뉴스로 확인하세요.',
+  title: '양성화 카드뉴스 | 양성화.com - 인건(仁建)',
+  description: '양성화.com에서 위반건축물 양성화 절차와 특정건축물 정리 특별조치법의 핵심 확인사항을 카드뉴스로 확인하세요.',
   openGraph: {
-    title: '양성화 카드뉴스 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
-    description: '위반건축물 양성화 절차와 핵심 확인사항을 한눈에 보는 카드뉴스입니다.',
+    title: '양성화 카드뉴스 | 양성화.com - 인건(仁建)',
+    description: '양성화.com에서 위반건축물 양성화 절차와 핵심 확인사항을 한눈에 확인하세요.',
     type: 'article',
     images: ['/card1.png']
   },
@@ -29,7 +29,7 @@ export default function CardNewsPage() {
             href="/"
             className="text-sm font-semibold uppercase tracking-[0.25em] text-muted-foreground transition hover:text-primary"
           >
-            Interworld
+            양성화.com
           </Link>
           <Link
             href="/"

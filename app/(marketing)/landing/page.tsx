@@ -4,8 +4,8 @@ import type { Metadata } from 'next';
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: '인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
-  description: '양성화닷컴으로도 연결되는 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
+  title: '양성화.com | 인건(仁建) 위반건축물 양성화 전문 플랫폼',
+  description: '양성화.com은 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
   keywords: [
     '위반 건축물',
     '건축물 양성화',
@@ -23,16 +23,16 @@ export const metadata: Metadata = {
     '건축 컨설팅'
   ],
   openGraph: {
-    title: '인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
-    description: '양성화닷컴으로도 연결되는 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
+    title: '양성화.com | 인건(仁建) 위반건축물 양성화 전문 플랫폼',
+    description: '양성화.com은 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
     type: 'website',
     locale: 'ko_KR',
-    siteName: '인건 양성화.com',
+    siteName: '양성화.com',
   },
   twitter: {
     card: 'summary_large_image',
-    title: '인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
-    description: '양성화닷컴으로도 연결되는 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
+    title: '양성화.com | 인건(仁建) 위반건축물 양성화 전문 플랫폼',
+    description: '양성화.com은 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다. 특정건축물 정리, 추인허가, 이행강제금 상담을 제공합니다.',
   },
   alternates: {
     canonical: 'https://www.archlegal.co.kr/landing',

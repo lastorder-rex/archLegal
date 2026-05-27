@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 
 export const metadata: Metadata = {
-  title: '개인정보 처리방침 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
+  title: '개인정보 처리방침 | 양성화.com - 인건(仁建)',
   description: 'ArchLegal(archlegal.co.kr)의 개인정보 처리방침 안내문입니다.'
 };
 

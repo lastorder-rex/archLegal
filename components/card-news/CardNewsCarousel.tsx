@@ -37,8 +37,8 @@ export function CardNewsCarousel() {
                   <Image src="/docu/archlegal-fa-p-transparent.png" alt="" width={30} height={30} />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-950">인터월드엔지니어링 건축사사무소</p>
-                  <p className="text-xs text-slate-500">양성화.com</p>
+                  <p className="truncate text-sm font-semibold text-slate-950">양성화.com</p>
+                  <p className="text-xs text-slate-500">인건(仁建) 양성화 전문 플랫폼</p>
                 </div>
               </div>
               <span className="text-lg font-semibold text-slate-400" aria-hidden="true">

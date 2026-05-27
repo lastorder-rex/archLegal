@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 
 export const metadata: Metadata = {
-  title: '환불 · 취소 정책 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
+  title: '환불 · 취소 정책 | 양성화.com - 인건(仁建)',
   description: 'ArchLegal(archlegal.co.kr)의 환불 및 취소 정책 안내문입니다.'
 };
 

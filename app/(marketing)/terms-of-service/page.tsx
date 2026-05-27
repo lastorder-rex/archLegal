@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 
 export const metadata: Metadata = {
-  title: '이용약관 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
+  title: '이용약관 | 양성화.com - 인건(仁建)',
   description: 'ArchLegal 서비스 이용약관',
 };
 

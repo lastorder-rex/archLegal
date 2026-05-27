@@ -4,7 +4,7 @@ import { HouseHeart } from 'lucide-react';
 const PDF_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/interword_process.pdf';
 
 export const metadata = {
-  title: '양성화 절차 안내 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com',
+  title: '양성화 절차 안내 | 양성화.com - 인건(仁建)',
   description: '위반 건축물 양성화의 전체 절차와 단계별 가이드를 확인하실 수 있습니다.'
 };
 
@@ -17,7 +17,7 @@ export default function ProcedurePage() {
             href="/"
             className="text-sm font-semibold uppercase tracking-[0.25em] text-muted-foreground transition hover:text-primary"
           >
-            Interworld
+            양성화.com
           </Link>
           <nav className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
             <Link
