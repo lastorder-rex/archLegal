@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="위반건축물 양성화 절차와 핵심 확인사항을 카드뉴스로 간단히 확인하세요." />
+  <meta property="og:title" content="양성화 카드뉴스 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com" />
+  <meta property="og:description" content="위반건축물 양성화 절차와 핵심 확인사항을 한눈에 보는 카드뉴스입니다." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/card1.png" />
+  <title>양성화 카드뉴스 | 인건(仁建) - 양성화 전문 플랫폼 | 양성화.com</title>
+  <link rel="icon" href="/docu/archlegal-fa.ico" sizes="any" />
+  <link rel="shortcut icon" href="/docu/archlegal-fa.ico" />
+  <link rel="apple-touch-icon" href="/docu/archlegal-fa-p-transparent.png" />
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, .16), transparent 30%),
+        linear-gradient(135deg, #0b1220, #111827 58%, #020617);
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      color: #111827;
+    }
+
+    .phone-wrap {
+      width: min(100vw, 430px);
+      padding: 18px 14px 28px;
+    }
+
+    .instagram-frame {
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: 28px;
+      background: #fff;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .45);
+    }
+
+    .topbar {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 14px;
+      border-bottom: 1px solid #eef2f7;
+      background: #fff;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .brand-mark img {
+      display: block;
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      min-width: 0;
+      line-height: 1.18;
+    }
+
+    .brand-title strong,
+    .brand-title span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .brand-title strong {
+      color: #111827;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-title span {
+      margin-top: 3px;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .top-actions {
+      flex: 0 0 auto;
+      color: #111827;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .carousel {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+
+    .viewport {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      touch-action: pan-x;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    .track {
+      display: flex;
+      width: 100%;
+    }
+
+    .slide {
+      position: relative;
+      flex: 0 0 100%;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+
+    .slide img {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+    }
+
+    .diagnosis-link {
+      position: absolute;
+      left: 7%;
+      top: 67%;
+      width: 52%;
+      height: 8%;
+      border-radius: 999px;
+    }
+
+    .diagnosis-link:focus-visible {
+      outline: 3px solid #2563eb;
+      outline-offset: 3px;
+    }
+
+    .nav {
+      position: absolute;
+      top: 50%;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, .46);
+      color: #fff;
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 1;
+      transform: translateY(-50%);
+      backdrop-filter: blur(8px);
+      z-index: 2;
+    }
+
+    .nav.prev {
+      left: 10px;
+    }
+
+    .nav.next {
+      right: 10px;
+    }
+
+    .nav:active {
+      transform: translateY(-50%) scale(.94);
+    }
+
+    .nav[hidden] {
+      display: none;
+    }
+
+    .bottom {
+      padding: 12px 14px 16px;
+      background: #fff;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: #cbd5e1;
+      cursor: pointer;
+      transition: width .2s ease, background .2s ease;
+    }
+
+    .dot.active {
+      width: 18px;
+      background: #0f172a;
+    }
+
+    @media (max-width: 420px) {
+      .phone-wrap {
+        padding: 0;
+      }
+
+      .instagram-frame {
+        min-height: 100vh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .nav {
+        width: 34px;
+        height: 34px;
+        font-size: 22px;
+      }
+
+      .topbar {
+        height: 60px;
+        padding: 0 12px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+      }
+
+      .brand-mark img {
+        width: 27px;
+        height: 27px;
+      }
+
+      .brand-title strong {
+        font-size: 12px;
+      }
+
+      .brand-title span {
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone-wrap">
+    <article class="instagram-frame" aria-label="양성화 카드뉴스">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">
+            <img src="/docu/archlegal-fa-p-transparent.png" alt="ArchLegal" />
+          </div>
+          <div class="brand-title">
+            <strong>인터월드엔지니어링 건축사사무소</strong>
+            <span>양성화.com</span>
+          </div>
+        </div>
+        <div class="top-actions">•••</div>
+      </header>
+
+      <section class="carousel" id="carousel" aria-label="카드뉴스 슬라이드">
+        <div class="viewport" id="viewport">
+          <div class="track" id="track">
+            <section class="slide" aria-label="카드 1">
+              <img src="/card1.png" alt="양성화 카드뉴스 1번 이미지" width="382" height="538" draggable="false" />
+            </section>
+            <section class="slide" aria-label="카드 2">
+              <img src="/card2.png" alt="양성화 카드뉴스 2번 이미지" width="376" height="538" draggable="false" />
+            </section>
+            <section class="slide" aria-label="카드 3">
+              <img src="/card3.png" alt="양성화 카드뉴스 3번 이미지" width="377" height="539" draggable="false" />
+            </section>
+            <section class="slide" aria-label="카드 4">
+              <img src="/card4.png" alt="양성화 카드뉴스 4번 이미지" width="385" height="536" draggable="false" />
+            </section>
+            <section class="slide" aria-label="카드 5">
+              <img src="/card5.png" alt="양성화 카드뉴스 5번 이미지" width="381" height="482" draggable="false" />
+            </section>
+            <section class="slide" aria-label="카드 6">
+              <img src="/card6.png" alt="양성화 카드뉴스 6번 이미지" width="372" height="480" draggable="false" />
+            </section>
+            <section class="slide" aria-label="카드 7">
+              <img src="/card7.png" alt="양성화 카드뉴스 7번 이미지" width="377" height="482" draggable="false" />
+            </section>
+          <section class="slide" aria-label="카드 8">
+            <img src="/card8.png" alt="양성화 카드뉴스 8번 이미지" width="386" height="481" draggable="false" />
+            <a class="diagnosis-link" href="/legalization-check.html" aria-label="1분 양성화 자가진단 바로가기"></a>
+          </section>
+          </div>
+        </div>
+
+        <button class="nav prev" type="button" id="prev" aria-label="이전 카드" hidden>‹</button>
+        <button class="nav next" type="button" id="next" aria-label="다음 카드">›</button>
+      </section>
+
+      <footer class="bottom">
+        <div class="dots" id="dots">
+          <button class="dot active" type="button" aria-label="1번 카드로 이동" data-index="0"></button>
+          <button class="dot" type="button" aria-label="2번 카드로 이동" data-index="1"></button>
+          <button class="dot" type="button" aria-label="3번 카드로 이동" data-index="2"></button>
+          <button class="dot" type="button" aria-label="4번 카드로 이동" data-index="3"></button>
+          <button class="dot" type="button" aria-label="5번 카드로 이동" data-index="4"></button>
+          <button class="dot" type="button" aria-label="6번 카드로 이동" data-index="5"></button>
+          <button class="dot" type="button" aria-label="7번 카드로 이동" data-index="6"></button>
+          <button class="dot" type="button" aria-label="8번 카드로 이동" data-index="7"></button>
+        </div>
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    const viewport = document.getElementById('viewport');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const dots = Array.from(document.querySelectorAll('.dot'));
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    let index = 0;
+
+    function setActive(nextIndex) {
+      index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      dots.forEach((dot, dotIndex) => {
+        dot.classList.toggle('active', dotIndex === index);
+      });
+      prev.hidden = index === 0;
+      next.hidden = index === slides.length - 1;
+    }
+
+    function goTo(nextIndex) {
+      const targetIndex = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      slides[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+      setActive(targetIndex);
+    }
+
+    prev.addEventListener('click', () => goTo(index - 1));
+    next.addEventListener('click', () => goTo(index + 1));
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => goTo(Number(dot.dataset.index)));
+    });
+
+    viewport.addEventListener('scroll', () => {
+      const nextIndex = Math.round(viewport.scrollLeft / viewport.clientWidth);
+      if (nextIndex !== index) {
+        setActive(nextIndex);
+      }
+    }, { passive: true });
+
+    window.addEventListener('resize', () => {
+      viewport.scrollLeft = index * viewport.clientWidth;
+    });
+
+    setActive(0);
+  </script>
+</body>
+</html>

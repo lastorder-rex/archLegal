@@ -70,6 +70,12 @@ const navigationItems: NavigationItem[] = [
     icon: <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
+    label: '핵심정리',
+    type: 'link',
+    href: '/card-news',
+    icon: <BookUp className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
     label: '언론보도',
     type: 'link',
     href: '/press',
