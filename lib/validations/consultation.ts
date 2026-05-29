@@ -178,8 +178,8 @@ export function filterAddressDetailInput(value: string) {
  * 상담 메시지 입력 필터링 - SQL injection 및 XSS 방지
  */
 export function filterMessageInput(value: string) {
-  // 한글, 영문, 숫자, 공백, 기본 문장부호만 허용 (HTML 태그, SQL 특수문자 제거)
-  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s.,!?()~\-]/g, '');
+  // 상담 요약 가독성에 필요한 문장부호는 허용하고, HTML 태그에 쓰이는 < > 등은 차단합니다.
+  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s.,!?()[\]:;%㎡·→~\-]/g, '');
 }
 
 export { formatPhoneNumber, validatePhoneInput };

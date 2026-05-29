@@ -12,9 +12,11 @@ import { CTAButton } from '@/components/ui/cta-button';
 interface ConsultationModalProps {
   open: boolean;
   onClose: () => void;
+  nextPath?: string;
+  initialMessage?: string;
 }
 
-export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
+export function ConsultationModal({ open, onClose, nextPath = '/', initialMessage = '' }: ConsultationModalProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +83,7 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
       process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
 
-    const desiredNext = '/';
+    const desiredNext = nextPath;
     const encodedNext = encodeURIComponent(desiredNext);
 
     try {
@@ -108,7 +110,7 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [nextPath, supabase]);
 
   return (
     <Transition appear show={open} as={Fragment}>
@@ -245,7 +247,12 @@ export function ConsultationModal({ open, onClose }: ConsultationModalProps) {
 
                       {/* Consultation Form */}
                       <div className="bg-card border border-border rounded-lg p-6">
-                        <ConsultationForm user={user} profile={profile} onCancel={onClose} />
+                        <ConsultationForm
+                          user={user}
+                          profile={profile}
+                          onCancel={onClose}
+                          initialMessage={initialMessage}
+                        />
                       </div>
                     </div>
                   ) : (

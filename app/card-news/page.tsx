@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ClipboardCheck, FileText, MessageCircle } from 'lucide-react';
+import { ClipboardCheck, FileText, HouseHeart, MessageCircle } from 'lucide-react';
 import { CardNewsCarousel } from '@/components/card-news/CardNewsCarousel';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 
@@ -27,17 +28,20 @@ export default function CardNewsPage() {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
           <Link
             href="/"
-            className="text-sm font-semibold uppercase tracking-[0.25em] text-muted-foreground transition hover:text-primary"
+            className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-muted-foreground transition hover:text-primary"
           >
-            양성화.com
+            <Image src="/docu/logo.png" alt="" width={28} height={28} aria-hidden="true" />
+            <span>양성화.com</span>
           </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:border-primary hover:text-primary"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            홈으로
-          </Link>
+          <nav className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 transition hover:border-primary hover:text-primary"
+            >
+              <HouseHeart className="h-4 w-4" aria-hidden="true" />
+              홈으로 돌아가기
+            </Link>
+          </nav>
         </div>
       </header>
 
@@ -63,7 +67,7 @@ export default function CardNewsPage() {
 
             <div className="hidden gap-3 text-sm sm:grid sm:grid-cols-3 lg:grid-cols-1">
               <Link
-                href="/legalization-check.html"
+                href="/check"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 font-semibold text-foreground transition hover:border-primary hover:text-primary"

@@ -3,8 +3,13 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/check',
-        destination: '/legalization-check.html',
+        source: '/legalization-check.html',
+        destination: '/check',
+        permanent: true,
+      },
+      {
+        source: '/legalization-check',
+        destination: '/check',
         permanent: true,
       },
     ];

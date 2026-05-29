@@ -50,7 +50,7 @@ function sanitizeAddressDetail(value: string): string {
  * 상담 메시지 입력 필터링 (서버 측) - SQL injection 및 XSS 방지
  */
 function sanitizeMessage(value: string): string {
-  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s.,!?()~\-]/g, '');
+  return value.replace(/[^ㄱ-ㅎ가-힣a-zA-Z0-9\s.,!?()[\]:;%㎡·→~\-]/g, '');
 }
 
 // Input validation function

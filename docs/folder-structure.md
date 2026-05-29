@@ -7,6 +7,32 @@ Next.js 14 기반의 법률 상담 관리 시스템 (App Router 사용)
 - Google Drive API를 통한 파일 관리
 - TossPay 결제 시스템 연동
 - Telegram Bot API 통합
+- `양성화.com` 유입/SEO 브랜딩, 1분 양성화 자가진단, 카드뉴스 정적/동적 페이지 운영
+
+---
+
+## 최근 배포 반영 사항 (2026-05-28 기준)
+- **양성화.com 브랜딩/SEO 메타**: `app/layout.tsx`, `app/(marketing)/*/page.tsx`, `components/layout/SiteFooter.tsx`
+  - 전역 title/description/OG/Twitter 메타에 `양성화.com`, `양성화닷컴`, 위반건축물·불법건축물 양성화 문구 반영
+  - 푸터에 `양성화.com` 연결 안내 문구 추가
+- **1분 양성화 자가진단**: `app/check/page.tsx`, `components/diagnosis/LegalizationCheckClient.tsx`
+  - Next App Router 페이지와 클라이언트 컴포넌트로 구성
+  - 메타 description/OG/title 정리
+  - 복사/붙여넣기/드래그 선택 방지 스크립트 적용
+  - favicon 경로: `public/docu/archlegal-fa.ico`, `public/docu/archlegal-fa-p-transparent.png`
+- **자가진단 공개 URL**: `next.config.mjs`
+  - `/legalization-check.html` → `/check` 영구 리다이렉트
+  - `/legalization-check` → `/check` 영구 리다이렉트
+  - `/check`는 `app/check/page.tsx`에서 직접 제공
+- **카드뉴스 페이지**: `app/card-news/page.tsx`, `components/card-news/CardNewsCarousel.tsx`
+  - 카드뉴스 이미지: `public/card1.png` ~ `public/card8.png`
+  - 정적 HTML 백업/공유용 페이지: `public/legalization-card-news.html`
+- **검색엔진/소유확인 파일**:
+  - `public/sitemap.xml`: 대표 URL(`https://www.archlegal.co.kr`) 기준 sitemap
+  - `public/robots.txt`: sitemap 위치 및 차단 경로 정의
+  - `public/naver487c0dcb77e92d04a2a494edf158344a.html`: 네이버 서치어드바이저 소유확인 파일
+- **전역 복사 보호**: `components/CopyProtection.tsx`
+  - 운영 페이지에서 우클릭, copy/cut/paste, selectstart, dragstart, 주요 단축키 차단
 
 ---
 
@@ -53,6 +79,7 @@ app/
 ├── mypage/                    # 마이페이지
 ├── request/                   # 상담 요청 페이지
 ├── signup/                    # 회원가입 페이지
+├── card-news/                 # 양성화 카드뉴스 페이지
 ├── supercore/                 # 관리자/슈퍼유저 페이지
 ├── upload/                    # 파일 업로드 페이지
 ├── layout.tsx                 # 루트 레이아웃 (전역 레이아웃)
@@ -70,6 +97,7 @@ app/
   - `upload/`: Google Drive 연동 파일 업로드
   - `payments/`: TossPay 결제 처리 및 검증
 - **`layout.tsx`**: 모든 페이지에 공통으로 적용되는 레이아웃 (헤더, 푸터, Provider 등)
+- **`card-news/page.tsx`**: 양성화 카드뉴스 페이지. `CardNewsCarousel`과 `SiteFooter`를 조합해 구성
 - **`globals.css`**: Tailwind CSS 임포트 및 전역 스타일
 
 ---
@@ -81,26 +109,28 @@ app/
 ```
 components/
 ├── auth/                      # 인증 관련 컴포넌트
-│   ├── LoginForm.tsx          # 로그인 폼
+│   ├── AuthPanel.tsx          # 로그인/회원가입 진입 패널
 │   ├── SignupForm.tsx         # 회원가입 폼
-│   └── AuthGuard.tsx          # 인증 가드 (보호된 페이지)
+│   └── hooks/                 # 인증 UI 전용 훅
+├── card-news/                 # 양성화 카드뉴스 컴포넌트
+│   └── CardNewsCarousel.tsx   # 카드뉴스 슬라이드/CTA
 ├── consultation/              # 상담 관련 컴포넌트
-│   ├── ConsultationCard.tsx   # 상담 카드
-│   ├── ConsultationList.tsx   # 상담 목록
 │   ├── ConsultationForm.tsx   # 상담 신청 폼
-│   └── StatusBadge.tsx        # 상담 상태 뱃지
+│   ├── FileUpload.tsx         # 파일 업로드 UI
+│   └── sections/              # 상담 폼 섹션 컴포넌트
 ├── landing/                   # 랜딩 페이지 컴포넌트
-│   ├── Hero.tsx               # 히어로 섹션
-│   ├── Features.tsx           # 기능 소개 섹션
-│   ├── Pricing.tsx            # 가격표 섹션
-│   └── FAQ.tsx                # FAQ 섹션
+│   ├── LandingPage.tsx        # 메인 랜딩 페이지
+│   ├── FAQAccordion.tsx       # FAQ 아코디언
+│   ├── ConsultationModal.tsx  # 상담 CTA 모달
+│   ├── LoginModal.tsx         # 카카오 로그인 모달
+│   └── Timeline.tsx           # 절차 타임라인
 ├── layout/                    # 레이아웃 컴포넌트
-│   ├── Header.tsx             # 헤더
-│   └── Footer.tsx             # 푸터
+│   └── SiteFooter.tsx         # 공통 푸터
 ├── mypage/                    # 마이페이지 컴포넌트
-│   ├── ProfileCard.tsx        # 프로필 카드
-│   ├── ConsultationHistory.tsx # 상담 내역
-│   └── SettingsForm.tsx       # 설정 폼
+│   ├── MyPageShell.tsx        # 마이페이지 레이아웃
+│   ├── MyPageInfoSection.tsx  # 회원 정보
+│   ├── MyPageConsultationsSection.tsx # 상담 내역
+│   └── MyPagePaymentsSection.tsx      # 결제 내역/단계
 ├── providers/                 # Context Providers
 │   ├── QueryProvider.tsx      # React Query Provider
 │   └── SupabaseProvider.tsx   # Supabase Client Provider
@@ -220,9 +250,19 @@ types/
 #### 구조:
 ```
 public/
-├── images/                    # 이미지 파일
-├── fonts/                     # 웹 폰트
-└── favicon.ico                # 파비콘
+├── card1.png ~ card8.png      # 양성화 카드뉴스 이미지
+├── docu/                      # favicon, OG 이미지, PDF 자료
+│   ├── archlegal-fa.ico
+│   ├── archlegal-fa-p.png
+│   ├── archlegal-fa-p-transparent.png
+│   ├── archlegal-og.png
+│   ├── company-interview.pdf
+│   └── 양성화 절차 안내.pdf
+├── hero.png                   # 랜딩 히어로 이미지
+├── legalization-card-news.html # 카드뉴스 정적 HTML 페이지
+├── naver487c0dcb77e92d04a2a494edf158344a.html # 네이버 소유확인 파일
+├── robots.txt                 # 검색엔진 크롤링 정책
+└── sitemap.xml                # 대표 URL 기준 sitemap
 ```
 
 #### 사용법:
@@ -230,6 +270,12 @@ public/
 // 예시: /public/images/logo.png 사용
 <Image src="/images/logo.png" alt="Logo" />
 ```
+
+#### SEO/정적 페이지 운영 메모:
+- 자가진단 대표 공개 URL은 Next 페이지 `/check`를 사용하고, 기존 정적 HTML 주소는 `/check`로 리다이렉트한다.
+- `public/sitemap.xml`은 `https://www.archlegal.co.kr` 대표 URL 기준으로 관리한다.
+- `양성화.com`은 유입/리다이렉트 도메인으로 사용하고, 대표 canonical/sitemap은 `www.archlegal.co.kr` 기준이다.
+- 네이버 서치어드바이저 소유확인 파일은 삭제하지 않는다.
 
 ---
 
@@ -380,6 +426,19 @@ API 문서, 기능 명세, 설정 가이드 등
 - **유틸리티**: `lib/utils/building-info.ts`
 - **데이터**: `scripts/import-seoul-*.{js,py}`
 
+### 7. 마케팅/SEO/양성화.com
+- **전역 메타/브랜딩**: `app/layout.tsx`
+  - `applicationName`
+  - `title`, `description`
+  - `openGraph`, `twitter`
+  - Google/Naver/Bing 소유확인 메타
+- **랜딩 페이지 메타/본문**: `app/(marketing)/landing/page.tsx`, `components/landing/LandingPage.tsx`
+- **공통 푸터 브랜딩**: `components/layout/SiteFooter.tsx`
+- **1분 양성화 자가진단**: `app/check/page.tsx`, `components/diagnosis/LegalizationCheckClient.tsx`, `lib/diagnosis/legalization.ts`
+- **자가진단 공개 URL**: `next.config.mjs`의 기존 자가진단 URL redirect
+- **카드뉴스 페이지**: `app/card-news/page.tsx`, `components/card-news/CardNewsCarousel.tsx`
+- **검색엔진 파일**: `public/sitemap.xml`, `public/robots.txt`, `public/naver487c0dcb77e92d04a2a494edf158344a.html`
+
 ---
 
 ## 🔧 코드 수정 시 체크리스트
@@ -491,5 +550,5 @@ lib/validations/consultation.ts에 검증 스키마도 추가하고"
 
 ---
 
-**마지막 업데이트**: 2025-11-03
+**마지막 업데이트**: 2026-05-28
 **프로젝트 버전**: 0.1.1

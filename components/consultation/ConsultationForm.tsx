@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui/button';
@@ -30,14 +30,19 @@ interface ConsultationFormProps {
   user: User;
   profile: UserProfile;
   onCancel?: () => void;
+  initialMessage?: string;
 }
 
 interface FormErrors {
   [key: string]: string;
 }
 
-export default function ConsultationForm({ user, profile, onCancel }: ConsultationFormProps) {
+export default function ConsultationForm({ user, profile, onCancel, initialMessage = '' }: ConsultationFormProps) {
   const supabase = createClientComponentClient();
+  const sanitizedInitialMessage = useMemo(
+    () => filterMessageInput(initialMessage).slice(0, 1000),
+    [initialMessage]
+  );
 
   // Form state
   const defaultFormState = useMemo<Partial<ConsultationForm>>(
@@ -47,7 +52,7 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
       email: profile.email ?? user.email ?? '',
       address: '',
       addressDetail: '',
-      message: '',
+      message: sanitizedInitialMessage,
     }),
     [
       profile.contact_phone,
@@ -55,11 +60,29 @@ export default function ConsultationForm({ user, profile, onCancel }: Consultati
       profile.full_name,
       profile.legal_name,
       profile.phone,
+      sanitizedInitialMessage,
       user.email,
     ]
   );
 
   const [formData, setFormData] = useState<Partial<ConsultationForm>>(defaultFormState);
+
+  useEffect(() => {
+    if (!sanitizedInitialMessage) {
+      return;
+    }
+
+    setFormData(prev => {
+      if (prev.message === sanitizedInitialMessage) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        message: sanitizedInitialMessage,
+      };
+    });
+  }, [sanitizedInitialMessage]);
 
   // UI state
   const [errors, setErrors] = useState<FormErrors>({});

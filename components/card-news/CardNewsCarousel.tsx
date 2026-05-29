@@ -3,27 +3,130 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 
 const cards = [
-  { src: '/card1.png', alt: '양성화 카드뉴스 1번 이미지', width: 382, height: 538 },
-  { src: '/card2.png', alt: '양성화 카드뉴스 2번 이미지', width: 376, height: 538 },
-  { src: '/card3.png', alt: '양성화 카드뉴스 3번 이미지', width: 377, height: 539 },
-  { src: '/card4.png', alt: '양성화 카드뉴스 4번 이미지', width: 385, height: 536 },
-  { src: '/card5.png', alt: '양성화 카드뉴스 5번 이미지', width: 381, height: 482 },
-  { src: '/card6.png', alt: '양성화 카드뉴스 6번 이미지', width: 372, height: 480 },
-  { src: '/card7.png', alt: '양성화 카드뉴스 7번 이미지', width: 377, height: 482 },
-  { src: '/card8.png', alt: '양성화 카드뉴스 8번 이미지', width: 386, height: 481 }
+  {
+    src: '/card1.png',
+    alt: '불법건축물도 특정건축물 특별조치법으로 합법화 가능성을 검토할 수 있다는 양성화 카드뉴스',
+    width: 382,
+    height: 538
+  },
+  {
+    src: '/card2.png',
+    alt: '무허가 건축물, 사용승인 미취득 건축물, 무단 용도변경 건축물이 양성화 대상이 될 수 있다는 안내',
+    width: 376,
+    height: 538
+  },
+  {
+    src: '/card3.png',
+    alt: '다세대주택 85제곱미터 이하, 단독주택 330제곱미터 이하, 다가구주택 660제곱미터 이하 등 양성화 가능 건축물 기준',
+    width: 377,
+    height: 539
+  },
+  {
+    src: '/card4.png',
+    alt: '도시군계획시설 부지, 개발제한구역, 군사시설 보호구역, 접도구역, 보전산지 등 양성화 적용이 어려운 경우',
+    width: 385,
+    height: 536
+  },
+  {
+    src: '/card5.png',
+    alt: '대지 소유권, 도로 폭 3미터 이상, 구조안전과 이행강제금 체납 여부 등 양성화 승인 기준',
+    width: 381,
+    height: 482
+  },
+  {
+    src: '/card6.png',
+    alt: '옥상 증축 양성화 가능성, 경사지붕 교체와 증축 부분 높이 1.8미터 이하 조건 안내',
+    width: 372,
+    height: 480
+  },
+  {
+    src: '/card7.png',
+    alt: '건축사 현장조사서 신고부터 지자체 검토, 건축위원회 심의, 30일 내 사용승인서 발급까지 양성화 절차',
+    width: 377,
+    height: 482
+  },
+  {
+    src: '/card8.png',
+    alt: '1분 양성화 자가진단으로 무허가 증축, 사용승인 미취득, 용도변경, 이행강제금 부과 여부를 확인하는 안내',
+    width: 386,
+    height: 481
+  }
 ];
 
 export function CardNewsCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const swipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
+  const suppressClickRef = useRef(false);
   const activeCard = cards[activeIndex];
   const isFirst = activeIndex === 0;
   const isLast = activeIndex === cards.length - 1;
 
   const move = (direction: -1 | 1) => {
     setActiveIndex(current => Math.min(cards.length - 1, Math.max(0, current + direction)));
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse') {
+      return;
+    }
+
+    swipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const swipeStart = swipeStartRef.current;
+    swipeStartRef.current = null;
+
+    if (!swipeStart) {
+      return;
+    }
+
+    const deltaX = event.clientX - swipeStart.x;
+    const deltaY = event.clientY - swipeStart.y;
+    const isHorizontalSwipe = Math.abs(deltaX) > 48 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2;
+
+    if (event.currentTarget.hasPointerCapture(swipeStart.pointerId)) {
+      event.currentTarget.releasePointerCapture(swipeStart.pointerId);
+    }
+
+    if (!isHorizontalSwipe) {
+      return;
+    }
+
+    suppressClickRef.current = true;
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 350);
+    move(deltaX < 0 ? 1 : -1);
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handlePointerCancel = (event: PointerEvent<HTMLDivElement>) => {
+    const swipeStart = swipeStartRef.current;
+    swipeStartRef.current = null;
+
+    if (swipeStart && event.currentTarget.hasPointerCapture(swipeStart.pointerId)) {
+      event.currentTarget.releasePointerCapture(swipeStart.pointerId);
+    }
+  };
+
+  const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+    if (!suppressClickRef.current) {
+      return;
+    }
+
+    suppressClickRef.current = false;
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   return (
@@ -46,7 +149,13 @@ export function CardNewsCarousel() {
               </span>
             </div>
 
-            <div className="relative bg-slate-100">
+            <div
+              className="relative select-none bg-slate-100 touch-pan-y"
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
+              onClickCapture={handleClickCapture}
+            >
               <Image
                 key={activeCard.src}
                 src={activeCard.src}
@@ -59,7 +168,7 @@ export function CardNewsCarousel() {
               />
               {activeIndex === cards.length - 1 ? (
                 <Link
-                  href="/legalization-check.html"
+                  href="/check"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="1분 양성화 자가진단 바로가기"

@@ -11,6 +11,7 @@ import {
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowBigDownDash,
@@ -20,6 +21,7 @@ import {
   CheckLine,
   Handshake,
   Landmark,
+  Megaphone,
   MessageCircleMore,
   Menu,
   PenLine,
@@ -74,6 +76,12 @@ const navigationItems: NavigationItem[] = [
     type: 'link',
     href: '/card-news',
     icon: <BookUp className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '캠페인',
+    type: 'link',
+    href: '/campaign',
+    icon: <Megaphone className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
     label: '언론보도',
@@ -359,22 +367,23 @@ export function LandingPage() {
         className="relative isolate overflow-hidden bg-slate-900/50 text-white"
         aria-labelledby="attention-section"
       >
-        <div
-          className="absolute inset-0 -z-10"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(24,24,27,0.15), rgba(24,24,27,0.15)), url('/hero.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
+        <Image
+          src="/hero.png"
+          alt="양성화.com 위반건축물과 불법건축물 양성화 상담 서비스를 소개하는 건축물 이미지"
+          fill
+          priority
+          sizes="100vw"
+          className="absolute inset-0 -z-20 object-cover"
         />
+        <div className="absolute inset-0 -z-10 bg-slate-900/15" />
         <header className="absolute inset-x-0 top-0 z-20 bg-slate-950/30 pb-4 pt-6 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6">
             <a
               href="#attention-section"
-              className="text-sm font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:text-white"
+              className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:text-white"
             >
-              양성화.com
+              <Image src="/docu/logo.png" alt="" width={28} height={28} aria-hidden="true" />
+              <span>양성화.com</span>
             </a>
             <div className="flex items-center gap-3">
               <nav className="hidden items-center gap-6 text-base font-medium text-white/80 lg:flex">
@@ -612,7 +621,7 @@ export function LandingPage() {
                 무료 상담 신청
               </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
-                <Link href="/legalization-check.html" target="_blank" rel="noopener noreferrer">
+                <Link href="/check" target="_blank" rel="noopener noreferrer">
                   자가진단 하기
                 </Link>
               </CTAButton>
