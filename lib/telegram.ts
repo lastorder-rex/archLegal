@@ -9,6 +9,7 @@ type ConsultationNotificationData = {
 };
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
+const TELEGRAM_REQUEST_TIMEOUT_MS = 5000;
 
 const composeMessage = (consultationData: ConsultationNotificationData) => {
   const fullAddress = `${consultationData.address}${
@@ -16,23 +17,29 @@ const composeMessage = (consultationData: ConsultationNotificationData) => {
   }`;
 
   return `
-🆕 *새 상담 요청이 등록되었습니다*
+🆕 <b>새 상담 요청이 등록되었습니다</b>
 
-👤 *고객명:* ${consultationData.name}
-📞 *연락처:* ${consultationData.phone}
-${consultationData.email ? `📧 *이메일:* ${consultationData.email}` : ''}
+👤 <b>고객명:</b> ${escapeHtml(consultationData.name)}
+📞 <b>연락처:</b> ${escapeHtml(consultationData.phone)}
+${consultationData.email ? `📧 <b>이메일:</b> ${escapeHtml(consultationData.email)}` : ''}
 
-📍 *주소:* ${fullAddress}
-🏠 *건축물 용도:* ${consultationData.main_purps || '확인 필요'}
+📍 <b>주소:</b> ${escapeHtml(fullAddress)}
+🏠 <b>건축물 용도:</b> ${escapeHtml(consultationData.main_purps || '확인 필요')}
 
-💬 *상담 내용:*
-${consultationData.message || '별도 요청사항 없음'}
+💬 <b>상담 내용:</b>
+${escapeHtml(consultationData.message || '별도 요청사항 없음')}
 
-⏰ *등록시간:* ${new Date().toLocaleString('ko-KR')}
+⏰ <b>등록시간:</b> ${escapeHtml(new Date().toLocaleString('ko-KR'))}
 
-#새상담 #${consultationData.name.replace(/\s/g, '')}
+#새상담
   `.trim();
 };
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
 export async function sendConsultationNotification(
   consultationData: ConsultationNotificationData,
@@ -46,15 +53,18 @@ export async function sendConsultationNotification(
   }
 
   const message = composeMessage(consultationData);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TELEGRAM_REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${TELEGRAM_API_BASE}/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         chat_id: channelId,
         text: message,
-        parse_mode: 'Markdown',
+        parse_mode: 'HTML',
       }),
     });
 
@@ -70,6 +80,8 @@ export async function sendConsultationNotification(
   } catch (error) {
     console.error('💥 Telegram notification error:', error);
     return false;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

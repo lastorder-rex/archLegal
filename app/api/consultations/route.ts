@@ -205,8 +205,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 텔레그램 알림 전송 (비동기로 처리해서 응답 속도에 영향 없음)
-    sendConsultationNotification({
+    // 텔레그램 알림 전송. 실패해도 상담 저장 응답은 유지한다.
+    const notificationSent = await sendConsultationNotification({
       name: consultationData.name,
       phone: consultationData.phone,
       email: consultationData.email,
@@ -216,8 +216,12 @@ export async function POST(request: NextRequest) {
       message: consultationData.message
     }).catch(error => {
       console.error('Telegram notification failed:', error);
-      // 알림 실패는 상담 저장에 영향 없음
+      return false;
     });
+
+    if (!notificationSent) {
+      console.error('Telegram notification was not sent for consultation:', consultation.id);
+    }
 
     // Success response
     return NextResponse.json({
