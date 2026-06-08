@@ -45,7 +45,7 @@ const KAKAO_JAVASCRIPT_KEY = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY;
 const DIAGNOSIS_SHARE_TITLE = '1분 양성화 자가진단';
 const DIAGNOSIS_SHARE_DESCRIPTION = '우리 건물도 특정건축물 특별조치법 대상인지 확인해보세요.';
 const DIAGNOSIS_SHARE_ORIGIN = 'https://www.archlegal.co.kr';
-const DIAGNOSIS_SHARE_IMAGE_PATH = '/kakao_b.png';
+const DIAGNOSIS_SHARE_IMAGE_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/kakao_b.png';
 
 type DiagnosisAnswer = {
   questionId: string;
@@ -302,7 +302,6 @@ export function LegalizationCheckClient() {
 
   const shareDiagnosisLink = async () => {
     const shareUrl = `${DIAGNOSIS_SHARE_ORIGIN}/check`;
-    const shareImageUrl = `${DIAGNOSIS_SHARE_ORIGIN}${DIAGNOSIS_SHARE_IMAGE_PATH}`;
 
     try {
       initializeKakaoSdk();
@@ -313,7 +312,7 @@ export function LegalizationCheckClient() {
           content: {
             title: DIAGNOSIS_SHARE_TITLE,
             description: DIAGNOSIS_SHARE_DESCRIPTION,
-            imageUrl: shareImageUrl,
+            imageUrl: DIAGNOSIS_SHARE_IMAGE_URL,
             imageWidth: 800,
             imageHeight: 800,
             link: {
