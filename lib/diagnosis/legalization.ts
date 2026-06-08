@@ -94,9 +94,19 @@ const TYPE_AREA_NEXT: Record<string, string> = {
 const DEFAULT_DOCS = [
   '건축물대장',
   '토지이용계획확인서',
-  '등기부등본 또는 사용승낙서',
+  '건축사가 작성한 설계도서',
+  '건축사가 작성한 현장조사서',
+  '등기부등본 또는 대지 사용승낙서',
+  '집합건물 공용부분 변경 시 집합건물법상 결의 증명 서류',
   '위반건축물 고지서 또는 이행강제금 부과 내역',
   '현장 사진 및 기존 도면'
+];
+
+const DEFAULT_CAUTIONS = [
+  '자가진단 결과는 법적 효력이 없습니다.',
+  '이 법은 공포 후 6개월이 경과한 날부터 시행되며, 시행일부터 18개월간 효력을 가집니다.',
+  '신고 기간, 서식, 일부 예외 기준은 대통령령·지방자치단체 조례·관할청 기준에 따라 달라질 수 있습니다.',
+  '유효기간 만료 전에 신고가 접수된 대상건축물은 유효기간 만료 후에도 이 법 적용을 받을 수 있습니다.'
 ];
 
 const QUESTIONS: Record<string, DiagnosisQuestion> = {
@@ -226,8 +236,8 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   zone: {
     badge: '적용 제외 구역',
     title: '건물이 다음 구역이나 부지에 있나요?',
-    desc: '도시·군계획시설 부지, 개발제한구역, 군사시설보호구역, 접도구역, 도시개발구역, 정비구역, 보전산지, 상습재해구역 등은 원칙적으로 적용 제외입니다.',
-    hint: '토지이용계획확인서에서 확인할 수 있습니다. 모르면 모르겠습니다를 선택하세요.',
+    desc: '도시·군계획시설 부지, 개발제한구역, 군사기지 및 군사시설 보호구역, 접도구역, 도시개발구역, 정비구역, 보전산지, 대통령령상 상습재해구역·환경정비구역은 원칙적으로 적용 제외입니다.',
+    hint: '토지이용계획확인서에서 확인할 수 있습니다. 개발제한구역·군사보호구역·도시개발구역·정비구역은 예외가 있을 수 있으므로 모르면 모르겠습니다를 선택하세요.',
     law: '제3조제2항',
     options: [
       { id: 'no', label: '아니오, 해당 없습니다', detail: '구역 제외 리스크 낮음', icon: 'O', tone: 'yes', next: 'land' },
@@ -238,8 +248,8 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   zone_exception: {
     badge: '구역 예외',
     title: '해당 구역이라면 예외 적용 가능성이 있나요?',
-    desc: '그린벨트·군사보호구역은 지정 전 건축 등 예외가 있고, 도시개발구역·정비구역은 사업 지장 여부가 중요합니다. 접도구역·보전산지 등은 더 엄격합니다.',
-    hint: '정확한 구역명과 지정일, 사업 지장 여부를 알아야 합니다. 모르면 전문가 검토로 넘기는 것이 안전합니다.',
+    desc: '개발제한구역은 지정 전 건축·대수선, 군사보호구역은 지정 전 건축·대수선 또는 관할부대장 건의에 따른 국방부장관 결정, 도시개발구역·정비구역은 사업 지장 여부가 중요합니다.',
+    hint: '접도구역·보전산지·도시군계획시설 부지는 예외가 제한적입니다. 정확한 구역명, 지정일, 사업 지장 여부를 모르면 전문가 검토로 넘기는 것이 안전합니다.',
     law: '제3조제2항 각 호 단서',
     options: [
       { id: 'yes', label: '예외 가능성이 있습니다', detail: '지정 전 건축 또는 사업 지장 없음', icon: 'O', tone: 'yes', next: 'land', flag: '적용 제외 구역 예외 사유 입증 필요' },
@@ -249,21 +259,23 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   },
   land: {
     badge: '대지 권한',
-    title: '건물이 서 있는 땅은 본인 소유이거나 사용 승낙을 받은 땅인가요?',
-    desc: '자기 소유 대지, 사용 승낙 받은 타인 소유 대지, 처분 제한이 없는 국유지·공유지 등이어야 합니다.',
-    hint: '집합건물 공용부분을 변경한 경우에는 집합건물법상 결의 증명도 필요할 수 있습니다.',
+    title: '건물이 서 있는 땅에 대한 사용 권한을 확보했나요?',
+    desc: '자기 소유 대지, 사용 승낙 받은 타인 소유 대지, 집합건물 공용부분 변경 결의, 처분 제한이 없는 국유지·공유지 등이 사용승인 기준에 포함됩니다.',
+    hint: '집합건물 공용부분을 변경한 경우에는 집합건물법상 결의 증명이 필요할 수 있고, 국유지·공유지는 처분 제한 여부를 확인해야 합니다.',
     law: '제6조제1항제1호',
     options: [
-      { id: 'yes', label: '예, 권한이 있습니다', detail: '대지 요건 충족 가능', icon: 'O', tone: 'yes', next: 'road_safety' },
+      { id: 'yes', label: '예, 소유 또는 사용승낙이 있습니다', detail: '대지 요건 충족 가능', icon: 'O', tone: 'yes', next: 'road_safety' },
+      { id: 'collective', label: '집합건물 결의가 필요합니다', detail: '공용부분 변경 결의 증명 확인', icon: '!', tone: 'warn', next: 'road_safety', flag: '집합건물 공용부분 변경 결의 증명 확인 필요' },
+      { id: 'public', label: '국유지·공유지입니다', detail: '처분 제한 여부 확인 필요', icon: '!', tone: 'warn', next: 'road_safety', flag: '국유지·공유지 처분 제한 여부 확인 필요' },
       { id: 'no', label: '아니오, 허락 없는 타인 토지입니다', detail: '양성화 어려움', icon: 'X', tone: 'danger', result: 'land_issue' },
-      { id: 'unknown', label: '모르겠습니다', detail: '등기·동의서 확인 필요', icon: '?', tone: 'unknown', next: 'road_safety', flag: '대지 소유권 또는 사용승낙 확인 필요' }
+      { id: 'unknown', label: '모르겠습니다', detail: '등기·동의서·국공유지 여부 확인 필요', icon: '?', tone: 'unknown', next: 'road_safety', flag: '대지 소유권·사용승낙 또는 국공유지 처분 제한 여부 확인 필요' }
     ]
   },
   road_safety: {
     badge: '도로·안전·일조',
     title: '도로, 구조안전, 위생, 방화, 일조권, 도시계획사업에 현저한 지장이 없나요?',
-    desc: '법안은 건축법상 일부 도로 기준을 완화하더라도 안전·방화·일조·도시계획상 현저한 지장은 없어야 한다고 봅니다.',
-    hint: '도로 최소 너비, 건축선, 이격, 구조안전, 방화, 민원 가능성 등은 현장조사에서 확인해야 합니다.',
+    desc: '법안은 도로 최소 너비를 3m로 보는 특례를 두지만, 구조안전·위생·방화·일조권·도시계획사업과 관계 법률 적용에 현저한 지장은 없어야 합니다.',
+    hint: '도로·건축선 기준은 일부 특례가 있으나, 소방에 지장이 없다고 인정되는지와 구조안전·방화·일조권 문제는 현장조사에서 확인해야 합니다.',
     law: '제6조제1항제2호',
     options: [
       { id: 'yes', label: '예, 큰 문제 없습니다', detail: '계속 확인 진행', icon: 'O', tone: 'yes', next: 'increase' },
@@ -274,20 +286,20 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   increase: {
     badge: '추가 강화 조건',
     title: '위반 내용이 세대·가구·호수 증가 또는 근린생활시설을 주택으로 바꾼 경우인가요?',
-    desc: '방쪼개기, 세대수 증가, 근생->주택은 소방·피난·주차 조건을 더 엄격하게 확인해야 합니다.',
-    hint: '단순 베란다·옥탑 증축과 달리, 거주 세대 수가 늘어난 경우에는 소방시설과 주차 문제가 핵심 리스크가 됩니다.',
+    desc: '무허가·미승인 건축 중 세대·가구·호수를 증가시키는 대수선이거나 근린생활시설을 사실상 주택으로 사용한 경우에는 건축법·소방시설법·주차장 기준을 더 확인해야 합니다.',
+    hint: '방쪼개기란 대수선 허가 또는 신고 없이 세대·가구수를 늘린 경우를 말합니다. 거주 단위가 늘어난 경우에는 피난·방화·소방시설과 주차장 문제가 핵심 리스크가 됩니다.',
     law: '제6조제1항제3호·제7조제1항 단서',
     options: [
       { id: 'yes', label: '예, 해당합니다', detail: '소방·주차 조건 확인', icon: 'O', tone: 'warn', next: 'fire', flag: '세대·가구·호수 증가 또는 근린->주택에 따른 강화 조건 확인 필요' },
-      { id: 'no', label: '아니오', detail: '일반 조건으로 계속 진행', icon: 'X', tone: 'yes', next: 'fines' },
+      { id: 'no', label: '아니오', detail: '일반 조건으로 계속 진행', icon: 'X', tone: 'yes', next: 'fine_assessment' },
       { id: 'unknown', label: '모르겠습니다', detail: '위반 내용 확인 필요', icon: '?', tone: 'unknown', next: 'fire', flag: '세대·가구·호수 증가 여부 확인 필요' }
     ]
   },
   fire: {
     badge: '소방·피난',
     title: '소방·피난 시설을 갖추었거나 보완할 수 있나요?',
-    desc: '세대·가구·호수 증가 또는 근린->주택은 건축법상 피난·방화 기준과 소방시설 기준을 준수해야 합니다.',
-    hint: '비상구, 피난계단, 방화문, 경보·소화설비, 스프링클러 등은 건물 현황별로 달라집니다.',
+    desc: '세대·가구·호수 증가 대수선 또는 근린->주택은 건축법 제49조·제50조·제52조와 소방시설 설치 및 관리에 관한 법률 제12조를 준수해야 합니다.',
+    hint: '피난시설, 내화구조, 방화벽, 마감재료, 경보·소화설비 등은 건물 현황별로 달라집니다.',
     law: '제6조제1항제3호',
     options: [
       { id: 'yes', label: '예, 갖추었거나 보완 가능', detail: '계속 확인 진행', icon: 'O', tone: 'yes', next: 'parking', flag: '소방·피난 시설 적합성 최종 확인 필요' },
@@ -298,22 +310,37 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   parking: {
     badge: '주차장',
     title: '세대수 증가 또는 근린->주택으로 인해 필요한 주차장 설치·비용 납부를 검토했나요?',
-    desc: '일반적인 사용승인 특례와 달리, 세대·가구·호수 증가 또는 근린->주택은 주차장 설치나 비용 납부가 필요할 수 있습니다.',
-    hint: '전세사기피해자가 매수한 피해주택 등은 예외가 있고, 지자체 조례로 완화·면제 가능성이 있습니다.',
+    desc: '일반 대상은 사용승인으로 부족해진 부설주차장을 추가 설치할 의무가 없지만, 세대·가구·호수 증가 대수선 또는 근린->주택은 설치나 비용 납부가 필요할 수 있습니다.',
+    hint: '전세사기피해자 지원 및 주거안정에 관한 특별법상 전세사기피해자가 매수한 전세사기피해주택은 추가 설치 의무 예외가 있고, 지자체 조례로 완화·면제 가능성이 있습니다.',
     law: '제7조제1항·제2항·제3항',
     options: [
-      { id: 'yes', label: '예, 검토했습니다', detail: '계속 진행', icon: 'O', tone: 'yes', next: 'fines', flag: '주차장 설치 또는 비용 납부 최종 확인 필요' },
-      { id: 'no', label: '아니오', detail: '비용·조례 검토 필요', icon: '!', tone: 'warn', next: 'fines', flag: '주차장 설치·비용 납부·조례 완화 여부 확인 필요' },
-      { id: 'victim', label: '전세사기 피해주택입니다', detail: '예외 가능성 있음', icon: '★', tone: 'yes', next: 'fines', flag: '전세사기피해주택 주차장 특례 확인 필요' },
-      { id: 'unknown', label: '모르겠습니다', detail: '관할 지자체 기준 확인 필요', icon: '?', tone: 'unknown', next: 'fines', flag: '주차장 기준 및 지자체 조례 확인 필요' }
+      { id: 'victim', label: '전세사기피해자가 매수한 피해주택입니다', detail: '추가 설치 의무 예외 가능', icon: '★', tone: 'yes', next: 'fine_assessment', flag: '전세사기피해주택 주차장·과태료 특례 확인 필요' },
+      { id: 'yes', label: '예, 검토했습니다', detail: '계속 진행', icon: 'O', tone: 'yes', next: 'fine_assessment', flag: '주차장 설치 또는 비용 납부 최종 확인 필요' },
+      { id: 'no', label: '아니오', detail: '비용·조례 검토 필요', icon: '!', tone: 'warn', next: 'fine_assessment', flag: '주차장 설치·비용 납부·조례 완화 여부 확인 필요' },
+      { id: 'unknown', label: '모르겠습니다', detail: '관할 지자체 기준 확인 필요', icon: '?', tone: 'unknown', next: 'fine_assessment', flag: '주차장 기준 및 지자체 조례 확인 필요' }
+    ]
+  },
+  fine_assessment: {
+    badge: '과태료 산정',
+    title: '이행강제금 부과 이력이나 추가 위반내용이 있나요?',
+    desc: '법안은 이행강제금 부과 이력과 추가 위반내용에 따라 이행강제금 5회분 상당 과태료 또는 기납부분 차감 과태료를 산정합니다.',
+    hint: '전세사기피해자가 매수한 전세사기피해주택은 과태료 부과 대상에서 제외됩니다. 단, 이행강제금 체납 여부는 별도로 확인해야 합니다.',
+    law: '제9조제1항·제2항',
+    options: [
+      { id: 'settled', label: '5회 이상 부과·납부했고 추가 위반은 없습니다', detail: '추가 과태료 리스크 낮음', icon: 'O', tone: 'yes', next: 'fines' },
+      { id: 'no_history', label: '부과 사실이 없습니다', detail: '5회분 과태료 산정 가능', icon: '!', tone: 'warn', next: 'fines', flag: '이행강제금 5회분 상당 과태료 산정 가능성 확인 필요' },
+      { id: 'additional', label: '부과 사실 있고 추가 위반도 있습니다', detail: '5회분 과태료 산정 가능', icon: '!', tone: 'warn', next: 'fines', flag: '추가 위반내용에 따른 5회분 과태료 산정 가능성 확인 필요' },
+      { id: 'under_5', label: '5회 미만 부과·납부 이력이 있습니다', detail: '5회분에서 기납부분 차감', icon: '!', tone: 'warn', next: 'fines', flag: '5회 미만 이행강제금 기납부분 차감 과태료 확인 필요' },
+      { id: 'victim', label: '전세사기피해자가 매수한 피해주택입니다', detail: '과태료 제외 가능', icon: '★', tone: 'yes', next: 'fines', flag: '전세사기피해주택 과태료 제외 여부 확인 필요' },
+      { id: 'unknown', label: '모르겠습니다', detail: '부과 이력·추가 위반 확인 필요', icon: '?', tone: 'unknown', next: 'fines', flag: '이행강제금 부과 이력 및 추가 위반내용 확인 필요' }
     ]
   },
   fines: {
     badge: '체납·과태료',
     title: '이행강제금 또는 과태료 체납이 없거나, 1년 이내 납부할 수 있나요?',
     desc: '사용승인 조건에는 과태료와 이행강제금 체납이 없어야 한다는 요건이 있습니다. 다만 1년 이내 납부 조건으로 승인 가능성이 있습니다.',
-    hint: '이행강제금 부과 이력이 없어도 법안상 과태료가 산정될 수 있습니다. 5회분 산정과 기납부 차감 여부는 관할청 확인이 필요합니다.',
-    law: '제6조제1항제4호·제9조',
+    hint: '과태료와 이행강제금을 1년 이내 모두 납부하는 조건으로 사용승인서를 받을 수 있는지 관할청 확인이 필요합니다.',
+    law: '제6조제1항제4호·제9조제1항·제2항',
     options: [
       { id: 'none', label: '체납 없음', detail: '승인 조건 충족 가능', icon: 'O', tone: 'yes', result: 'pass' },
       { id: 'payable', label: '있지만 1년 이내 납부 가능', detail: '조건부 승인 가능성', icon: '!', tone: 'warn', result: 'review', flag: '이행강제금·과태료 1년 이내 납부 조건 확인 필요' },
@@ -330,9 +357,9 @@ const RESULT_TEMPLATES: Record<string, Omit<DiagnosisResult, 'documents'>> = {
     color: 'var(--success)',
     chip: '가능성 높음',
     title: '양성화 신청 가능성이 높습니다.',
-    copy: '입력한 답변 기준으로는 핵심 결격 사유가 발견되지 않았습니다. 다만 실제 신청 전에는 건축사 현장조사, 설계도서, 토지이용계획, 관할청 심의 기준을 확인해야 합니다.',
+    copy: '입력한 답변 기준으로는 핵심 결격 사유가 발견되지 않았습니다. 다만 실제 신청 전에는 건축사 현장조사, 설계도서, 토지이용계획, 건축위원회 심의와 관할청 기준을 확인해야 합니다.',
     actions: ['건축물대장·토지이용계획확인서 준비', '건축사 현장조사 및 위반 면적 산정', '설계도서·현장조사서 작성', '관할 시·군·구청 신고 및 건축위원회 심의 준비'],
-    cautions: ['자가진단 결과는 법적 효력이 없습니다.', '법 공포일·시행령·관할 지자체 조례에 따라 세부 요건이 달라질 수 있습니다.']
+    cautions: ['최종 사용승인은 신고 후 건축위원회 심의와 관할청 판단을 거쳐야 합니다.']
   },
   review: {
     grade: 'B',
@@ -342,7 +369,7 @@ const RESULT_TEMPLATES: Record<string, Omit<DiagnosisResult, 'documents'>> = {
     title: '신청 가능성은 있으나, 확인 항목이 있습니다.',
     copy: '일부 답변이 모름 또는 조례·소방·주차·구역 검토 필요에 해당합니다. 이런 케이스는 바로 탈락시키기보다 서류와 현장 상태를 확인해야 합니다.',
     actions: ['확인 필요 항목을 기준으로 상담 접수', '토지이용계획확인서·건축물대장 확인', '현장 사진과 위반 고지서 준비', '조례·소방·주차 기준 검토'],
-    cautions: ['확인 항목이 해결되면 신청 가능성이 높아질 수 있습니다.', '적용 제외 구역과 소방·주차는 상담 전환 가치가 큰 항목입니다.']
+    cautions: ['확인 항목이 해결되면 신청 가능성이 높아질 수 있습니다.', '적용 제외 구역, 국공유지, 소방·주차, 과태료는 상담 전환 가치가 큰 항목입니다.']
   },
   legal: {
     grade: 'C',
@@ -460,7 +487,7 @@ function toPublicQuestion(id: string): PublicDiagnosisQuestion {
 }
 
 function getProgress(historyLength: number) {
-  const total = 11;
+  const total = 12;
   const done = Math.min(historyLength, total);
   return {
     done,
@@ -475,7 +502,8 @@ function pickResultTemplate(resultId: keyof typeof RESULT_TEMPLATES, flags: stri
 
   return {
     ...template,
-    documents: DEFAULT_DOCS
+    documents: DEFAULT_DOCS,
+    cautions: Array.from(new Set([...template.cautions, ...DEFAULT_CAUTIONS]))
   };
 }
 

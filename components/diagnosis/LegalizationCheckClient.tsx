@@ -89,7 +89,7 @@ export function LegalizationCheckClient() {
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const [summary, setSummary] = useState<string[]>([]);
   const [copyText, setCopyText] = useState('');
-  const [progress, setProgress] = useState({ done: 0, total: 11, percent: 0 });
+  const [progress, setProgress] = useState({ done: 0, total: 12, percent: 0 });
   const [toast, setToast] = useState('');
   const [isDark, setIsDark] = useState(false);
   const [isConsultationOpen, setConsultationOpen] = useState(false);
@@ -172,7 +172,7 @@ export function LegalizationCheckClient() {
     setResult(null);
     setSummary([]);
     setCopyText('');
-    setProgress({ done: 0, total: 11, percent: 0 });
+    setProgress({ done: 0, total: 12, percent: 0 });
     setView('landing');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
