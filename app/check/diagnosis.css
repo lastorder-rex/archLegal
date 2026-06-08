@@ -289,6 +289,51 @@
       background: var(--secondary);
     }
 
+    .diagnosis-root .share-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+      color: #111;
+      background: #fee500;
+      border-color: #fee500;
+    }
+
+    .diagnosis-root .share-btn:hover {
+      background: #f6dc00;
+      border-color: #f6dc00;
+    }
+
+    .diagnosis-root .kakao-talk-icon {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 20px;
+      flex: 0 0 30px;
+      border-radius: 999px;
+      background: #111;
+      color: #fee500;
+      font-size: 8px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .diagnosis-root .kakao-talk-icon::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      bottom: -3px;
+      width: 7px;
+      height: 7px;
+      background: #111;
+      transform: rotate(35deg);
+      border-radius: 1px;
+    }
+
     .diagnosis-root .danger-btn {
       color: var(--destructive-foreground);
       border-color: transparent;
@@ -1125,6 +1170,12 @@
 
       .diagnosis-root .hero-actions .primary-btn,
 .diagnosis-root .hero-actions .secondary-btn {
+        width: 100%;
+      }
+
+      .diagnosis-root .result-actions .primary-btn,
+.diagnosis-root .result-actions .secondary-btn,
+.diagnosis-root .result-actions .ghost-btn {
         width: 100%;
       }
     }

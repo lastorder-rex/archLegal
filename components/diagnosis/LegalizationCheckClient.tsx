@@ -1,10 +1,51 @@
 'use client';
 
 import Image from 'next/image';
+import Script from 'next/script';
 import { Moon, Sun } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ConsultationModal } from '@/components/landing/ConsultationModal';
+
+type KakaoShareTemplate = {
+  objectType: 'feed';
+  content: {
+    title: string;
+    description: string;
+    imageUrl: string;
+    imageWidth: number;
+    imageHeight: number;
+    link: {
+      mobileWebUrl: string;
+      webUrl: string;
+    };
+  };
+  buttons: Array<{
+    title: string;
+    link: {
+      mobileWebUrl: string;
+      webUrl: string;
+    };
+  }>;
+};
+
+declare global {
+  interface Window {
+    Kakao?: {
+      init: (key: string) => void;
+      isInitialized: () => boolean;
+      Share?: {
+        sendDefault: (template: KakaoShareTemplate) => void;
+      };
+    };
+  }
+}
+
+const KAKAO_JAVASCRIPT_KEY = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY;
+const DIAGNOSIS_SHARE_TITLE = '1분 양성화 자가진단';
+const DIAGNOSIS_SHARE_DESCRIPTION = '우리 건물도 특정건축물 특별조치법 대상인지 확인해보세요.';
+const DIAGNOSIS_SHARE_ORIGIN = 'https://www.archlegal.co.kr';
+const DIAGNOSIS_SHARE_IMAGE_PATH = '/kakao_b.png';
 
 type DiagnosisAnswer = {
   questionId: string;
@@ -81,6 +122,14 @@ function ResultText({ text }: { text: string }) {
   return <pre className="result-text">{text}</pre>;
 }
 
+function KakaoTalkIcon() {
+  return (
+    <span className="kakao-talk-icon" aria-hidden="true">
+      TALK
+    </span>
+  );
+}
+
 export function LegalizationCheckClient() {
   const [view, setView] = useState<View>('landing');
   const [answers, setAnswers] = useState<DiagnosisAnswer[]>([]);
@@ -96,6 +145,14 @@ export function LegalizationCheckClient() {
   const [consultationInitialMessage, setConsultationInitialMessage] = useState('');
 
   const rootClassName = useMemo(() => `diagnosis-root${isDark ? ' dark-mode' : ''}`, [isDark]);
+
+  const initializeKakaoSdk = () => {
+    if (!KAKAO_JAVASCRIPT_KEY || !window.Kakao || window.Kakao.isInitialized()) {
+      return;
+    }
+
+    window.Kakao.init(KAKAO_JAVASCRIPT_KEY);
+  };
 
   useEffect(() => {
     if (!toast) {
@@ -177,9 +234,9 @@ export function LegalizationCheckClient() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const scrollToInfo = () => {
-    document.getElementById('info-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  // const scrollToInfo = () => {
+  //   document.getElementById('info-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // };
 
   const jumpToContact = () => {
     if (view === 'result') {
@@ -227,6 +284,70 @@ export function LegalizationCheckClient() {
     }
   };
 
+  const fallbackShareDiagnosisLink = async (shareUrl: string) => {
+    const shareData = {
+      title: DIAGNOSIS_SHARE_TITLE,
+      text: DIAGNOSIS_SHARE_DESCRIPTION,
+      url: shareUrl
+    };
+
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareUrl);
+    setToast('자가진단 링크가 복사되었습니다.');
+  };
+
+  const shareDiagnosisLink = async () => {
+    const shareUrl = `${DIAGNOSIS_SHARE_ORIGIN}/check`;
+    const shareImageUrl = `${DIAGNOSIS_SHARE_ORIGIN}${DIAGNOSIS_SHARE_IMAGE_PATH}`;
+
+    try {
+      initializeKakaoSdk();
+
+      if (window.Kakao?.Share && window.Kakao.isInitialized()) {
+        window.Kakao.Share.sendDefault({
+          objectType: 'feed',
+          content: {
+            title: DIAGNOSIS_SHARE_TITLE,
+            description: DIAGNOSIS_SHARE_DESCRIPTION,
+            imageUrl: shareImageUrl,
+            imageWidth: 800,
+            imageHeight: 800,
+            link: {
+              mobileWebUrl: shareUrl,
+              webUrl: shareUrl
+            }
+          },
+          buttons: [
+            {
+              title: '자가진단 시작하기',
+              link: {
+                mobileWebUrl: shareUrl,
+                webUrl: shareUrl
+              }
+            }
+          ]
+        });
+        return;
+      }
+
+      await fallbackShareDiagnosisLink(shareUrl);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
+
+      try {
+        await fallbackShareDiagnosisLink(shareUrl);
+      } catch {
+        setToast('공유를 지원하지 않는 브라우저입니다. 주소창의 링크를 복사해주세요.');
+      }
+    }
+  };
+
   const openConsultation = () => {
     if (copyText) {
       window.sessionStorage.setItem('legalizationDiagnosisSummary', copyText);
@@ -239,6 +360,13 @@ export function LegalizationCheckClient() {
 
   return (
     <div className={rootClassName}>
+      {KAKAO_JAVASCRIPT_KEY ? (
+        <Script
+          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.5/kakao.min.js"
+          strategy="afterInteractive"
+          onLoad={initializeKakaoSdk}
+        />
+      ) : null}
       <div className="app-shell">
         <header className="topbar">
           <div className="brand">
@@ -288,11 +416,17 @@ export function LegalizationCheckClient() {
                   </p>
                   <div className="hero-actions">
                     <button className="primary-btn" type="button" onClick={startDiagnosis}>
-                      자가진단 시작하기 -&gt;
+                      자가진단 시작하기
                     </button>
+                    <button className="secondary-btn share-btn" type="button" onClick={shareDiagnosisLink}>
+                      <KakaoTalkIcon />
+                      자가진단 공유하기
+                    </button>
+                    {/*
                     <button className="secondary-btn" type="button" onClick={scrollToInfo}>
                       대상 요건 보기
                     </button>
+                    */}
                   </div>
                 </div>
                 <div className="metric-row" aria-label="핵심 조건">
@@ -477,6 +611,10 @@ export function LegalizationCheckClient() {
                 <div className="result-actions">
                   <button className="primary-btn" type="button" onClick={openConsultation}>
                     무료상담 신청하기
+                  </button>
+                  <button className="secondary-btn share-btn" type="button" onClick={shareDiagnosisLink}>
+                    <KakaoTalkIcon />
+                    이 자가진단 링크 공유하기
                   </button>
                   <button className="ghost-btn" type="button" onClick={restart}>
                     다시 진단하기
