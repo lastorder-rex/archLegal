@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import Script from 'next/script';
 import { Moon, Sun } from 'lucide-react';
 import type { CSSProperties } from 'react';
@@ -368,7 +369,7 @@ export function LegalizationCheckClient() {
       ) : null}
       <div className="app-shell">
         <header className="topbar">
-          <div className="brand">
+          <Link href="/" className="brand" aria-label="양성화.com 홈페이지로 이동">
             <div className="brand-mark">
               <Image src="/docu/archlegal-fa-p-transparent.png" alt="ArchLegal" width={30} height={30} />
             </div>
@@ -376,7 +377,7 @@ export function LegalizationCheckClient() {
               <strong>양성화.com</strong>
               <span>특정건축물 정리에 관한 특별조치법 자가진단</span>
             </div>
-          </div>
+          </Link>
           <div className="top-actions">
             <button
               className="ghost-btn theme-toggle-btn"
