@@ -15,17 +15,39 @@ export function CopyProtection() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // 관리자 페이지는 복사 보호 제외
-    const isAdminPage = pathname?.startsWith('/admin');
-    if (isAdminPage) return;
+    // 관리자/인증 페이지와 입력 화면에서는 복사 보호 제외
+    const isExcludedPage =
+      pathname?.startsWith('/admin') ||
+      pathname?.startsWith('/supercore') ||
+      pathname?.startsWith('/auth') ||
+      pathname === '/login' ||
+      pathname === '/signup';
+    if (isExcludedPage) return;
+
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) {
+        return false;
+      }
+
+      return Boolean(
+        target.closest('input, textarea, select, [contenteditable="true"]')
+      );
+    };
 
     const blockEvent = (e: Event) => {
+      if (isEditableTarget(e.target)) {
+        return;
+      }
       e.preventDefault();
       return false;
     };
 
     // 복사/붙여넣기 키보드 단축키 방지
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target) || typeof e.key !== 'string') {
+        return;
+      }
+
       const key = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'x', 'v'].includes(key)) {
         e.preventDefault();

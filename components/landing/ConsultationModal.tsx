@@ -7,16 +7,20 @@ import type { User } from '@supabase/supabase-js';
 import { X } from 'lucide-react';
 import ConsultationForm from '@/components/consultation/ConsultationForm';
 import type { UserProfile } from '@/types/profile';
+import type { AddressSearchResult } from '@/lib/validations/consultation';
 import { CTAButton } from '@/components/ui/cta-button';
+import { getKakaoOAuthOptions } from '@/lib/auth/oauth';
 
 interface ConsultationModalProps {
   open: boolean;
   onClose: () => void;
   nextPath?: string;
   initialMessage?: string;
+  initialAddress?: AddressSearchResult | null;
+  initialAddressDetail?: string;
 }
 
-export function ConsultationModal({ open, onClose, nextPath = '/', initialMessage = '' }: ConsultationModalProps) {
+export function ConsultationModal({ open, onClose, nextPath = '/', initialMessage = '', initialAddress, initialAddressDetail }: ConsultationModalProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,29 +83,11 @@ export function ConsultationModal({ open, onClose, nextPath = '/', initialMessag
 
   const handleLogin = useCallback(async () => {
     setLoading(true);
-    const origin =
-      process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-
-    const desiredNext = nextPath;
-    const encodedNext = encodeURIComponent(desiredNext);
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
-        options: {
-          redirectTo: `${cleanOrigin}/auth/callback?next=${encodedNext}`,
-          queryParams: {
-            scope: [
-              'account_email',
-              'phone_number',
-              'name',
-              'birthday',
-              'birthyear'
-            ].join(' '),
-            prompt: 'consent'
-          }
-        }
+        options: getKakaoOAuthOptions(nextPath)
       });
 
       if (error) {
@@ -252,6 +238,8 @@ export function ConsultationModal({ open, onClose, nextPath = '/', initialMessag
                           profile={profile}
                           onCancel={onClose}
                           initialMessage={initialMessage}
+                          initialAddress={initialAddress}
+                          initialAddressDetail={initialAddressDetail}
                         />
                       </div>
                     </div>

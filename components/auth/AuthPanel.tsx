@@ -11,13 +11,16 @@ import { handleUserLogout } from '@/lib/auth/logout';
 import { Input } from '@/components/ui/input';
 import { sanitizeRedirectPath } from '@/lib/utils/navigation';
 import { usePasswordLogin } from '@/components/auth/hooks/usePasswordLogin';
+import { getKakaoOAuthOptions } from '@/lib/auth/oauth';
+import { getAuthErrorMessage } from '@/lib/auth/errors';
 
 type Props = {
   sessionUser: User | null;
   profile: UserProfile | null;
+  authError?: string | null;
 };
 
-export default function AuthPanel({ sessionUser, profile }: Props) {
+export default function AuthPanel({ sessionUser, profile, authError }: Props) {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -27,6 +30,9 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
     []
   );
   const redirectParam = searchParams.get('redirect');
+  const authErrorMessage = getAuthErrorMessage(
+    authError ?? searchParams.get('auth_error') ?? searchParams.get('error')
+  );
   const redirectPath = useMemo(
     () => sanitizeRedirectPath(redirectParam, '/mypage'),
     [redirectParam]
@@ -43,25 +49,10 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
   } = usePasswordLogin({ redirectPath });
   const handleSignIn = useCallback(async () => {
     setLoading(true);
-    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-    const encodedNext = encodeURIComponent(redirectPath);
 
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
-      options: {
-        redirectTo: `${cleanOrigin}/auth/callback?next=${encodedNext}`,
-        queryParams: {
-          scope: [
-            'account_email',
-            'phone_number',
-            'name',
-            'birthday',
-            'birthyear'
-          ].join(' '),
-          prompt: 'consent'
-        }
-      }
+      options: getKakaoOAuthOptions(redirectPath)
     });
   }, [redirectPath, supabase]);
 
@@ -131,6 +122,11 @@ export default function AuthPanel({ sessionUser, profile }: Props) {
       <Button onClick={handleSignIn} disabled={loading}>
         {loading ? '카카오 로그인 준비중...' : '카카오 계정으로 시작하기'}
       </Button>
+      {authErrorMessage ? (
+        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {authErrorMessage}
+        </p>
+      ) : null}
       <ul className="space-y-2 text-xs text-muted-foreground">
         <li>• 최초 로그인 시 회원정보가 자동으로 저장됩니다.</li>
         <li>• 로그인 후 로그아웃을 통해 세션을 종료할 수 있습니다.</li>

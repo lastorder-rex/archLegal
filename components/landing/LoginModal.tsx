@@ -4,45 +4,39 @@ import { Dialog, Transition } from '@headlessui/react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { CTAButton } from '../ui/cta-button';
+import { getKakaoOAuthOptions } from '@/lib/auth/oauth';
+import { getAuthErrorMessage } from '@/lib/auth/errors';
 
 interface LoginModalProps {
   open: boolean;
   onClose: () => void;
   nextPath?: string;
+  authError?: string | null;
 }
 
-export function LoginModal({ open, onClose, nextPath }: LoginModalProps) {
+function getCurrentPathForOAuthRedirect() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('auth_error');
+  return `${url.pathname}${url.search}` || '/';
+}
+
+export function LoginModal({ open, onClose, nextPath, authError }: LoginModalProps) {
   const supabase = useMemo(() => createClientComponentClient(), []);
   const [loading, setLoading] = useState(false);
+  const authErrorMessage = getAuthErrorMessage(authError);
 
   const handleLogin = useCallback(async () => {
     setLoading(true);
-    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-
     const desiredNext =
       nextPath ??
       (typeof window !== 'undefined'
-        ? `${window.location.pathname}${window.location.search}` || '/'
+        ? getCurrentPathForOAuthRedirect()
         : '/');
-    const encodedNext = encodeURIComponent(desiredNext);
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
-        options: {
-          redirectTo: `${cleanOrigin}/auth/callback?next=${encodedNext}`,
-          queryParams: {
-            scope: [
-              'account_email',
-              'phone_number',
-              'name',
-              'birthday',
-              'birthyear'
-            ].join(' '),
-            prompt: 'consent'
-          }
-        }
+        options: getKakaoOAuthOptions(desiredNext)
       });
 
       if (error) {
@@ -88,6 +82,11 @@ export function LoginModal({ open, onClose, nextPath }: LoginModalProps) {
                 </Dialog.Description>
 
                 <div className="mt-6 space-y-3">
+                  {authErrorMessage ? (
+                    <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                      {authErrorMessage}
+                    </p>
+                  ) : null}
                   <CTAButton
                     className="w-full bg-[#ffeb00] text-black hover:bg-[#f5dc00] hover:text-black focus-visible:ring-[#ffeb00]"
                     onClick={handleLogin}

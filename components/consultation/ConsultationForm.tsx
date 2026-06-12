@@ -31,13 +31,15 @@ interface ConsultationFormProps {
   profile: UserProfile;
   onCancel?: () => void;
   initialMessage?: string;
+  initialAddress?: AddressSearchResult | null;
+  initialAddressDetail?: string;
 }
 
 interface FormErrors {
   [key: string]: string;
 }
 
-export default function ConsultationForm({ user, profile, onCancel, initialMessage = '' }: ConsultationFormProps) {
+export default function ConsultationForm({ user, profile, onCancel, initialMessage = '', initialAddress, initialAddressDetail }: ConsultationFormProps) {
   const supabase = createClientComponentClient();
   const sanitizedInitialMessage = useMemo(
     () => filterMessageInput(initialMessage).slice(0, 1000),
@@ -83,6 +85,15 @@ export default function ConsultationForm({ user, profile, onCancel, initialMessa
       };
     });
   }, [sanitizedInitialMessage]);
+
+  useEffect(() => {
+    if (!initialAddress) return;
+    void handleAddressSelect(initialAddress);
+    if (initialAddressDetail) {
+      setFormData(prev => ({ ...prev, addressDetail: initialAddressDetail.slice(0, 100) }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // UI state
   const [errors, setErrors] = useState<FormErrors>({});

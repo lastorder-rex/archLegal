@@ -47,14 +47,17 @@ export async function GET(request: Request) {
   }
 
   const supabase = createRouteHandlerClient({ cookies });
-  await supabase.auth.exchangeCodeForSession(code);
+  const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
-  const { data: sessionData } = await supabase.auth.getSession();
+  if (exchangeError) {
+    console.error('Failed to exchange OAuth code for session', exchangeError);
+    const fallbackUrl = new URL(safeRedirectPath, requestUrl.origin);
+    fallbackUrl.searchParams.set('auth_error', exchangeError.code ?? 'oauth_exchange_failed');
+    return NextResponse.redirect(fallbackUrl);
+  }
+
   const providerAccessToken = sessionData.session?.provider_token ?? null;
-
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const user = sessionData.session?.user ?? null;
 
   if (user) {
     const metadata = (user.user_metadata ?? null) as KakaoMetadata | null;

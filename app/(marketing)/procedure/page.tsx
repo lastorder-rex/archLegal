@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { HouseHeart } from 'lucide-react';
 
@@ -15,9 +16,10 @@ export default function ProcedurePage() {
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
           <Link
             href="/"
-            className="text-sm font-semibold uppercase tracking-[0.25em] text-muted-foreground transition hover:text-primary"
+            className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-muted-foreground transition hover:text-primary"
           >
-            양성화.com
+            <Image src="/docu/logo.png" alt="" width={28} height={28} aria-hidden="true" />
+            <span>양성화.com</span>
           </Link>
           <nav className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
             <Link

@@ -6,7 +6,11 @@ import { isUserSessionExpired } from '@/lib/auth/user-session';
 
 export const revalidate = 0;
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies });
   const {
@@ -16,6 +20,8 @@ export default async function LoginPage() {
   const activeSession = isUserSessionExpired(cookieStore) ? null : session;
 
   let profile: UserProfile | null = null;
+  const authErrorParam = searchParams?.auth_error ?? searchParams?.error;
+  const authError = Array.isArray(authErrorParam) ? authErrorParam[0] : authErrorParam;
 
   if (activeSession?.user) {
     const { data: profileRows } = await supabase
@@ -54,7 +60,11 @@ export default async function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-16">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lg">
-        <AuthPanel sessionUser={activeSession?.user ?? null} profile={profile} />
+        <AuthPanel
+          sessionUser={activeSession?.user ?? null}
+          profile={profile}
+          authError={authError}
+        />
       </div>
     </main>
   );

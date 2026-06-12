@@ -8,7 +8,7 @@ const storageKey = 'ui-theme';
 
 type Theme = 'light' | 'dark';
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
@@ -38,7 +38,8 @@ export function ThemeToggle() {
       aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
       className={cn(
         'inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/80 text-foreground shadow-sm transition',
-        'hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+        'hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        className
       )}
     >
       <span className="sr-only">테마 전환</span>

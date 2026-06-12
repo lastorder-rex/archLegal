@@ -7,6 +7,7 @@ import { Moon, Sun } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ConsultationModal } from '@/components/landing/ConsultationModal';
+import { getAuthErrorMessage } from '@/lib/auth/errors';
 
 type KakaoShareTemplate = {
   objectType: 'feed';
@@ -165,11 +166,26 @@ export function LegalizationCheckClient() {
   }, [toast]);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get('consultation') === 'open') {
+    const url = new URL(window.location.href);
+    let shouldCleanUrl = false;
+
+    const authError = url.searchParams.get('auth_error');
+    if (authError) {
+      setToast(getAuthErrorMessage(authError) ?? '로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      url.searchParams.delete('auth_error');
+      shouldCleanUrl = true;
+    }
+
+    if (url.searchParams.get('consultation') === 'open') {
       setConsultationInitialMessage(window.sessionStorage.getItem('legalizationDiagnosisSummary') || '');
       setConsultationOpen(true);
-      window.history.replaceState(null, '', window.location.pathname);
+      url.searchParams.delete('consultation');
+      shouldCleanUrl = true;
+    }
+
+    if (shouldCleanUrl) {
+      const cleanUrl = `${url.pathname}${url.search}${url.hash}`;
+      window.history.replaceState(null, '', cleanUrl || '/');
     }
   }, []);
 

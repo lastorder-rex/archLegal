@@ -155,8 +155,13 @@ const renderTimelineIcon = (type: TimelineIconKey) => {
 
 export function LandingPage() {
   const [isModalOpen, setModalOpen] = useState(false);
+  const [consultationNextPath, setConsultationNextPath] = useState('/?consultation=open');
+  const [consultationInitialMessage, setConsultationInitialMessage] = useState('');
+  const [consultationInitialAddress, setConsultationInitialAddress] = useState<import('@/lib/validations/consultation').AddressSearchResult | null>(null);
+  const [consultationInitialAddressDetail, setConsultationInitialAddressDetail] = useState('');
   const [isAboutModalOpen, setAboutModalOpen] = useState(false);
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   // TODO(daily-notice): Remove once service notice popup is no longer needed.
   const [isNoticeOpen, setNoticeOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
@@ -279,6 +284,52 @@ export function LandingPage() {
     await handleUserLogout(router);
   }, [router]);
 
+  const openConsultationModal = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      setConsultationNextPath(`${window.location.pathname}?consultation=open`);
+    }
+    setModalOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    let shouldCleanUrl = false;
+
+    const authErrorCode = url.searchParams.get('auth_error');
+    if (authErrorCode) {
+      setAuthError(authErrorCode);
+      setLoginModalOpen(true);
+      url.searchParams.delete('auth_error');
+      shouldCleanUrl = true;
+    }
+
+    if (url.searchParams.get('consultation') === 'open') {
+      setConsultationNextPath(`${url.pathname}?consultation=open`);
+      try {
+        const stored = window.sessionStorage.getItem('calc_consultation_prefill');
+        if (stored) {
+          const prefill = JSON.parse(stored) as { address?: unknown; addressDetail?: string; message?: string };
+          if (prefill.message) setConsultationInitialMessage(prefill.message);
+          if (prefill.address) setConsultationInitialAddress(prefill.address as import('@/lib/validations/consultation').AddressSearchResult);
+          if (prefill.addressDetail) setConsultationInitialAddressDetail(prefill.addressDetail);
+          window.sessionStorage.removeItem('calc_consultation_prefill');
+        }
+      } catch {}
+      setModalOpen(true);
+      url.searchParams.delete('consultation');
+      shouldCleanUrl = true;
+    }
+
+    if (shouldCleanUrl) {
+      const cleanUrl = `${url.pathname}${url.search}${url.hash}`;
+      window.history.replaceState(null, '', cleanUrl || '/');
+    }
+  }, []);
+
   useEffect(() => {
     // TODO(daily-notice): Remove once service notice popup is no longer needed.
     if (typeof window === 'undefined' || !isDailyNoticeEnabled) {
@@ -328,8 +379,22 @@ export function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground transition-colors duration-200">
-      <ConsultationModal open={isModalOpen} onClose={() => setModalOpen(false)} />
-      <LoginModal open={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <ConsultationModal
+        open={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        nextPath={consultationNextPath}
+        initialMessage={consultationInitialMessage}
+        initialAddress={consultationInitialAddress}
+        initialAddressDetail={consultationInitialAddressDetail}
+      />
+      <LoginModal
+        open={isLoginModalOpen}
+        onClose={() => {
+          setLoginModalOpen(false);
+          setAuthError(null);
+        }}
+        authError={authError}
+      />
       <AboutModal open={isAboutModalOpen} onClose={() => setAboutModalOpen(false)} faqs={fullFaqs} />
       {isNoticeOpen ? (
         // TODO(daily-notice): Remove once service notice popup is no longer needed.
@@ -578,7 +643,7 @@ export function LandingPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            setModalOpen(true);
+                            openConsultationModal();
                             setNavOpen(false);
                           }}
                           className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
@@ -617,7 +682,7 @@ export function LandingPage() {
               지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
-              <CTAButton className="sm:w-auto" onClick={() => setModalOpen(true)}>
+              <CTAButton className="sm:w-auto" onClick={openConsultationModal}>
                 무료 상담 신청
               </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
@@ -810,7 +875,7 @@ export function LandingPage() {
                 <CTAButton
                   tone="secondary"
                   className="sm:w-auto hover:bg-[#ffeb00] hover:text-black focus-visible:ring-[#ffeb00]"
-                  onClick={() => setModalOpen(true)}
+                  onClick={openConsultationModal}
                 >
                   문의 남기기
                 </CTAButton>

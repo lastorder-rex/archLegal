@@ -7,20 +7,29 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 // Building registry API response types
 interface BuildingTitleItem {
   mainPurpsCdNm: string;    // 주용도코드명
-  totArea: string;          // 연면적
-  platArea: string;         // 대지면적
-  groundFloorCnt: string;   // 지상층수
-  ugrndFloorCnt?: string;   // 지하층수
-  hhldCnt?: string;         // 세대수
-  fmlyNum?: string;         // 가구수
-  mainBldCnt?: string;      // 주건축물수
-  atchBldCnt?: string;      // 부속건축물수
+  totArea: string | number; // 연면적
+  platArea: string | number; // 대지면적
+  groundFloorCnt?: string | number; // 지상층수 (legacy)
+  grndFlrCnt?: string | number; // 지상층수 (HUB)
+  ugrndFloorCnt?: string | number; // 지하층수
+  ugrndFlrCnt?: string | number; // 지하층수 (HUB)
+  hhldCnt?: string | number;    // 세대수
+  fmlyNum?: string | number;    // 가구수 (legacy)
+  fmlyCnt?: string | number;    // 가구수 (HUB)
+  mainBldCnt?: string | number; // 주건축물수
+  atchBldCnt?: string | number; // 부속건축물수
   platPlc?: string;         // 대지위치
   sigunguCd: string;        // 시군구코드
   bjdongCd: string;         // 법정동코드
   platGbCd: string;         // 대지구분코드
   bun: string;              // 번
   ji: string;               // 지
+  etcPurps?: string;
+  etcPurpsCdNm?: string;
+  strctCdNm?: string;
+  etcStrct?: string;
+  roofCdNm?: string;
+  etcRoof?: string;
 }
 
 interface BuildingApiResponse {
@@ -30,10 +39,10 @@ interface BuildingApiResponse {
       resultMsg: string;
     };
     body: {
-      items: BuildingTitleItem[];
-      numOfRows: number;
-      pageNo: number;
-      totalCount: number;
+      items?: BuildingTitleItem[] | { item?: BuildingTitleItem | BuildingTitleItem[] };
+      numOfRows: number | string;
+      pageNo: number | string;
+      totalCount: number | string;
     };
   };
 }
@@ -208,8 +217,8 @@ export async function POST(request: NextRequest) {
     // STEP 1: Try National Building Registry API first
     if (apiKey) {
       try {
-        // Build API URL for 건축물대장 총괄표제부 조회
-        const buildingUrl = new URL('http://apis.data.go.kr/1613000/BldRgstService_v2/getBrTitleInfo');
+        // Build API URL for 건축물대장 표제부 조회
+        const buildingUrl = new URL('https://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleInfo');
         buildingUrl.searchParams.set('serviceKey', apiKey);
         buildingUrl.searchParams.set('sigunguCd', sigunguCd);
         buildingUrl.searchParams.set('bjdongCd', bjdongCd);
@@ -238,29 +247,41 @@ export async function POST(request: NextRequest) {
           const responseText = await response.text();
           const data: BuildingApiResponse = JSON.parse(responseText);
 
+          const rawItems = data.response.body.items;
+          const apiItems = Array.isArray(rawItems)
+            ? rawItems
+            : Array.isArray(rawItems?.item)
+              ? rawItems.item
+              : rawItems?.item
+                ? [rawItems.item]
+                : [];
+
           // Check if API returned valid data
           if (
             data.response.header.resultCode === '00' &&
-            data.response.body.items &&
-            data.response.body.items.length > 0
+            apiItems.length > 0
           ) {
-            const building = data.response.body.items[0];
+            const building = apiItems[0];
             const secondaryUseFromApi = (building as any)?.etcPurpsCdNm
               || (building as any)?.etcPurps
               || null;
 
             // Parse and validate numeric fields
-            const parseNumeric = (value: string | undefined): number | null => {
-              if (!value || value === '') return null;
-              const parsed = parseFloat(value);
+            const parseNumeric = (value: string | number | undefined): number | null => {
+              if (value === undefined || value === null || value === '') return null;
+              const parsed = parseFloat(String(value));
               return isNaN(parsed) ? null : parsed;
             };
 
-            const parseInt32 = (value: string | undefined): number | null => {
-              if (!value || value === '') return null;
-              const parsed = parseInt(value, 10);
+            const parseInt32 = (value: string | number | undefined): number | null => {
+              if (value === undefined || value === null || value === '') return null;
+              const parsed = parseInt(String(value), 10);
               return isNaN(parsed) ? null : parsed;
             };
+
+            const groundFloorCount = building.groundFloorCnt ?? building.grndFlrCnt;
+            const undergroundFloorCount = building.ugrndFloorCnt ?? building.ugrndFlrCnt;
+            const familyCount = building.fmlyNum ?? building.fmlyCnt;
 
             // Successfully got data from National API
             const buildingInfo = {
@@ -268,10 +289,10 @@ export async function POST(request: NextRequest) {
               secondaryUse: secondaryUseFromApi,
               totArea: parseNumeric(building.totArea),
               platArea: parseNumeric(building.platArea),
-              groundFloorCnt: parseInt32(building.groundFloorCnt),
-              ugrndFloorCnt: parseInt32(building.ugrndFloorCnt),
+              groundFloorCnt: parseInt32(groundFloorCount),
+              ugrndFloorCnt: parseInt32(undergroundFloorCount),
               hhldCnt: parseInt32(building.hhldCnt),
-              fmlyNum: parseInt32(building.fmlyNum),
+              fmlyNum: parseInt32(familyCount),
               mainBldCnt: parseInt32(building.mainBldCnt),
               atchBldCnt: parseInt32(building.atchBldCnt),
               platPlc: building.platPlc || null,
@@ -282,6 +303,10 @@ export async function POST(request: NextRequest) {
                 bun: building.bun,
                 ji: building.ji
               },
+              structure: building.strctCdNm || null,
+              roof: building.roofCdNm || null,
+              etcStructure: building.etcStrct || null,
+              etcRoof: building.etcRoof || null,
               rawData: building,
               source: 'national_api' // Indicate data source
             };
@@ -294,8 +319,8 @@ export async function POST(request: NextRequest) {
                 totalArea: parseNumeric(building.totArea),
                 plotArea: parseNumeric(building.platArea),
                 floors: {
-                  ground: parseInt32(building.groundFloorCnt),
-                  underground: parseInt32(building.ugrndFloorCnt)
+                  ground: parseInt32(groundFloorCount),
+                  underground: parseInt32(undergroundFloorCount)
                 },
                 households: parseInt32(building.hhldCnt)
               }

@@ -19,39 +19,6 @@ const mockAddress = {
   },
 };
 
-const mockBuildingResponse = {
-  building: {
-    mainPurpsCdNm: '업무시설',
-    totArea: 1000,
-    platArea: 800,
-    groundFloorCnt: 10,
-    ugrndFloorCnt: 2,
-    hhldCnt: null,
-    fmlyNum: null,
-    mainBldCnt: 1,
-    atchBldCnt: 0,
-    platPlc: '서울특별시 종로구',
-    addressInfo: {
-      sigunguCd: '11110',
-      bjdongCd: '10300',
-      platGbCd: '0',
-      bun: '001',
-      ji: '0000',
-    },
-    rawData: {},
-  },
-  summary: {
-    mainPurpose: '업무시설',
-    totalArea: 1000,
-    plotArea: 800,
-    floors: {
-      ground: 10,
-      underground: 2,
-    },
-    households: null,
-  },
-};
-
 const baseUser = {
   id: 'user-1',
   email: 'user@example.com',
@@ -215,13 +182,6 @@ describe('ConsultationForm', () => {
     const fetchMock = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString();
 
-      if (url.endsWith('/api/building/title')) {
-        return {
-          ok: true,
-          json: async () => mockBuildingResponse,
-        } as Response;
-      }
-
       if (url.endsWith('/api/consultations') && init?.method === 'POST') {
         return {
           ok: true,
@@ -240,13 +200,6 @@ describe('ConsultationForm', () => {
     render(<ConsultationForm user={baseUser} profile={baseProfile} />);
 
     fireEvent.click(screen.getByTestId('select-address'));
-
-    await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/building/title',
-        expect.objectContaining({ method: 'POST' })
-      )
-    );
 
     await waitFor(() =>
       expect(screen.getByTestId('address-input')).toHaveValue(mockAddress.roadAddr)
@@ -274,13 +227,6 @@ describe('ConsultationForm', () => {
     const fetchMock = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString();
 
-      if (url.endsWith('/api/building/title')) {
-        return {
-          ok: true,
-          json: async () => mockBuildingResponse,
-        } as Response;
-      }
-
       if (url.endsWith('/api/consultations') && init?.method === 'POST') {
         return {
           ok: false,
@@ -302,10 +248,7 @@ describe('ConsultationForm', () => {
     fireEvent.click(screen.getByTestId('select-address'));
 
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/building/title',
-        expect.objectContaining({ method: 'POST' })
-      )
+      expect(screen.getByTestId('address-input')).toHaveValue(mockAddress.roadAddr)
     );
 
     fireEvent.change(screen.getByTestId('message-input'), {
