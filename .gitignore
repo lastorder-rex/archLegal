@@ -17,3 +17,4 @@ supabase/.temp/
 
 # Claude settings (contains sensitive tokens)
 .claude/settings.local.json
+.vercel
