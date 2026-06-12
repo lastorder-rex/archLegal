@@ -261,20 +261,25 @@ function selectUnitAreas(items: UnitItem[], dongName?: string, hoName?: string) 
   ));
 }
 
-async function fetchLandPrice(pnu: string) {
+type FetchLandPriceResult =
+  | { ok: true; data: { pnu: string; standardYear: number | null; standardMonth: number | null; landPriceKrwPerM2: number | null; address: string | null; raw: any } }
+  | { ok: false; reason: string };
+
+async function fetchLandPrice(pnu: string): Promise<FetchLandPriceResult> {
   const apiKey = process.env.VWORLD_API_KEY;
   if (!apiKey) {
     console.error('[VWorld] VWORLD_API_KEY is not set');
-    return null;
+    return { ok: false, reason: 'API 키 미설정 (VWORLD_API_KEY)' };
   }
 
   const domain = process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3002';
+  const resolvedDomain = domain.replace(/^https?:\/\//, '');
   const url = new URL('https://api.vworld.kr/req/data');
   url.searchParams.set('service', 'data');
   url.searchParams.set('request', 'GetFeature');
   url.searchParams.set('data', 'LP_PA_CBND_BUBUN');
   url.searchParams.set('key', apiKey);
-  url.searchParams.set('domain', domain.replace(/^https?:\/\//, ''));
+  url.searchParams.set('domain', resolvedDomain);
   url.searchParams.set('attrFilter', `pnu:=:${pnu}`);
   url.searchParams.set('format', 'json');
   url.searchParams.set('size', '10');
@@ -284,26 +289,33 @@ async function fetchLandPrice(pnu: string) {
   try {
     data = await fetchJson<any>(url);
   } catch (err) {
-    console.error('[VWorld] fetch failed', { domain: domain.replace(/^https?:\/\//, ''), pnu, err });
-    return null;
+    const reason = `VWorld 요청 실패 (domain=${resolvedDomain}, ${err instanceof Error ? err.message : err})`;
+    console.error('[VWorld] fetch failed', { resolvedDomain, pnu, err });
+    return { ok: false, reason };
   }
+
   if (data?.response?.status !== 'OK') {
-    console.error('[VWorld] API error', { status: data?.response?.status, domain: url.searchParams.get('domain') });
-    return null;
+    const reason = `VWorld 응답 오류 (status=${data?.response?.status}, domain=${resolvedDomain})`;
+    console.error('[VWorld] API error', { status: data?.response?.status, resolvedDomain });
+    return { ok: false, reason };
   }
+
   const feature = data?.response?.result?.featureCollection?.features?.[0];
   if (!feature?.properties?.jiga) {
     console.error('[VWorld] No jiga found for PNU', pnu);
-    return null;
+    return { ok: false, reason: `해당 필지 공시지가 없음 (PNU=${pnu})` };
   }
 
   return {
-    pnu,
-    standardYear: parseInteger(feature.properties.gosi_year),
-    standardMonth: parseInteger(feature.properties.gosi_month),
-    landPriceKrwPerM2: parseInteger(feature.properties.jiga),
-    address: feature.properties.addr || null,
-    raw: feature.properties
+    ok: true,
+    data: {
+      pnu,
+      standardYear: parseInteger(feature.properties.gosi_year),
+      standardMonth: parseInteger(feature.properties.gosi_month),
+      landPriceKrwPerM2: parseInteger(feature.properties.jiga),
+      address: feature.properties.addr || null,
+      raw: feature.properties
+    }
   };
 }
 
@@ -554,11 +566,13 @@ export async function prepareEnforcementFine(input: PrepareInput) {
   const address = await resolveAddress(input);
   const pnu = buildPnu(address.addressCode);
 
-  const [titleItems, unitListItems, landPrice] = await Promise.all([
+  const [titleItems, unitListItems, landPriceResult] = await Promise.all([
     fetchBuildingHub('getBrTitleInfo', address.addressCode, '50'),
     fetchBuildingHub('getBrExposInfo', address.addressCode, '200').catch(() => []),
-    fetchLandPrice(pnu).catch(() => null)
+    fetchLandPrice(pnu)
   ]);
+  const landPrice = landPriceResult.ok ? landPriceResult.data : null;
+  const landPriceFailReason = landPriceResult.ok ? null : landPriceResult.reason;
 
   if (!titleItems.length) {
     throw new Error('건축물대장 표제부 정보를 찾을 수 없습니다.');
@@ -668,7 +682,7 @@ export async function prepareEnforcementFine(input: PrepareInput) {
       pendingQuestions: adjustments.pending
     },
     warnings: [
-      ...(!landPrice ? ['VWorld 개별공시지가를 조회하지 못했습니다.'] : []),
+      ...(!landPrice ? [`VWorld 개별공시지가 조회 실패: ${landPriceFailReason || '알 수 없는 오류'}`] : []),
       ...(!structureRef ? ['구조지수 매핑이 필요합니다.'] : []),
       ...(!useRef ? ['용도지수 매핑이 필요합니다.'] : []),
       ...(!locationRef ? ['위치지수 매핑이 필요합니다.'] : []),
