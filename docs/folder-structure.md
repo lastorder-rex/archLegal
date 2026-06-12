@@ -7,11 +7,11 @@ Next.js 14 기반의 법률 상담 관리 시스템 (App Router 사용)
 - Google Drive API를 통한 파일 관리
 - TossPay 결제 시스템 연동
 - Telegram Bot API 통합
-- `양성화.com` 유입/SEO 브랜딩, 1분 양성화 자가진단, 카드뉴스 정적/동적 페이지 운영
+- `양성화.com` 유입/SEO 브랜딩, 1분 양성화 자가진단, 이행강제금 계산기, 카드뉴스 정적/동적 페이지 운영
 
 ---
 
-## 최근 배포 반영 사항 (2026-05-28 기준)
+## 최근 배포 반영 사항 (2026-06-12 기준)
 - **양성화.com 브랜딩/SEO 메타**: `app/layout.tsx`, `app/(marketing)/*/page.tsx`, `components/layout/SiteFooter.tsx`
   - 전역 title/description/OG/Twitter 메타에 `양성화.com`, `양성화닷컴`, 위반건축물·불법건축물 양성화 문구 반영
   - 푸터에 `양성화.com` 연결 안내 문구 추가
@@ -20,6 +20,17 @@ Next.js 14 기반의 법률 상담 관리 시스템 (App Router 사용)
   - 메타 description/OG/title 정리
   - 복사/붙여넣기/드래그 선택 방지 스크립트 적용
   - favicon 경로: `public/docu/archlegal-fa.ico`, `public/docu/archlegal-fa-p-transparent.png`
+- **이행강제금 계산기**: `app/calc/page.tsx`, `components/enforcement-fine/EnforcementFineCalculatorClient.tsx`
+  - 로그인 필수 계산기 화면과 카카오 공유/상담 전환 흐름 구성
+  - `/api/enforcement-fine/prepare`, `/api/enforcement-fine/calculate`, 옵션 API로 기준자료 조회와 계산 수행
+  - `lib/enforcement-fine/prepare.ts`, `lib/enforcement-fine/calculate.ts`에서 외부 API 매핑과 계산식 분리
+  - `/enforcement-fine`은 `/calc`로 리다이렉트
+- **이행강제금 기준자료 DB**: `supabase/migrations/033_create_enforcement_fine_tables.sql` ~ `044_seed_additional_reduction_special_conditions.sql`
+  - 2026 시가표준액 기준가격, 구조지수, 용도지수, 위치지수, 잔가율, 위반유형, 감경/가중 조건 관리
+  - 계산 결과와 산출근거는 `enforcement_fine_estimates`에 사용자별로 저장
+- **랜딩 CTA/사이트맵**: `components/landing/LandingPage.tsx`, `public/sitemap.xml`
+  - 랜딩 상단에 `/check`와 동일한 새 탭 패턴으로 `/calc` CTA 추가
+  - sitemap에 `/calc` 대표 URL 추가
 - **자가진단 공개 URL**: `next.config.mjs`
   - `/legalization-check.html` → `/check` 영구 리다이렉트
   - `/legalization-check` → `/check` 영구 리다이렉트
@@ -71,15 +82,20 @@ app/
 │   ├── building/              # 건물 정보 조회 API
 │   ├── consultations/         # 상담 관리 API
 │   ├── debug/                 # 디버그용 API
+│   ├── diagnosis/             # 1분 자가진단 계산 API
+│   ├── enforcement-fine/      # 이행강제금 계산기 API
 │   ├── juso/                  # 주소 검색 API (국가 주소 API 연동)
 │   ├── payments/              # 결제 처리 API (TossPay)
 │   ├── upload/                # 파일 업로드 API (Google Drive)
 │   └── users/                 # 사용자 관리 API
 ├── auth/                      # 인증 페이지 (로그인, 회원가입 등)
+├── calc/                      # 이행강제금 계산기 페이지
+├── check/                     # 1분 양성화 자가진단 페이지
 ├── mypage/                    # 마이페이지
 ├── request/                   # 상담 요청 페이지
 ├── signup/                    # 회원가입 페이지
 ├── card-news/                 # 양성화 카드뉴스 페이지
+├── enforcement-fine/          # /calc 리다이렉트 라우트
 ├── supercore/                 # 관리자/슈퍼유저 페이지
 ├── upload/                    # 파일 업로드 페이지
 ├── layout.tsx                 # 루트 레이아웃 (전역 레이아웃)
@@ -94,9 +110,13 @@ app/
 - **`api/`**: 서버사이드 API 엔드포인트
   - `admin/`: 관리자 권한 검증, 통계, 사용자 관리 등
   - `consultations/`: 상담 CRUD, 상태 업데이트
+  - `diagnosis/`: 자가진단 답변 기반 결과 계산
+  - `enforcement-fine/`: 계산 준비, 최종 계산, 위반유형/구조/용도 옵션 조회
   - `upload/`: Google Drive 연동 파일 업로드
   - `payments/`: TossPay 결제 처리 및 검증
 - **`layout.tsx`**: 모든 페이지에 공통으로 적용되는 레이아웃 (헤더, 푸터, Provider 등)
+- **`check/page.tsx`**: 1분 양성화 자가진단 페이지
+- **`calc/page.tsx`**: 이행강제금 계산기 페이지
 - **`card-news/page.tsx`**: 양성화 카드뉴스 페이지. `CardNewsCarousel`과 `SiteFooter`를 조합해 구성
 - **`globals.css`**: Tailwind CSS 임포트 및 전역 스타일
 
@@ -118,6 +138,10 @@ components/
 │   ├── ConsultationForm.tsx   # 상담 신청 폼
 │   ├── FileUpload.tsx         # 파일 업로드 UI
 │   └── sections/              # 상담 폼 섹션 컴포넌트
+├── diagnosis/                 # 1분 양성화 자가진단 컴포넌트
+│   └── LegalizationCheckClient.tsx # 질문/결과/공유/상담 전환 UI
+├── enforcement-fine/          # 이행강제금 계산기 컴포넌트
+│   └── EnforcementFineCalculatorClient.tsx # 주소 조회, 계산 입력, 결과/상담 전환 UI
 ├── landing/                   # 랜딩 페이지 컴포넌트
 │   ├── LandingPage.tsx        # 메인 랜딩 페이지
 │   ├── FAQAccordion.tsx       # FAQ 아코디언
@@ -169,6 +193,12 @@ lib/
 │   ├── routes.ts              # 라우트 경로 상수
 │   ├── status.ts              # 상담 상태 상수
 │   └── config.ts              # 설정 상수
+├── diagnosis/                 # 1분 자가진단 질문/분기/결과 로직
+│   ├── legalization.ts
+│   └── __tests__/legalization.test.ts
+├── enforcement-fine/          # 이행강제금 계산기 준비/계산 로직
+│   ├── prepare.ts             # 주소/건축물대장/VWorld 조회 및 기준자료 매핑
+│   └── calculate.ts           # 이행강제금 산식, 감경/가중, 결과 저장
 ├── services/                  # 외부 서비스 통합
 │   ├── consultation-drive-service.ts  # Google Drive 연동 서비스
 │   └── upload-context.ts      # 업로드 컨텍스트 관리
@@ -208,6 +238,20 @@ lib/
 - **`telegram.ts`**:
   - 알림 전송 (상담 신청, 결제 완료 등)
   - 관리자 알림
+
+- **`diagnosis/legalization.ts`**:
+  - 1분 자가진단 질문/답변/결과 등급 정의
+  - 특별조치법 요건, 이행강제금/과태료 확인 플래그, 상담 전환 문구 생성
+
+- **`enforcement-fine/prepare.ts`**:
+  - 주소 선택값과 건축물대장 정보를 기준으로 계산 준비 데이터 생성
+  - VWorld 개별공시지가, 구조지수, 용도지수, 위치지수, 잔가율 후보 매핑
+  - 조회 실패 사유를 warning으로 반환해 운영 진단 가능하게 유지
+
+- **`enforcement-fine/calculate.ts`**:
+  - 위반유형별 건축법 제80조 산식 적용
+  - 시가표준액, 증축/대수선 비율, 감경/가중 조건, 계산 버전과 산출근거 구성
+  - 계산 결과를 Supabase `enforcement_fine_estimates`에 저장
 
 ---
 
@@ -318,10 +362,20 @@ supabase/
 ├── migrations/                # 데이터베이스 마이그레이션 파일
 │   ├── 20240101_create_users.sql
 │   ├── 20240102_create_consultations.sql
-│   └── ...
+│   ├── 033_create_enforcement_fine_tables.sql
+│   ├── 034_seed_enforcement_fine_reference_data.sql
+│   ├── 035_* ~ 042_* enforcement fine reference updates
+│   ├── 043_correct_special_condition_increase_rates.sql
+│   └── 044_seed_additional_reduction_special_conditions.sql
 ├── .temp/                     # 임시 파일 (gitignore)
 └── admin.ts                   # Supabase Admin 설정
 ```
+
+#### 이행강제금 계산기 DB 메모:
+- `033_create_enforcement_fine_tables.sql`: 기준시가, 구조/용도/위치지수, 잔가율, 보정률, 계산 결과 저장 테이블 생성
+- `034_seed_enforcement_fine_reference_data.sql`: 2026 기준 기초 데이터 시드
+- `035`~`044`: 보정률, 위반유형, 증축/대수선 비율, 감경/가중 조건, 구조/용도 인덱스 보강 및 오류 보정
+- 기준자료 테이블은 인증 사용자 조회 정책을 사용하고, `enforcement_fine_estimates`는 사용자 본인 결과만 조회/수정 가능하게 RLS 적용
 
 #### 마이그레이션 실행:
 ```bash
@@ -354,6 +408,16 @@ npm run test:e2e
 
 ### 10. `/docs` - 프로젝트 문서
 API 문서, 기능 명세, 설정 가이드 등
+
+#### 주요 문서:
+- `docs/모듈별 상세 개발정의서.md`: 모듈별 구현 요약과 주요 파일/API/DB 위치
+- `docs/folder-structure.md`: 전체 폴더 구조와 기능별 파일 위치
+- `docs/legalization-1min-diagnosis-spec.md`: 1분 양성화 자가진단 질문/답변/결과 기준
+- `docs/legalization-special-act-current.md`: 특정건축물 정리 특별조치법 기준 문서
+- `docs/enforcement-fine/README.md`: 이행강제금 계산기 문서 묶음 안내
+- `docs/enforcement-fine/spec.md`: 이행강제금 계산기 상세 개발 정의서
+- `docs/enforcement-fine/verification-cases.md`: 실제 사례 검증표
+- `docs/enforcement-fine/*.md`: 구조지수, 용도지수, 위치지수, 잔가율, 2026 시가표준액 기준자료
 
 ---
 
@@ -436,6 +500,10 @@ API 문서, 기능 명세, 설정 가이드 등
 - **공통 푸터 브랜딩**: `components/layout/SiteFooter.tsx`
 - **1분 양성화 자가진단**: `app/check/page.tsx`, `components/diagnosis/LegalizationCheckClient.tsx`, `lib/diagnosis/legalization.ts`
 - **자가진단 공개 URL**: `next.config.mjs`의 기존 자가진단 URL redirect
+- **이행강제금 계산기**: `app/calc/page.tsx`, `components/enforcement-fine/EnforcementFineCalculatorClient.tsx`, `lib/enforcement-fine/prepare.ts`, `lib/enforcement-fine/calculate.ts`
+- **이행강제금 계산기 API**: `app/api/enforcement-fine/prepare/route.ts`, `app/api/enforcement-fine/calculate/route.ts`, `app/api/enforcement-fine/violation-types/route.ts`, `app/api/enforcement-fine/structure-options/route.ts`, `app/api/enforcement-fine/use-options/route.ts`
+- **이행강제금 기준자료 DB**: `supabase/migrations/033_create_enforcement_fine_tables.sql` ~ `supabase/migrations/044_seed_additional_reduction_special_conditions.sql`
+- **계산기 문서**: `docs/enforcement-fine/README.md`, `docs/enforcement-fine/spec.md`, `docs/enforcement-fine/verification-cases.md`
 - **카드뉴스 페이지**: `app/card-news/page.tsx`, `components/card-news/CardNewsCarousel.tsx`
 - **검색엔진 파일**: `public/sitemap.xml`, `public/robots.txt`, `public/naver487c0dcb77e92d04a2a494edf158344a.html`
 

@@ -691,7 +691,12 @@ export function LandingPage() {
                 </Link>
               </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
-                <Link href="/procedure">절차 자세히 보기</Link>
+                <Link href="/calc" target="_blank" rel="noopener noreferrer">
+                  이행강제금 계산하기
+                </Link>
+              </CTAButton>
+              <CTAButton tone="secondary" className="sm:w-auto" asChild>
+                <Link href="/procedure">절차 보기</Link>
               </CTAButton>
             </div>
           </div>

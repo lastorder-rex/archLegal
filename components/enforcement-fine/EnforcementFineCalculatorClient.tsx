@@ -488,11 +488,10 @@ export function EnforcementFineCalculatorClient() {
     (!isUseChangeType || Boolean(violationUseIndexId)) &&
     !calculating;
 
-  const openLogin = () => setLoginOpen(true);
   const requireLogin = () => {
     if (session?.user) return false;
-    setErrorMessage('로그인 후 이용할 수 있습니다.');
-    openLogin();
+    setErrorMessage('');
+    setLoginOpen(true);
     return true;
   };
 
@@ -535,7 +534,6 @@ export function EnforcementFineCalculatorClient() {
   const handleUnauthorized = (error: Error & { status?: number }) => {
     if (error.status === 401) {
       setLoginOpen(true);
-      setErrorMessage('로그인 후 이용할 수 있습니다.');
       return true;
     }
     return false;
@@ -650,7 +648,7 @@ export function EnforcementFineCalculatorClient() {
     if (!preparedData) return;
 
     if (!session?.user) {
-      openLogin();
+      setLoginOpen(true);
       return;
     }
 
@@ -1028,8 +1026,8 @@ export function EnforcementFineCalculatorClient() {
                     </div>
                   ) : null}
 
-                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(180px,240px)_minmax(180px,240px)]">
-                    <div className="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2 sm:block sm:space-y-2">
+                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_100px_minmax(180px,240px)_160px]">
+                    <div className="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2 sm:block sm:space-y-2 lg:col-span-2">
                       <Label htmlFor="violation-structure" required className="whitespace-nowrap">
                         위반구조
                       </Label>

@@ -49,6 +49,19 @@ export default function SupabaseProvider({ children, initialSession }: Props) {
       }
     };
 
+    const ensureServerSession = async () => {
+      try {
+        const response = await fetch('/api/auth/session', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        return response.ok;
+      } catch (error) {
+        console.error('서버 세션 확인 중 오류가 발생했습니다.', error);
+        return false;
+      }
+    };
+
     const performSignOut = async () => {
       clearTimer();
       window.localStorage.removeItem(SESSION_STORAGE_KEY);
@@ -110,6 +123,18 @@ export default function SupabaseProvider({ children, initialSession }: Props) {
     void ensureTimerForSession(initialSession);
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) return;
+      if (!initialSession && session) {
+        void ensureServerSession().then(serverSessionOk => {
+          if (!active) return;
+          if (!serverSessionOk) {
+            void performSignOut();
+            return;
+          }
+          void ensureTimerForSession(session);
+        });
+        return;
+      }
       void ensureTimerForSession(session);
     });
 
