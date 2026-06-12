@@ -263,7 +263,10 @@ function selectUnitAreas(items: UnitItem[], dongName?: string, hoName?: string) 
 
 async function fetchLandPrice(pnu: string) {
   const apiKey = process.env.VWORLD_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.error('[VWorld] VWORLD_API_KEY is not set');
+    return null;
+  }
 
   const domain = process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3002';
   const url = new URL('https://api.vworld.kr/req/data');
@@ -277,9 +280,22 @@ async function fetchLandPrice(pnu: string) {
   url.searchParams.set('size', '10');
   url.searchParams.set('page', '1');
 
-  const data = await fetchJson<any>(url);
+  let data: any;
+  try {
+    data = await fetchJson<any>(url);
+  } catch (err) {
+    console.error('[VWorld] fetch failed', { domain: domain.replace(/^https?:\/\//, ''), pnu, err });
+    return null;
+  }
+  if (data?.response?.status !== 'OK') {
+    console.error('[VWorld] API error', { status: data?.response?.status, domain: url.searchParams.get('domain') });
+    return null;
+  }
   const feature = data?.response?.result?.featureCollection?.features?.[0];
-  if (!feature?.properties?.jiga) return null;
+  if (!feature?.properties?.jiga) {
+    console.error('[VWorld] No jiga found for PNU', pnu);
+    return null;
+  }
 
   return {
     pnu,
