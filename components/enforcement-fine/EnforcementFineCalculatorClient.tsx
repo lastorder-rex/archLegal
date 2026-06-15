@@ -495,6 +495,7 @@ export function EnforcementFineCalculatorClient({
   const [lookupOpen, setLookupOpen] = useState(false);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
   const [violationExamplesOpen, setViolationExamplesOpen] = useState(false);
+  const [violationPickerOpen, setViolationPickerOpen] = useState(false);
   const [shareToast, setShareToast] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -565,6 +566,7 @@ export function EnforcementFineCalculatorClient({
     () => violationTypes.find(item => item.code === violationCode) || null,
     [violationCode, violationTypes]
   );
+  const selectedViolationLabel = selectedViolationType?.label || '';
   const groupedViolationOptions = useMemo(() => (
     VIOLATION_CATEGORY_OPTIONS
       .map(category => {
@@ -808,12 +810,18 @@ export function EnforcementFineCalculatorClient({
 
   const handleViolationTypeChange = (nextCode: string) => {
     setViolationType(nextCode);
+    setViolationPickerOpen(false);
     if (nextCode !== 'unauthorized_major_repair') {
       setMajorRepairApprovalType('');
       setMajorRepairRoofReductionApplied(false);
     }
 
     setResult(null);
+  };
+
+  const openViolationPicker = () => {
+    if (violationTypes.length === 0 && !loadingTypes) void loadViolationTypes();
+    setViolationPickerOpen(true);
   };
 
   const handleUnauthorized = (error: Error & { status?: number }) => {
@@ -1537,26 +1545,23 @@ export function EnforcementFineCalculatorClient({
 	                        대표 위반사례
 	                      </button>
 	                    </div>
-	                    <select
+	                    <button
 	                      id="wizard-violation-type"
-	                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-	                      value={violationType}
-	                      onFocus={() => {
-	                        if (violationTypes.length === 0 && !loadingTypes) void loadViolationTypes();
-	                      }}
-	                      onChange={event => handleViolationTypeChange(event.target.value)}
+	                      type="button"
+	                      className="flex min-h-11 w-full items-center justify-between gap-3 rounded-md border border-input bg-background px-3 py-2 text-left text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-40"
+	                      onClick={openViolationPicker}
+	                      aria-haspopup="dialog"
+	                      aria-expanded={violationPickerOpen}
 	                    >
-	                      <option value="">위반유형 선택</option>
-	                      {groupedViolationOptions.map(group => (
-	                        <optgroup key={group.label} label={group.label}>
-	                          {group.items.map(option => (
-	                            <option key={option.code} value={option.code}>
-	                              {option.label}
-	                            </option>
-	                          ))}
-	                        </optgroup>
-	                      ))}
-	                    </select>
+	                      <span className={selectedViolationLabel ? 'leading-5 text-slate-950' : 'text-slate-500'}>
+	                        {selectedViolationLabel || (loadingTypes ? '위반유형 불러오는 중' : '위반유형 선택')}
+	                      </span>
+	                      {loadingTypes ? (
+	                        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-400" />
+	                      ) : (
+	                        <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+	                      )}
+	                    </button>
                     {violationExamplesOpen ? (
                       <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-3 text-sm text-blue-950">
                         <div className="font-semibold">대표 위반사례 보기</div>
@@ -1901,6 +1906,81 @@ export function EnforcementFineCalculatorClient({
       </div>
 
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} nextPath={loginNextPath} />
+      {violationPickerOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-slate-950/45 px-0 sm:items-center sm:px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="violation-picker-title"
+          onClick={() => setViolationPickerOpen(false)}
+        >
+          <div
+            className="max-h-[82vh] w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:mx-auto sm:max-w-lg sm:rounded-xl"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+              <div>
+                <h2 id="violation-picker-title" className="text-base font-semibold text-slate-950">위반유형 선택</h2>
+                <p className="mt-0.5 text-xs text-slate-500">대분류 아래에서 실제 위반유형을 선택하세요.</p>
+              </div>
+              <button
+                type="button"
+                className="h-9 shrink-0 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-600"
+                onClick={() => setViolationPickerOpen(false)}
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="max-h-[calc(82vh-68px)] overflow-y-auto px-4 py-3">
+              {loadingTypes && groupedViolationOptions.length === 0 ? (
+                <div className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-4 text-sm text-slate-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  위반유형을 불러오는 중입니다.
+                </div>
+              ) : null}
+
+              {!loadingTypes && groupedViolationOptions.length === 0 ? (
+                <div className="rounded-md bg-slate-50 px-3 py-4 text-sm text-slate-600">
+                  표시할 위반유형이 없습니다.
+                </div>
+              ) : null}
+
+              <div className="space-y-4">
+                {groupedViolationOptions.map(group => (
+                  <section key={group.label}>
+                    <h3 className="mb-2 rounded-md bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">
+                      {group.label}
+                    </h3>
+                    <div className="space-y-1">
+                      {group.items.map(option => {
+                        const selected = violationType === option.code;
+
+                        return (
+                          <button
+                            key={option.code}
+                            type="button"
+                            className={[
+                              'flex w-full items-start justify-between gap-3 rounded-md border px-3 py-3 text-left text-sm leading-5 transition',
+                              selected
+                                ? 'border-primary bg-primary/5 text-primary'
+                                : 'border-slate-200 bg-white text-slate-800 hover:border-primary/40 hover:bg-blue-50'
+                            ].join(' ')}
+                            onClick={() => handleViolationTypeChange(option.code)}
+                          >
+                            <span>{option.label}</span>
+                            {selected ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <AddressSearchModal
         isOpen={addressSearchOpen}
         onClose={() => setAddressSearchOpen(false)}
