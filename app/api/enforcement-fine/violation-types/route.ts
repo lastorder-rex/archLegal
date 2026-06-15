@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withSupabaseAuth } from '@/lib/auth/server-auth';
-
-const STANDARD_PRICE_YEAR = 2026;
+import { STANDARD_PRICE_YEAR } from '@/lib/enforcement-fine/constants';
 
 export async function GET(request: NextRequest) {
   return withSupabaseAuth(request, async ({ supabase }) => {

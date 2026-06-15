@@ -132,7 +132,7 @@ values
   (
     2026,
     'article80_sunlight_residential_half',
-    '일조권 높이 제한 위반 주거용',
+    '일조사선 위반 주거용',
     'reduction',
     0.5000,
     0.5000,

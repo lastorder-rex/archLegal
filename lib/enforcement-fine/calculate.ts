@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { prepareEnforcementFine } from '@/lib/enforcement-fine/prepare';
+import { STANDARD_PRICE_YEAR } from '@/lib/enforcement-fine/constants';
 
-const STANDARD_PRICE_YEAR = 2026;
 const CALCULATION_VERSION = '2026-v1';
 const PYEONG_TO_M2 = 3.305785;
 
@@ -37,7 +37,7 @@ type CalculateInput = {
   violationCompletedYearUnknown?: boolean;
   violationStructureIndexId?: string;
   violationUseIndexId?: string;
-  extensionConstructionType?: 'with_foundation' | 'without_foundation' | 'without_foundation_multilevel';
+  extensionConstructionType?: 'not_applicable' | 'with_foundation' | 'without_foundation' | 'without_foundation_multilevel';
   majorRepairApprovalType?: 'permit' | 'report';
   majorRepairRoofReductionApplied?: boolean;
   specialConditionFlags?: {
@@ -46,6 +46,7 @@ type CalculateInput = {
     repeatedViolation?: boolean;
   };
   selectedAdjustmentCodes?: string[];
+  selectedSpecialConditionCodes?: string[];
   excludedAppliedAdjustmentCodes?: string[];
   reductionFlags?: Record<string, unknown>;
   increaseFlags?: Record<string, unknown>;
@@ -173,7 +174,30 @@ async function getAdjustmentRows(supabase: SupabaseClient, codes: string[]) {
     throw new Error(`가감산율 조회에 실패했습니다: ${error.message}`);
   }
 
-  return (data || []) as ReferenceRow[];
+  const rows = (data || []) as ReferenceRow[];
+  const foundCodes = new Set(rows.map(row => String(row.code)));
+  const fallbackRows: ReferenceRow[] = [
+    {
+      code: 'special_building',
+      adjustment_type: 'increase',
+      label: '특수건물',
+      rate: 0.05
+    },
+    {
+      code: 'nuclear_power_facility',
+      adjustment_type: 'increase',
+      label: '원자력발전시설',
+      rate: 0.5
+    },
+    {
+      code: 'floating_building',
+      adjustment_type: 'increase',
+      label: '수상건축물',
+      rate: 0.1
+    }
+  ].filter(row => codes.includes(String(row.code)) && !foundCodes.has(String(row.code)));
+
+  return [...rows, ...fallbackRows];
 }
 
 async function getStructureById(supabase: SupabaseClient, id: string) {
@@ -351,6 +375,7 @@ function isOfficetel(preparedData: Record<string, any>) {
 function getSelectedSpecialConditionCodes(input: CalculateInput, violationAreaM2: number) {
   const flags = input.specialConditionFlags || {};
   return [
+    ...(input.selectedSpecialConditionCodes || []),
     ...(flags.acquiredAfterViolation ? ['acquired_after_violation'] : []),
     ...(isForProfitIncreaseApplicable(input, violationAreaM2) ? ['for_profit_purpose'] : []),
     ...(flags.repeatedViolation && !flags.acquiredAfterViolation ? ['repeated_violation'] : [])
@@ -381,7 +406,16 @@ function isBuildingActAppendixResidentialGroup(preparedData: Record<string, any>
 
 function isCollectiveBuilding(preparedData: Record<string, any>) {
   const registerKind = String(preparedData.building?.registerKind || '');
-  return Boolean(preparedData.selectedUnit) || registerKind.includes('집합');
+  const useText = [
+    preparedData.selectedUnit?.mainUse,
+    preparedData.selectedUnit?.detailUse,
+    preparedData.building?.mainUse,
+    preparedData.building?.detailUse
+  ].filter(Boolean).join(' ');
+
+  return Boolean(preparedData.selectedUnit) ||
+    registerKind.includes('집합') ||
+    /공동주택|다세대|연립|아파트|오피스텔/.test(useText);
 }
 
 function getSmallResidentialArea(preparedData: Record<string, any>) {
@@ -548,17 +582,17 @@ export async function calculateEnforcementFine(input: CalculateInput, context: C
   const location = preparedData.reference?.location;
   const basePrice = preparedData.reference?.basePrice;
 
-  if (input.violationType === 'unauthorized_use_change' && !input.violationUseIndexId) {
-    throw new Error('무단 용도변경은 변경 후 용도를 선택해야 계산할 수 있습니다.');
-  }
-
   const selectedViolationStructure = input.violationStructureIndexId
     ? await getStructureById(context.supabase, input.violationStructureIndexId)
     : null;
   const selectedViolationUse = input.violationUseIndexId
     ? await getUseById(context.supabase, input.violationUseIndexId)
     : null;
-  const appliedUse = input.violationType === 'unauthorized_use_change' && selectedViolationUse
+  if (input.violationType === 'unauthorized_use_change' && !selectedViolationUse) {
+    throw new Error('무단 용도변경은 변경 후 용도를 선택해야 계산할 수 있습니다.');
+  }
+
+  const appliedUse = selectedViolationUse
     ? {
         id: selectedViolationUse.id,
         categoryCode: selectedViolationUse.category_code,
@@ -633,27 +667,25 @@ export async function calculateEnforcementFine(input: CalculateInput, context: C
   ]);
   const { increaseRate, decreaseRate, adjustmentRate } = buildAdjustmentRate(adjustmentRows);
   const formulaType = String(violationRate.formula_type);
-  const extensionConstructionType = input.extensionConstructionType || 'without_foundation';
-  const majorRepairApprovalType = input.majorRepairApprovalType || 'report';
+  const extensionConstructionType = input.extensionConstructionType || 'not_applicable';
+  const majorRepairApprovalType = input.majorRepairApprovalType;
 
-  const extensionRatio = formulaType === 'extension_area'
+  if (input.violationType === 'unauthorized_major_repair' && !majorRepairApprovalType) {
+    throw new Error('대수선 위반은 허가 대상 또는 신고 대상을 선택해야 계산할 수 있습니다.');
+  }
+
+  const extensionRatio = formulaType === 'extension_area' && extensionConstructionType !== 'not_applicable'
     ? await getExtensionRatio(context.supabase, violationStructureNo, extensionConstructionType)
     : null;
   const majorRepairRatio = input.violationType === 'unauthorized_major_repair'
-    ? await getMajorRepairRatio(context.supabase, violationStructureNo, majorRepairApprovalType)
+    ? await getMajorRepairRatio(context.supabase, violationStructureNo, majorRepairApprovalType as NonNullable<CalculateInput['majorRepairApprovalType']>)
     : null;
   const majorRepairChangedConstructionYear = majorRepairRatio
-    ? calculateMajorRepairChangedConstructionYear(buildingApprovalYear, completionYear, majorRepairApprovalType)
+    ? calculateMajorRepairChangedConstructionYear(buildingApprovalYear, completionYear, majorRepairApprovalType as NonNullable<CalculateInput['majorRepairApprovalType']>)
     : null;
   const depreciationYear = majorRepairChangedConstructionYear || completionYear;
   const depreciation = await getDepreciationRate(context.supabase, usefulLifeYears, depreciationYear);
 
-  if (formulaType === 'extension_area' && !input.extensionConstructionType) {
-    warnings.push('증축 산정비율은 기본값으로 기초공사를 하지 않은 건축물 기준을 적용했습니다.');
-  }
-  if (input.violationType === 'unauthorized_major_repair' && !input.majorRepairApprovalType) {
-    warnings.push('대수선 산정비율은 기본값으로 대수선 신고 대상 기준을 적용했습니다.');
-  }
   if (majorRepairRatio && !buildingApprovalYear) {
     warnings.push('대수선 변경 잔가율 산정에 필요한 건물 사용승인연도를 확인하지 못해 위반완료연도를 잔가율 산정에 적용했습니다.');
   }

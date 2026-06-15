@@ -8,8 +8,7 @@ set
   updated_at = now()
 where year = 2026
   and code in (
-    'other_building_act_violation_10',
-    'other_violation_max_3'
+    'other_building_act_violation_10'
   );
 
 insert into public.enforcement_fine_violation_rates (
@@ -33,7 +32,7 @@ values
   (
     2026,
     'landscape_violation',
-    '대지 조경 위반',
+    '대지의 조경에 관한 사항을 위반한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -50,7 +49,7 @@ values
   (
     2026,
     'building_line_violation',
-    '건축선 위반',
+    '건축선에 적합하지 아니한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -67,7 +66,7 @@ values
   (
     2026,
     'structural_safety_violation',
-    '구조내력 기준 위반',
+    '구조내력기준에 적합하지 아니한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -84,7 +83,7 @@ values
   (
     2026,
     'evacuation_fire_compartment_violation',
-    '피난·방화구획 등 기준 위반',
+    '피난시설, 용도·구조 제한, 방화구획 등 기준에 적합하지 아니한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -101,7 +100,7 @@ values
   (
     2026,
     'fire_resistant_wall_violation',
-    '내화구조·방화벽 기준 위반',
+    '내화구조 및 방화벽 기준에 적합하지 아니한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -118,7 +117,7 @@ values
   (
     2026,
     'fire_district_violation',
-    '방화지구 기준 위반',
+    '방화지구 안의 건축물 기준에 적합하지 아니한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -135,7 +134,7 @@ values
   (
     2026,
     'finish_material_violation',
-    '마감재료 기준 위반',
+    '법령 등에 적합하지 않은 마감재료를 사용한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -152,7 +151,7 @@ values
   (
     2026,
     'height_limit_violation',
-    '높이 제한 위반',
+    '높이 제한을 위반한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -169,7 +168,7 @@ values
   (
     2026,
     'sunlight_height_violation',
-    '일조권 높이 제한 위반',
+    '일조 등의 확보를 위한 높이 제한을 위반한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -186,7 +185,7 @@ values
   (
     2026,
     'building_equipment_violation',
-    '건축설비 기준 위반',
+    '건축설비의 설치·구조 기준과 설계 및 공사감리 기준을 위반한 건축물',
     'standard_value',
     null,
     0.1000,
@@ -203,7 +202,7 @@ values
   (
     2026,
     'building_act_order_violation',
-    '그 밖의 건축법령 위반',
+    '그 밖에 건축법 또는 건축법에 따른 명령이나 처분을 위반한 건축물',
     'standard_value',
     null,
     0.0300,

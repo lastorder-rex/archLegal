@@ -43,6 +43,7 @@ const calculateSchema = z.object({
   violationStructureIndexId: z.string().uuid().optional(),
   violationUseIndexId: z.string().uuid().optional(),
   extensionConstructionType: z.enum([
+    'not_applicable',
     'with_foundation',
     'without_foundation',
     'without_foundation_multilevel'
@@ -55,6 +56,7 @@ const calculateSchema = z.object({
     repeatedViolation: z.boolean().optional()
   }).optional(),
   selectedAdjustmentCodes: z.array(z.string().trim().min(1)).optional(),
+  selectedSpecialConditionCodes: z.array(z.string().trim().min(1)).optional(),
   excludedAppliedAdjustmentCodes: z.array(z.string().trim().min(1)).optional(),
   reductionFlags: z.record(z.string(), z.any()).optional(),
   increaseFlags: z.record(z.string(), z.any()).optional(),
