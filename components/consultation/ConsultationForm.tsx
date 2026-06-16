@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import type { User } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui/button';
 import { AddressSearchModal } from './AddressSearchModal';
@@ -40,7 +40,7 @@ interface FormErrors {
 }
 
 export default function ConsultationForm({ user, profile, onCancel, initialMessage = '', initialAddress, initialAddressDetail }: ConsultationFormProps) {
-  const supabase = createClientComponentClient();
+  const supabase = useSupabaseClient();
   const sanitizedInitialMessage = useMemo(
     () => filterMessageInput(initialMessage).slice(0, 1000),
     [initialMessage]

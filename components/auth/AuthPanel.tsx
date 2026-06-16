@@ -1,7 +1,7 @@
 'use client';
 
 import type { User } from '@supabase/auth-helpers-nextjs';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { Button } from '../ui/button';
@@ -21,7 +21,7 @@ type Props = {
 };
 
 export default function AuthPanel({ sessionUser, profile, authError }: Props) {
-  const supabase = createClientComponentClient();
+  const supabase = useSupabaseClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();

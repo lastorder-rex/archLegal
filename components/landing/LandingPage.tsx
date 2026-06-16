@@ -8,7 +8,7 @@ import {
   type MouseEvent,
   type ReactNode
 } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -170,7 +170,7 @@ export function LandingPage() {
   const [paymentNoticeItems, setPaymentNoticeItems] = useState<PaymentNoticeItem[]>([]);
   const [paymentNoticeOverflow, setPaymentNoticeOverflow] = useState(0);
   const [paymentNoticeError, setPaymentNoticeError] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
+  const supabase = useSupabaseClient();
   const router = useRouter();
   // TODO(daily-notice): Remove once service notice popup is no longer needed.
   const isDailyNoticeEnabled = process.env.NEXT_PUBLIC_DAILY_NOTICE_ENABLED === 'true';

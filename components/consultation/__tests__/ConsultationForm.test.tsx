@@ -52,6 +52,10 @@ jest.mock('@supabase/auth-helpers-nextjs', () => ({
   createClientComponentClient: jest.fn(() => ({})),
 }));
 
+jest.mock('@supabase/auth-helpers-react', () => ({
+  useSupabaseClient: jest.fn(() => ({})),
+}));
+
 jest.mock('@/components/consultation/sections/UserInfoSection', () => ({
   UserInfoSection: ({ formData, errors, onInputChange }: any) => (
     <div>

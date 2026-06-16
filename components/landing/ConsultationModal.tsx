@@ -1,8 +1,8 @@
 'use client';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useEffect, useState, useMemo, useCallback } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { X } from 'lucide-react';
 import ConsultationForm from '@/components/consultation/ConsultationForm';
@@ -26,7 +26,7 @@ export function ConsultationModal({ open, onClose, nextPath = '/', initialMessag
   const [isLoading, setIsLoading] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [loading, setLoading] = useState(false);
-  const supabase = useMemo(() => createClientComponentClient(), []);
+  const supabase = useSupabaseClient();
 
   useEffect(() => {
     if (!open) return;

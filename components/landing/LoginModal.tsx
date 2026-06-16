@@ -1,8 +1,8 @@
 'use client';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { Fragment, useCallback, useState } from 'react';
 import { CTAButton } from '../ui/cta-button';
 import { getKakaoOAuthOptions } from '@/lib/auth/oauth';
 import { getAuthErrorMessage } from '@/lib/auth/errors';
@@ -21,7 +21,7 @@ function getCurrentPathForOAuthRedirect() {
 }
 
 export function LoginModal({ open, onClose, nextPath, authError }: LoginModalProps) {
-  const supabase = useMemo(() => createClientComponentClient(), []);
+  const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
   const authErrorMessage = getAuthErrorMessage(authError);
 

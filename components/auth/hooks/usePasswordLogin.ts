@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 interface UsePasswordLoginOptions {
   redirectPath: string;
@@ -10,7 +10,7 @@ interface UsePasswordLoginOptions {
 
 export function usePasswordLogin({ redirectPath }: UsePasswordLoginOptions) {
   const router = useRouter();
-  const supabase = useMemo(() => createClientComponentClient(), []);
+  const supabase = useSupabaseClient();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -61,4 +61,3 @@ export function usePasswordLogin({ redirectPath }: UsePasswordLoginOptions) {
     canSubmit: Boolean(email && password && !loading),
   };
 }
-
