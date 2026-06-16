@@ -15,6 +15,78 @@ interface JusoResultItem {
   emdNm?: string;        // 읍면동명
 }
 
+function parseAddressKeyword(keyword: string) {
+  const normalized = keyword.replace(/[(),]/g, ' ');
+  const tokens = normalized
+    .split(/\s+/)
+    .map(token => token.trim())
+    .filter(Boolean);
+
+  const parsedTokens = tokens.map((token, index) => {
+    const match = token.match(/^([0-9A-Za-z가-힣-]+?)(동|호)?$/);
+    if (!match) return null;
+    return {
+      index,
+      value: match[1],
+      suffix: match[2] || null,
+      raw: token
+    };
+  });
+
+  const unitTokens = parsedTokens.filter(
+    (token): token is { index: number; value: string; suffix: string | null; raw: string } => Boolean(token)
+  );
+
+  let dongToken: { index: number; value: string; suffix: string | null; raw: string } | null = null;
+  let hoToken = unitTokens.find(token => token.suffix === '호') || null;
+
+  if (hoToken) {
+    dongToken = [...unitTokens]
+      .reverse()
+      .find(token => token.index < hoToken!.index && token.suffix === '동') || null;
+  } else {
+    dongToken = [...unitTokens].reverse().find(token => token.suffix === '동') || null;
+  }
+
+  if (!dongToken && !hoToken && tokens.length >= 3) {
+    const last = unitTokens.find(token => token.index === tokens.length - 1 && !token.suffix);
+    const prev = unitTokens.find(token => token.index === tokens.length - 2 && !token.suffix);
+    if (last && prev && /\d/.test(last.value)) {
+      dongToken = prev;
+      hoToken = last;
+    }
+  } else if (dongToken && !hoToken) {
+    const afterDong = unitTokens.find(token => (
+      token.index > dongToken!.index &&
+      !token.suffix &&
+      /^[A-Za-z가-힣]*\d+[A-Za-z가-힣]*$/.test(token.value)
+    ));
+    hoToken = afterDong || null;
+  } else if (!dongToken && hoToken) {
+    const beforeHo = [...unitTokens].reverse().find(token => token.index < hoToken!.index && !token.suffix);
+    dongToken = beforeHo || null;
+  }
+
+  if (!hoToken && dongToken?.index === 0 && tokens.some(token => /^\d+-\d+$/.test(token))) {
+    dongToken = null;
+  }
+
+  const excludedIndexes = new Set<number>();
+  if (dongToken) excludedIndexes.add(dongToken.index);
+  if (hoToken) excludedIndexes.add(hoToken.index);
+
+  const searchKeyword = tokens
+    .filter((_, index) => !excludedIndexes.has(index))
+    .join(' ')
+    .trim();
+
+  return {
+    searchKeyword: searchKeyword || keyword.trim(),
+    dongName: dongToken ? `${dongToken.value}동` : null,
+    hoName: hoToken ? `${hoToken.value}호` : null
+  };
+}
+
 interface JusoApiResponse {
   results: {
     common: {
@@ -49,10 +121,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const parsedKeyword = parseAddressKeyword(query.trim());
+
     // Build API URL
     const jusoUrl = new URL('https://business.juso.go.kr/addrlink/addrLinkApi.do');
     jusoUrl.searchParams.set('confmKey', apiKey);
-    jusoUrl.searchParams.set('keyword', query.trim());
+    jusoUrl.searchParams.set('keyword', parsedKeyword.searchKeyword);
     jusoUrl.searchParams.set('resultType', 'json');
     jusoUrl.searchParams.set('countPerPage', '10');
     jusoUrl.searchParams.set('currentPage', page.toString());
@@ -117,6 +191,8 @@ export async function POST(request: NextRequest) {
           zipNo: item.zipNo,
           buildingName: item.bdNm || null,
           detailBuildingName: item.detBdNmList || null,
+          dongName: parsedKeyword.dongName,
+          hoName: parsedKeyword.hoName,
           // Data needed for building registry lookup
           addressCode: {
             sigunguCd,

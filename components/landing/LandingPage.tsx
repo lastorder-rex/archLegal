@@ -671,15 +671,15 @@ export function LandingPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-24 sm:py-32 lg:flex-row lg:items-center lg:gap-16">
           <div className="flex-1 space-y-6">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground opacity-70">
-              Special Act 2026
+              법률 제21820호 · 2026.12.17 시행
             </p>
             <h1 id="attention-section" className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-              특정건축물 정리에 관한 특별법 안내
+              양성화, 이제 ‘법’으로 길이 열렸습니다
             </h1>
             <p className="text-lg text-primary-foreground opacity-80 sm:text-xl">
-              2026년 특정건축물 정리 특별조치법이 1년 한시 시행을 목표로 준비되고 있습니다.
+              「특정건축물 정리에 관한 특별조치법」이 2026년 6월 16일 제정·공포되어 12월 17일 시행됩니다.
               <br className="hidden sm:block" />
-              지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
+              시행일부터 18개월 한시 — 지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
               <CTAButton className="sm:w-auto" onClick={openConsultationModal}>
@@ -690,11 +690,11 @@ export function LandingPage() {
                   자가진단 하기
                 </Link>
               </CTAButton>
-              <CTAButton tone="secondary" className="sm:w-auto" asChild>
+              {/* <CTAButton tone="secondary" className="sm:w-auto" asChild>
                 <Link href="/calc" target="_blank" rel="noopener noreferrer">
                   이행강제금 계산하기
                 </Link>
-              </CTAButton>
+              </CTAButton> */}
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
                 <Link href="/procedure">절차 보기</Link>
               </CTAButton>
@@ -744,7 +744,7 @@ export function LandingPage() {
               법 시행 안내 & 소요 기간
             </h2>
             <p className="text-base text-slate-700 dark:text-slate-200 md:whitespace-nowrap">
-              특별법 시행 기간은 단 1년입니다. 건축위원회 심의 일정까지 고려하면 지금 바로 준비해야
+              특별법 시행 기간은 단 18개월(2026.12.17~2028.6.16)입니다. 건축위원회 심의 일정까지 고려하면 지금 바로 준비해야
               여유롭게 절차를 마칠 수 있습니다.
             </p>
           </div>
@@ -768,7 +768,7 @@ export function LandingPage() {
               <ul className="mt-3 space-y-2 text-sm text-accent-foreground/90">
                 <li>• 총 147,726동 중 주거용이 56.5%, 연평균 5~6천 동씩 증가</li>
                 <li>• 서울 49,011동(33.2%), 경기 40,908동(27.7%)에 집중 발생</li>
-                <li>• 이행강제금은 건당 141만 원, 반복 부과 의무화 추진 중</li>
+                <li>• 이행강제금은 건당 141만 원, 시정 시까지 반복·가중 부과</li>
               </ul>
               <p className="mt-4 text-sm font-medium text-accent-foreground/90">
                 초기 진단과 서류 준비를 선제적으로 진행해야 비용과 시간을 줄일 수 있습니다.

@@ -427,7 +427,7 @@ export function LegalizationCheckClient() {
                     있는지 먼저 확인하세요.
                   </h1>
                   <p className="hero-copy">
-                    불법·무허가·준공미필·무단 용도변경 건축물이 법안 요건에 들어오는지 O/X와 간단한 객관식으로
+                    불법·무허가·준공미필·무단 용도변경 건축물이 법 요건에 들어오는지 O/X와 간단한 객관식으로
                     확인합니다. 결과가 애매한 경우 바로 양성화.com 상담으로 연결됩니다.
                   </p>
                   <div className="hero-actions">
@@ -465,7 +465,7 @@ export function LegalizationCheckClient() {
                 <section className="panel">
                   <div className="panel-title">
                     <h2>먼저 확인할 대상 요건</h2>
-                    <span className="pill">법안 기준</span>
+                    <span className="pill">법 기준</span>
                   </div>
                   <ul className="check-list">
                     <li>건축허가·신고 없이 지었거나 대수선한 건축물</li>

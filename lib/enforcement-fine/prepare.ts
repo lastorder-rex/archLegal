@@ -141,7 +141,7 @@ async function resolveAddress(input: PrepareInput): Promise<JusoAddress> {
   };
 }
 
-async function fetchBuildingHub(endpoint: string, code: AddressCode, numOfRows = '100') {
+async function fetchBuildingHubPage(endpoint: string, code: AddressCode, numOfRows = '100', pageNo = '1') {
   const apiKey = process.env.BLD_RGST_API_KEY;
   if (!apiKey) {
     throw new Error('건축물대장 API 설정이 없습니다.');
@@ -156,7 +156,7 @@ async function fetchBuildingHub(endpoint: string, code: AddressCode, numOfRows =
   url.searchParams.set('ji', code.ji);
   url.searchParams.set('_type', 'json');
   url.searchParams.set('numOfRows', numOfRows);
-  url.searchParams.set('pageNo', '1');
+  url.searchParams.set('pageNo', pageNo);
 
   const data = await fetchJson<any>(url);
   const header = data?.response?.header;
@@ -164,7 +164,33 @@ async function fetchBuildingHub(endpoint: string, code: AddressCode, numOfRows =
     throw new Error(header?.resultMsg || '건축물대장 조회에 실패했습니다.');
   }
 
-  return getHubItems(data);
+  return {
+    items: getHubItems(data),
+    totalCount: parseInteger(data?.response?.body?.totalCount) || 0
+  };
+}
+
+async function fetchBuildingHub(endpoint: string, code: AddressCode, numOfRows = '100') {
+  const page = await fetchBuildingHubPage(endpoint, code, numOfRows, '1');
+  return page.items;
+}
+
+async function fetchUnitAreaItemsForUnit(code: AddressCode, dongName?: string, hoName?: string) {
+  if (!hoName) return [];
+
+  const numOfRows = 1000;
+  const firstPage = await fetchBuildingHubPage('getBrExposPubuseAreaInfo', code, String(numOfRows), '1');
+  const firstMatches = selectUnitAreas(firstPage.items, dongName, hoName);
+  if (firstMatches.length > 0) return firstMatches;
+
+  const totalPages = Math.ceil(firstPage.totalCount / numOfRows);
+  for (let pageNo = 2; pageNo <= totalPages; pageNo += 1) {
+    const page = await fetchBuildingHubPage('getBrExposPubuseAreaInfo', code, String(numOfRows), String(pageNo));
+    const matches = selectUnitAreas(page.items, dongName, hoName);
+    if (matches.length > 0) return matches;
+  }
+
+  return [];
 }
 
 function selectTitleItem(items: BuildingTitleItem[], dongName?: string) {
@@ -316,6 +342,14 @@ async function findUseReference(candidates: Array<{ mainUse: string | null; deta
       const aliasMatches = !aliasName || combined.includes(aliasName);
       const strongAliasMatch = Boolean(aliasName && combined.includes(aliasName))
         || Boolean(pattern && combined.includes(pattern));
+
+      // 표제부의 etcPurps(기타용도)에는 부속 용도가 나열되므로(예: 공동주택의
+      // "구매,근린생활,의료,종교시설"), 주용도와 충돌하는 별칭이 detail 문자열만 보고
+      // 카테고리를 가로채지 않도록 막는다.
+      const mainConflict = Boolean(
+        main && aliasMain && !main.includes(aliasMain) && !aliasMain.includes(main)
+      );
+      if (mainConflict) return false;
 
       return (mainMatches && patternMatches && aliasMatches) || strongAliasMatch;
     });
@@ -510,7 +544,7 @@ export async function prepareEnforcementFine(input: PrepareInput) {
   const unitList = unitListItems.map(simplifyUnit);
 
   const unitAreaItems = input.hoName
-    ? await fetchBuildingHub('getBrExposPubuseAreaInfo', address.addressCode, '300').catch(() => [])
+    ? await fetchUnitAreaItemsForUnit(address.addressCode, input.dongName, input.hoName).catch(() => [])
     : [];
   const selectedUnitAreas = selectUnitAreas(unitAreaItems, input.dongName, input.hoName).map(simplifyUnitArea);
   const exclusiveUnit = selectedUnitAreas.find(item => item.exposureType === '전유') || selectedUnitAreas[0] || null;

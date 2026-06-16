@@ -461,6 +461,7 @@ export function EnforcementFineCalculatorClient({
   const [violationStructureIndexId, setViolationStructureIndexId] = useState('');
   const [violationUseIndexId, setViolationUseIndexId] = useState('');
   const [violationUseCategoryKey, setViolationUseCategoryKey] = useState<'I' | 'II' | 'other' | ''>('');
+  const [useCategoryManuallyChanged, setUseCategoryManuallyChanged] = useState(false);
   const [extensionConstructionType, setExtensionConstructionType] = useState('not_applicable');
   const [majorRepairApprovalType, setMajorRepairApprovalType] = useState('');
   const [majorRepairRoofReductionApplied, setMajorRepairRoofReductionApplied] = useState(false);
@@ -604,6 +605,11 @@ export function EnforcementFineCalculatorClient({
     () => useOptions.find(item => item.id === violationUseIndexId) || null,
     [useOptions, violationUseIndexId]
   );
+  const automaticUseCategoryKey = getUseCategorySelectionKey(reference?.use?.categoryCode);
+  const displayedUseCategoryKey = useCategoryManuallyChanged
+    ? violationUseCategoryKey
+    : automaticUseCategoryKey || violationUseCategoryKey;
+  const displayedUseIndexId = violationUseIndexId || (!useCategoryManuallyChanged ? reference?.use?.id || '' : '');
   const isExtensionType = selectedViolationType?.formulaType === 'extension_area';
   const isMajorRepairType = selectedViolationType?.code === 'unauthorized_major_repair';
   const isUseChangeType = selectedViolationType?.code === 'unauthorized_use_change';
@@ -734,20 +740,20 @@ export function EnforcementFineCalculatorClient({
     [specialConditionOptions]
   );
   const filteredUseOptionGroups = useMemo(() => {
-    if (!violationUseCategoryKey) return [];
-    const filtered = violationUseCategoryKey === 'other'
+    if (!displayedUseCategoryKey) return [];
+    const filtered = displayedUseCategoryKey === 'other'
       ? useOptions.filter(item => item.categoryCode !== 'I' && item.categoryCode !== 'II')
-      : useOptions.filter(item => item.categoryCode === violationUseCategoryKey);
+      : useOptions.filter(item => item.categoryCode === displayedUseCategoryKey);
     const map = new Map<string, UseOption[]>();
     filtered.forEach(item => {
-      const key = violationUseCategoryKey === 'other'
+      const key = displayedUseCategoryKey === 'other'
         ? `${item.categoryName} · ${item.mainUse}`
         : item.mainUse;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     });
     return Array.from(map.entries());
-  }, [useOptions, violationUseCategoryKey]);
+  }, [useOptions, displayedUseCategoryKey]);
 
   const shouldShowManualAdjustmentSelector = Boolean(preparedData && !selectedUnit);
   const canPrepare = address.trim().length >= 2 && !preparing;
@@ -786,6 +792,7 @@ export function EnforcementFineCalculatorClient({
     setViolationStructureIndexId(nextStructureIndexId);
     setViolationUseIndexId('');
     setViolationUseCategoryKey('');
+    setUseCategoryManuallyChanged(false);
     setExtensionConstructionType('not_applicable');
     setMajorRepairApprovalType('');
     setMajorRepairRoofReductionApplied(false);
@@ -810,8 +817,8 @@ export function EnforcementFineCalculatorClient({
   const handleAddressSelect = (nextAddress: AddressSearchResult) => {
     setSelectedAddress(nextAddress);
     setAddress(nextAddress.roadAddr);
-    setDongName('');
-    setHoName('');
+    setDongName(nextAddress.dongName || '');
+    setHoName(nextAddress.hoName || '');
     clearPreparedCalculation();
     setAddressSearchOpen(false);
   };
@@ -1010,6 +1017,7 @@ export function EnforcementFineCalculatorClient({
       resetViolationInputs(data.reference?.structure?.id || '');
       setViolationUseIndexId(data.reference?.use?.id || '');
       setViolationUseCategoryKey(getUseCategorySelectionKey(data.reference?.use?.categoryCode));
+      setUseCategoryManuallyChanged(false);
       setLookupOpen(false);
       setCurrentStep(2);
     } catch (error) {
@@ -1320,12 +1328,13 @@ export function EnforcementFineCalculatorClient({
                           key={key}
                           type="button"
                           className={`h-9 rounded-md border text-sm font-medium transition-colors ${
-                            violationUseCategoryKey === key
+                            displayedUseCategoryKey === key
                               ? 'border-primary bg-primary text-white'
                               : 'border-input bg-background text-slate-700 hover:bg-slate-50'
                           }`}
                           onClick={() => {
                             setViolationUseCategoryKey(key);
+                            setUseCategoryManuallyChanged(true);
                             setViolationUseIndexId('');
                             setResult(null);
                             if (useOptions.length === 0 && !loadingUses) void loadUseOptions();
@@ -1341,12 +1350,18 @@ export function EnforcementFineCalculatorClient({
                     <select
                       id="wizard-use"
                       className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                      value={violationUseIndexId || preparedData.reference?.use?.id || ''}
+                      value={displayedUseIndexId}
                       onFocus={() => {
                         if (useOptions.length === 0 && !loadingUses) void loadUseOptions();
                       }}
                       onChange={event => {
-                        setViolationUseIndexId(event.target.value);
+                        const nextUseId = event.target.value;
+                        const nextUse = useOptions.find(item => item.id === nextUseId);
+                        setViolationUseIndexId(nextUseId);
+                        if (nextUse) {
+                          setViolationUseCategoryKey(getUseCategorySelectionKey(nextUse.categoryCode));
+                        }
+                        setUseCategoryManuallyChanged(true);
                         setResult(null);
                       }}
                     >

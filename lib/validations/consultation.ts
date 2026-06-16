@@ -95,6 +95,8 @@ export const addressSearchResultSchema = z.object({
   zipNo: z.string(),
   buildingName: z.string().nullable(),
   detailBuildingName: z.string().nullable(),
+  dongName: z.string().nullable().optional(),
+  hoName: z.string().nullable().optional(),
   addressCode: addressCodeSchema,
 });
 

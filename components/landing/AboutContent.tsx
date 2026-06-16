@@ -45,7 +45,7 @@ export function AboutContent({ faqs }: AboutContentProps) {
         <div className="rounded-2xl border border-border bg-card p-6">
           <h3 className="text-lg font-semibold text-foreground">우리가 해결하는 핵심 이슈</h3>
           <ul className="mt-4 space-y-3 text-base text-muted-foreground">
-            <li>• 현재 국회에 계류되어 있는 『특정건축물 정리에 관한 특별조치법』이 곧 통과될 것으로 전망되고 있습니다.</li>
+            <li>• 『특정건축물 정리에 관한 특별조치법』이 2026년 6월 16일 제정·공포되어 2026년 12월 17일 시행됩니다.</li>
             <li>• 이 특별법에 포함되는 단독, 다세대, 다가구 주택의 양성화 가능성을 정확히 진단하고, 실패없는 양성화 솔류션을 제공합니다.</li>
       
           </ul>
@@ -92,7 +92,7 @@ export function AboutContent({ faqs }: AboutContentProps) {
         <h3 className="text-lg font-semibold text-foreground">왜 지금 시작해야 하나요?</h3>
         <ul className="mt-4 space-y-3 text-base text-muted-foreground">
           <li>
-            • 2026년 시행을 목표로 한 특정건축물 정리 특별조치법은 1년 한시로 적용될 예정이라, 기회를 놓치면 다시 합법화하기 어렵습니다.
+            • 특정건축물 정리에 관한 특별조치법은 2026.12.17 시행되어 18개월(~2028.6.16) 한시로 적용되므로, 기회를 놓치면 다시 합법화하기 어렵습니다.
           </li>
           <li>• 반복 부과 의무화된 이행강제금과 가중 부과 제도로 인해 방치할수록 비용이 증가합니다.</li>
           <li>• 공인중개사 건축물대장 제시 의무화, 매매·임대차 책임 강화로 시장 투명성이 높아지고 있습니다.</li>

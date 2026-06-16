@@ -113,7 +113,7 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   type: {
     badge: '건축물 유형',
     title: '확인하려는 건축물 유형을 선택해주세요.',
-    desc: '법안상 핵심 대상은 다세대주택, 단독주택, 다가구주택, 근린생활시설 허가 후 사실상 주택으로 사용 중인 건축물입니다.',
+    desc: '법상 핵심 대상은 다세대주택, 단독주택, 다가구주택, 근린생활시설 허가 후 사실상 주택으로 사용 중인 건축물입니다.',
     hint: '정확히 모르겠다면 유형 모름/기타를 선택하세요. 상담 단계에서 건축물대장 기준으로 다시 분류합니다.',
     law: '제3조제1항제1호·제2호·제3호',
     options: [
@@ -139,7 +139,7 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   residential: {
     badge: '주거 비율',
     title: '건물 전체 연면적의 50% 이상이 주거용으로 사용되고 있나요?',
-    desc: '이 법안은 주거용 특정건축물을 중심으로 적용됩니다. 실제 사용 상태가 중요합니다.',
+    desc: '이 법은 주거용 특정건축물을 중심으로 적용됩니다. 실제 사용 상태가 중요합니다.',
     hint: '주택으로 쓰는 방·세대·가구 면적이 절반 이상인지 확인하세요. 근린생활시설도 실제 주거 사용이 50% 이상인지 봅니다.',
     law: '제2조제1항제2호',
     options: [
@@ -151,12 +151,12 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   completed: {
     badge: '완공 시점',
     title: '2023년 12월 31일 당시 사실상 완공된 건축물인가요?',
-    desc: '법안 적용 기준일 이후에 지어진 건축물은 이번 특별조치법 대상에서 제외됩니다.',
+    desc: '법 적용 기준일 이후에 지어진 건축물은 이번 특별조치법 대상에서 제외됩니다.',
     hint: '골조·지붕·외벽 등 건축물이 사실상 완성되어 사용 가능했는지가 핵심입니다. 사진, 전입, 수도·전기 사용 내역 등이 보조 자료가 될 수 있습니다.',
     law: '제3조제1항 본문',
     options: [
       { id: 'yes', label: '예, 2023년 말 이전 완공', detail: '기준일 요건 충족 가능', icon: 'O', tone: 'yes', next: 'prior_approval' },
-      { id: 'no', label: '아니오, 2024년 이후 완공', detail: '이번 법안 대상 아님', icon: 'X', tone: 'danger', result: 'too_late' },
+      { id: 'no', label: '아니오, 2024년 이후 완공', detail: '이번 법 대상 아님', icon: 'X', tone: 'danger', result: 'too_late' },
       { id: 'unknown', label: '모르겠습니다', detail: '완공 입증자료 확인 필요', icon: '?', tone: 'unknown', next: 'prior_approval', flag: '2023.12.31 이전 사실상 완공 입증 필요' }
     ]
   },
@@ -217,13 +217,13 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
     law: '제3조제1항제3호 단서',
     options: [
       { id: 'yes', label: '예, 기준일 이전부터 주거 사용', detail: '계속 확인 진행', icon: 'O', tone: 'yes', next: 'area_unknown' },
-      { id: 'no', label: '아니오, 2024년 이후 주거 사용', detail: '이번 법안 대상 아님', icon: 'X', tone: 'danger', result: 'too_late_use' },
+      { id: 'no', label: '아니오, 2024년 이후 주거 사용', detail: '이번 법 대상 아님', icon: 'X', tone: 'danger', result: 'too_late_use' },
       { id: 'unknown', label: '모르겠습니다', detail: '주거 사용 입증 필요', icon: '?', tone: 'unknown', next: 'area_unknown', flag: '근린생활시설의 2023.12.31 이전 주거 사용 입증 필요' }
     ]
   },
   area_unknown: {
     badge: '면적 기준',
-    title: '건물의 실제 주택 형태와 면적이 법안 기준 안에 들어올 가능성이 있나요?',
+    title: '건물의 실제 주택 형태와 면적이 법 기준 안에 들어올 가능성이 있나요?',
     desc: '다세대는 세대당 85㎡ 이하, 단독은 원칙 165㎡ 이하, 다가구는 660㎡ 이하가 핵심 기준입니다.',
     hint: '유형이 불확실한 경우 상담에서 건축물대장과 현황을 기준으로 다세대·단독·다가구 중 어느 기준을 적용할지 먼저 확인해야 합니다.',
     law: '제3조제1항제1호·제2호·제3호',
@@ -274,7 +274,7 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   road_safety: {
     badge: '도로·안전·일조',
     title: '도로, 구조안전, 위생, 방화, 일조권, 도시계획사업에 현저한 지장이 없나요?',
-    desc: '법안은 도로 최소 너비를 3m로 보는 특례를 두지만, 구조안전·위생·방화·일조권·도시계획사업과 관계 법률 적용에 현저한 지장은 없어야 합니다.',
+    desc: '법은 도로 최소 너비를 3m로 보는 특례를 두지만, 구조안전·위생·방화·일조권·도시계획사업과 관계 법률 적용에 현저한 지장은 없어야 합니다.',
     hint: '도로·건축선 기준은 일부 특례가 있으나, 소방에 지장이 없다고 인정되는지와 구조안전·방화·일조권 문제는 현장조사에서 확인해야 합니다.',
     law: '제6조제1항제2호',
     options: [
@@ -323,7 +323,7 @@ const QUESTIONS: Record<string, DiagnosisQuestion> = {
   fine_assessment: {
     badge: '과태료 산정',
     title: '이행강제금 부과 이력이나 추가 위반내용이 있나요?',
-    desc: '법안은 이행강제금 부과 이력과 추가 위반내용에 따라 이행강제금 5회분 상당 과태료 또는 기납부분 차감 과태료를 산정합니다.',
+    desc: '법은 이행강제금 부과 이력과 추가 위반내용에 따라 이행강제금 5회분 상당 과태료 또는 기납부분 차감 과태료를 산정합니다.',
     hint: '전세사기피해자가 매수한 전세사기피해주택은 과태료 부과 대상에서 제외됩니다. 단, 이행강제금 체납 여부는 별도로 확인해야 합니다.',
     law: '제9조제1항·제2항',
     options: [
@@ -397,7 +397,7 @@ const RESULT_TEMPLATES: Record<string, Omit<DiagnosisResult, 'documents'>> = {
     color: 'var(--destructive)',
     chip: '대상 아님',
     title: '2024년 이후 완공 건물은 대상이 아닙니다.',
-    copy: '법안은 2023년 12월 31일 당시 사실상 완공된 주거용 특정건축물을 대상으로 합니다.',
+    copy: '법은 2023년 12월 31일 당시 사실상 완공된 주거용 특정건축물을 대상으로 합니다.',
     actions: ['정식 인허가·사용승인 절차 검토', '위반 내용별 시정 가능성 상담'],
     cautions: ['완공 시점을 입증할 자료가 있다면 재검토할 수 있습니다.']
   },
@@ -416,7 +416,7 @@ const RESULT_TEMPLATES: Record<string, Omit<DiagnosisResult, 'documents'>> = {
     status: 'fail',
     color: 'var(--destructive)',
     chip: '면적 초과',
-    title: '법안상 면적 기준을 초과합니다.',
+    title: '법상 면적 기준을 초과합니다.',
     copy: '선택한 유형의 면적 기준을 넘는 경우 이번 특별조치법으로 양성화하기 어렵습니다.',
     actions: ['실제 위반 면적 재산정', '전용면적·연면적 기준 구분', '다른 정리 절차 상담'],
     cautions: ['불법 증축·대수선 부분도 포함해 산정해야 합니다.']
