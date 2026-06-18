@@ -97,11 +97,21 @@ export function ViolationMapClient() {
         },
       });
       naver.maps.Event.addListener(marker, 'click', () => {
+        const nameHtml = it.name
+          ? `<div style="font-size:16px;font-weight:800;color:#191F28;margin-bottom:4px">${it.name}</div>`
+          : '';
+        const addrHtml = it.jibun
+          ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:${it.name ? 13 : 16}px;font-weight:${it.name ? 400 : 800};color:#191F28">
+               <span>📍 ${it.jibun}</span>
+               <span title="주소 복사" style="cursor:pointer;font-size:14px"
+                 onclick="navigator.clipboard.writeText('${it.jibun}').then(()=>{this.textContent='✅';setTimeout(()=>{this.textContent='📋'},1200)})">📋</span>
+             </div>`
+          : '';
         const html = `
           <div style="padding:14px 16px;min-width:220px;font-family:inherit">
             <div style="font-size:11px;font-weight:800;color:#E5484D;margin-bottom:6px">위반건축물</div>
-            <div style="font-size:16px;font-weight:800;color:#191F28;margin-bottom:4px">${it.name || '(건물명 없음)'}</div>
-            ${it.jibun ? `<div style="font-size:13px;color:#191F28;margin-bottom:8px">📍 ${it.jibun}</div>` : ''}
+            ${nameHtml}
+            ${addrHtml}
             <div style="font-size:13px;color:#6B7684;line-height:1.7">
               용도: <b style="color:#191F28">${it.useName}</b><br/>
               ${it.floors ? `지상 ${it.floors}층 · ` : ''}사용승인 ${fmtDay(it.useaprDay)}
