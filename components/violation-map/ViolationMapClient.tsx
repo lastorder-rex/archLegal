@@ -48,6 +48,9 @@ const ICON_ROADVIEW =
 // https://lucide.dev/icons/x (InfoWindow 닫기)
 const ICON_X =
   '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7684" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+// https://lucide.dev/icons/map-pin (검색 위치 핀)
+const ICON_PIN =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#E5484D" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/></svg>';
 
 declare global {
   interface Window {
@@ -76,6 +79,11 @@ export function ViolationMapClient() {
   const [pano, setPano] = useState<{ lat: number; lon: number; label: string } | null>(null);
   const [panoMsg, setPanoMsg] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'marker' | 'sigungu' | 'bjdong'>('marker');
+  const [searchQ, setSearchQ] = useState('');
+  const [results, setResults] = useState<Array<{ address: string; lat: number; lon: number }>>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchDone, setSearchDone] = useState(false);
+  const searchMarkerRef = useRef<any>(null);
 
   // 현재 지도 영역(bbox)으로 마커 로드. 이전 마커는 지우고 새로 그린다.
   const loadMarkers = useCallback(() => {
@@ -162,6 +170,47 @@ export function ViolationMapClient() {
     if (z >= 15) loadMarkers();
     else loadClusters(z < 13 ? 'sigungu' : 'bjdong');
   }, [loadMarkers, loadClusters]);
+
+  // 주소 검색 → 후보 조회
+  const doSearch = useCallback((q: string) => {
+    if (q.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    fetch(`/api/violation/geocode?q=${encodeURIComponent(q)}`)
+      .then((r) => r.json())
+      .then((d: { ok: boolean; items: Array<{ address: string; lat: number; lon: number }> }) => {
+        setResults(d.ok ? d.items : []);
+      })
+      .catch(() => setResults([]))
+      .finally(() => {
+        setSearching(false);
+        setSearchDone(true);
+      });
+  }, []);
+
+  // 검색 후보 선택 → 지도 이동 + 핀 표시
+  const goToResult = useCallback((it: { address: string; lat: number; lon: number }) => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+    const pos = new naver.maps.LatLng(it.lat, it.lon);
+    map.morph(pos, 16);
+    setSearchQ(it.address);
+    setResults([]);
+    setSearchDone(false);
+    if (searchMarkerRef.current) searchMarkerRef.current.setMap(null);
+    searchMarkerRef.current = new naver.maps.Marker({
+      position: pos,
+      map,
+      zIndex: 1000,
+      icon: {
+        content: `<div style="transform:translate(-50%,-100%);filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">${ICON_PIN}</div>`,
+        anchor: new naver.maps.Point(0, 0),
+      },
+    });
+  }, []);
 
   // 지도 1회 초기화 + 이동(idle) 시 디바운스 로드
   useEffect(() => {
@@ -286,6 +335,111 @@ export function ViolationMapClient() {
       />
       <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
         <div ref={mapElRef} style={{ width: '100%', height: '100%' }} />
+
+        {/* 주소 검색창 (상단 중앙) */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'min(92vw, 380px)',
+            zIndex: 20,
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              doSearch(searchQ);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 2px 12px rgba(0,0,0,.15)',
+              padding: '8px 10px 8px 14px',
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7684" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              value={searchQ}
+              onChange={(e) => {
+                setSearchQ(e.target.value);
+                setSearchDone(false);
+              }}
+              placeholder="주소 검색 (예: 구로구 경인로 445)"
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#191F28', background: 'transparent' }}
+            />
+            {searchQ && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQ('');
+                  setResults([]);
+                  setSearchDone(false);
+                  if (searchMarkerRef.current) {
+                    searchMarkerRef.current.setMap(null);
+                    searchMarkerRef.current = null;
+                  }
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', color: '#6B7684' }}
+                title="지우기"
+                dangerouslySetInnerHTML={{ __html: ICON_X }}
+              />
+            )}
+            <button
+              type="submit"
+              style={{ flexShrink: 0, background: '#1B64DA', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+            >
+              {searching ? '검색중' : '검색'}
+            </button>
+          </form>
+
+          {results.length > 0 && (
+            <div
+              style={{
+                marginTop: 6,
+                background: '#fff',
+                borderRadius: 12,
+                boxShadow: '0 2px 12px rgba(0,0,0,.15)',
+                overflow: 'hidden',
+                maxHeight: '50vh',
+                overflowY: 'auto',
+              }}
+            >
+              {results.map((it, i) => (
+                <button
+                  key={`${it.address}-${i}`}
+                  onClick={() => goToResult(it)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    borderTop: i === 0 ? 'none' : '1px solid #F2F4F6',
+                    padding: '11px 14px',
+                    fontSize: 13.5,
+                    color: '#191F28',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {it.address}
+                </button>
+              ))}
+            </div>
+          )}
+          {searchDone && !searching && searchQ.trim().length >= 2 && results.length === 0 && (
+            <div style={{ marginTop: 6, background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,.15)', padding: '11px 14px', fontSize: 13, color: '#6B7684' }}>
+              검색 결과가 없습니다.
+            </div>
+          )}
+        </div>
 
         {/* 상단 정보 카드 */}
         <div
