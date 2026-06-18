@@ -53,6 +53,13 @@ const ICON_EXPAND =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#191F28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/></svg>';
 const ICON_SHRINK =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#191F28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" x2="21" y1="10" y2="3"/><line x1="3" x2="10" y1="21" y2="14"/></svg>';
+// 우측 툴바 아이콘 (stroke=currentColor로 활성/비활성 색 전환)
+const ICON_STREET =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICON_LOCATE =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>';
+const ICON_RULER =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>';
 // https://lucide.dev/icons/map-pin (검색 위치 핀)
 const ICON_PIN =
   '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#E5484D" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/></svg>';
@@ -68,6 +75,19 @@ declare global {
 
 const fmtDay = (d: string | null) =>
   d && d.length === 8 ? `${d.slice(0, 4)}.${d.slice(4, 6)}.${d.slice(6, 8)}` : '-';
+
+// 두 좌표 간 거리(m) — 하버사인
+function haversine(a: { lat: number; lon: number }, b: { lat: number; lon: number }) {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const la1 = toRad(a.lat);
+  const la2 = toRad(b.lat);
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+const fmtDist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(2)}km` : `${Math.round(m)}m`);
 
 export function ViolationMapClient() {
   const mapElRef = useRef<HTMLDivElement>(null);
@@ -93,6 +113,15 @@ export function ViolationMapClient() {
   const [searching, setSearching] = useState(false);
   const [searchDone, setSearchDone] = useState(false);
   const searchMarkerRef = useRef<any>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [streetOn, setStreetOn] = useState(false);
+  const [measureOn, setMeasureOn] = useState(false);
+  const [measureDist, setMeasureDist] = useState(0);
+  const streetLayerRef = useRef<any>(null);
+  const locMarkerRef = useRef<any>(null);
+  const measurePointsRef = useRef<Array<{ lat: number; lon: number }>>([]);
+  const measureMarkersRef = useRef<any[]>([]);
+  const measurePolylineRef = useRef<any>(null);
 
   // 현재 지도 영역(bbox)으로 마커 로드. 이전 마커는 지우고 새로 그린다.
   const loadMarkers = useCallback(() => {
@@ -227,6 +256,112 @@ export function ViolationMapClient() {
     });
   }, []);
 
+  // === 우측 툴바 기능 ===
+  const clearMeasure = useCallback(() => {
+    measureMarkersRef.current.forEach((m) => m.setMap(null));
+    measureMarkersRef.current = [];
+    measurePolylineRef.current?.setMap(null);
+    measurePolylineRef.current = null;
+    measurePointsRef.current = [];
+    setMeasureDist(0);
+  }, []);
+
+  const addMeasurePoint = useCallback((lat: number, lon: number) => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+    measurePointsRef.current.push({ lat, lon });
+    measureMarkersRef.current.push(
+      new naver.maps.Marker({
+        position: new naver.maps.LatLng(lat, lon),
+        map,
+        icon: {
+          content: '<div style="width:10px;height:10px;border-radius:50%;background:#1B64DA;border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.4)"></div>',
+          anchor: new naver.maps.Point(5, 5),
+        },
+      })
+    );
+    const path = measurePointsRef.current.map((p) => new naver.maps.LatLng(p.lat, p.lon));
+    if (measurePolylineRef.current) measurePolylineRef.current.setPath(path);
+    else measurePolylineRef.current = new naver.maps.Polyline({ path, strokeColor: '#1B64DA', strokeWeight: 4, strokeOpacity: 0.9, map });
+    let d = 0;
+    const pts = measurePointsRef.current;
+    for (let i = 1; i < pts.length; i++) d += haversine(pts[i - 1], pts[i]);
+    setMeasureDist(d);
+  }, []);
+
+  // 거리뷰 레이어 토글 (네이버처럼 거리뷰 가능 도로를 파란 선으로 표시 → 클릭 시 로드뷰)
+  const toggleStreet = useCallback(() => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+    setStreetOn((prev) => {
+      const next = !prev;
+      if (next) {
+        streetLayerRef.current = new naver.maps.StreetLayer();
+        streetLayerRef.current.setMap(map);
+      } else {
+        streetLayerRef.current?.setMap(null);
+        streetLayerRef.current = null;
+      }
+      return next;
+    });
+  }, []);
+
+  // 측정 토글 (켜면 클릭으로 점 추가, 끄면 초기화)
+  const toggleMeasure = useCallback(() => {
+    setMeasureOn((prev) => {
+      const next = !prev;
+      if (!next) clearMeasure();
+      return next;
+    });
+  }, [clearMeasure]);
+
+  // 현재 위치
+  const goCurrentLocation = useCallback(() => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+    if (!navigator.geolocation) {
+      setError('이 브라우저는 위치 정보를 지원하지 않습니다.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const pos = new naver.maps.LatLng(p.coords.latitude, p.coords.longitude);
+        map.morph(pos, 16);
+        if (locMarkerRef.current) locMarkerRef.current.setMap(null);
+        locMarkerRef.current = new naver.maps.Marker({
+          position: pos,
+          map,
+          zIndex: 900,
+          icon: {
+            content: '<div style="width:16px;height:16px;border-radius:50%;background:#1B64DA;border:3px solid #fff;box-shadow:0 0 0 2px rgba(27,100,218,.4),0 1px 3px rgba(0,0,0,.4)"></div>',
+            anchor: new naver.maps.Point(8, 8),
+          },
+        });
+      },
+      () => setError('현재 위치를 가져올 수 없습니다. (위치 권한 확인)')
+    );
+  }, []);
+
+  // 지도 클릭 → 측정 모드면 점 추가 / 거리뷰 모드면 로드뷰 열기
+  useEffect(() => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!mapReady || !map || !naver) return;
+    const listener = naver.maps.Event.addListener(map, 'click', (e: { coord: { lat: () => number; lng: () => number } }) => {
+      const lat = e.coord.lat();
+      const lon = e.coord.lng();
+      if (measureOn) addMeasurePoint(lat, lon);
+      else if (streetOn) {
+        setPanoMsg(null);
+        setPano({ lat, lon, label: '거리뷰' });
+      }
+    });
+    return () => naver.maps.Event.removeListener(listener);
+  }, [mapReady, measureOn, streetOn, addMeasurePoint]);
+
   // 지도 1회 초기화 + 이동(idle) 시 디바운스 로드
   useEffect(() => {
     if (!scriptReady || !mapElRef.current || mapRef.current || !window.naver) return;
@@ -265,6 +400,7 @@ export function ViolationMapClient() {
       if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
       loadTimerRef.current = setTimeout(refreshView, 250);
     });
+    setMapReady(true);
     refreshView();
   }, [scriptReady, refreshView]);
 
@@ -546,6 +682,80 @@ export function ViolationMapClient() {
             VWorld 등재(viol_bd_yn=1) 기준. 등재 누락분은 표시되지 않을 수 있습니다.
           </div>
         </div>
+
+        {/* 우측 세로 툴바 (거리뷰 / 현재위치 / 측정) */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 120,
+            right: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            zIndex: 15,
+          }}
+        >
+          {(
+            [
+              { key: 'street', icon: ICON_STREET, label: '거리뷰', active: streetOn, onClick: toggleStreet },
+              { key: 'locate', icon: ICON_LOCATE, label: '현재 위치', active: false, onClick: goCurrentLocation },
+              { key: 'measure', icon: ICON_RULER, label: '거리 측정', active: measureOn, onClick: toggleMeasure },
+            ] as const
+          ).map((b) => (
+            <button
+              key={b.key}
+              onClick={b.onClick}
+              title={b.label}
+              aria-label={b.label}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 10,
+                border: '1px solid #E5E8EB',
+                background: b.active ? '#1B64DA' : '#fff',
+                color: b.active ? '#fff' : '#454C53',
+                boxShadow: '0 2px 8px rgba(0,0,0,.12)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              dangerouslySetInnerHTML={{ __html: b.icon }}
+            />
+          ))}
+        </div>
+
+        {/* 측정 안내/결과 (하단 중앙) */}
+        {measureOn && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 20,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#191F28',
+              color: '#fff',
+              borderRadius: 10,
+              boxShadow: '0 2px 12px rgba(0,0,0,.3)',
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              zIndex: 15,
+              fontSize: 14,
+            }}
+          >
+            <span>
+              {measurePointsRef.current.length < 2 ? '지도를 클릭해 거리를 측정하세요' : <b>총 {fmtDist(measureDist)}</b>}
+            </span>
+            <button
+              onClick={clearMeasure}
+              style={{ background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 7, padding: '5px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              초기화
+            </button>
+          </div>
+        )}
 
         {error && (
           <div
