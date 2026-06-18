@@ -44,6 +44,17 @@ const REGIONS: Record<string, ViolationCache> = {
   oryudong: oryudong as ViolationCache,
 };
 
+// PNU(19자리) → 지번주소. region을 접두사로 쓴다.
+// 구조: 시군구(5)+법정동(5)+산여부(1)+본번(4)+부번(4)
+function pnuToJibun(pnu: string, regionPrefix: string): string | null {
+  if (!/^\d{19}$/.test(pnu)) return null;
+  const san = pnu[10] === '2' ? '산 ' : '';
+  const bun = parseInt(pnu.slice(11, 15), 10);
+  const ji = parseInt(pnu.slice(15, 19), 10);
+  if (!bun) return null;
+  return `${regionPrefix} ${san}${bun}${ji ? `-${ji}` : ''}`;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -70,6 +81,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const withAddress = items.map((i) => ({ ...i, jibun: pnuToJibun(i.pnu, cache.region) }));
+
     return corsJson({
       ok: true,
       region: cache.region,
@@ -77,8 +90,8 @@ export async function GET(request: NextRequest) {
       source: cache.source,
       counts: cache.counts,
       useDistribution: cache.useDistribution,
-      total: items.length,
-      items,
+      total: withAddress.length,
+      items: withAddress,
     });
   } catch (error) {
     console.error('Violation map lookup failed', error);

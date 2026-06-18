@@ -15,6 +15,7 @@ type ViolationItem = {
   residential: boolean;
   floors: number | null;
   useaprDay: string | null;
+  jibun: string | null;
   lat: number;
   lon: number;
 };
@@ -99,7 +100,8 @@ export function ViolationMapClient() {
         const html = `
           <div style="padding:14px 16px;min-width:220px;font-family:inherit">
             <div style="font-size:11px;font-weight:800;color:#E5484D;margin-bottom:6px">위반건축물</div>
-            <div style="font-size:16px;font-weight:800;color:#191F28;margin-bottom:8px">${it.name || '(건물명 없음)'}</div>
+            <div style="font-size:16px;font-weight:800;color:#191F28;margin-bottom:4px">${it.name || '(건물명 없음)'}</div>
+            ${it.jibun ? `<div style="font-size:13px;color:#191F28;margin-bottom:8px">📍 ${it.jibun}</div>` : ''}
             <div style="font-size:13px;color:#6B7684;line-height:1.7">
               용도: <b style="color:#191F28">${it.useName}</b><br/>
               ${it.floors ? `지상 ${it.floors}층 · ` : ''}사용승인 ${fmtDay(it.useaprDay)}
