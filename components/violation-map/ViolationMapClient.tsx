@@ -48,6 +48,11 @@ const ICON_ROADVIEW =
 // https://lucide.dev/icons/x (InfoWindow 닫기)
 const ICON_X =
   '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7684" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+// https://lucide.dev/icons/maximize-2 , minimize-2 (미니맵 확대/축소)
+const ICON_EXPAND =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#191F28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/></svg>';
+const ICON_SHRINK =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#191F28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" x2="21" y1="10" y2="3"/><line x1="3" x2="10" y1="21" y2="14"/></svg>';
 // https://lucide.dev/icons/map-pin (검색 위치 핀)
 const ICON_PIN =
   '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#E5484D" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/></svg>';
@@ -72,12 +77,16 @@ export function ViolationMapClient() {
   const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panoElRef = useRef<HTMLDivElement>(null);
   const panoRef = useRef<any>(null);
+  const miniElRef = useRef<HTMLDivElement>(null);
+  const miniMapRef = useRef<any>(null);
+  const miniMarkerRef = useRef<any>(null);
   const [scriptReady, setScriptReady] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pano, setPano] = useState<{ lat: number; lon: number; label: string } | null>(null);
   const [panoMsg, setPanoMsg] = useState<string | null>(null);
+  const [miniExpanded, setMiniExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<'marker' | 'sigungu' | 'bjdong'>('marker');
   const [searchQ, setSearchQ] = useState('');
   const [results, setResults] = useState<Array<{ address: string; lat: number; lon: number }>>([]);
@@ -276,13 +285,67 @@ export function ViolationMapClient() {
     naver.maps.Event.addListener(panoRef.current, 'pano_status', (status: string) => {
       setPanoMsg(status === 'OK' ? null : '이 위치 주변에는 거리뷰가 없습니다.');
     });
+
+    // 미니맵 (네이버 로드뷰 스타일): 현재 위치를 작은 지도로 표시, 로드뷰 이동 시 동기화
+    if (miniElRef.current) {
+      const start = new naver.maps.LatLng(pano.lat, pano.lon);
+      miniMapRef.current = new naver.maps.Map(miniElRef.current, {
+        center: start,
+        zoom: 16,
+        draggable: false,
+        scrollWheel: false,
+        pinchZoom: false,
+        disableDoubleClickZoom: true,
+        zoomControl: false,
+        logoControl: false,
+        mapDataControl: false,
+        scaleControl: false,
+      });
+      miniMarkerRef.current = new naver.maps.Marker({
+        position: start,
+        map: miniMapRef.current,
+        icon: {
+          content: '<div style="width:14px;height:14px;border-radius:50%;background:#E5484D;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.6)"></div>',
+          anchor: new naver.maps.Point(7, 7),
+        },
+      });
+      // 로드뷰에서 이동(다른 파노라마로 전환)하면 미니맵도 따라감
+      naver.maps.Event.addListener(panoRef.current, 'pano_changed', () => {
+        const p = panoRef.current?.getPosition?.();
+        if (p && miniMapRef.current) {
+          miniMapRef.current.setCenter(p);
+          miniMarkerRef.current?.setPosition(p);
+        }
+      });
+      // 컨테이너 크기 확정 후 타일이 제대로 그려지도록 리사이즈 보정
+      window.setTimeout(() => {
+        if (miniMapRef.current && window.naver) {
+          window.naver.maps.Event.trigger(miniMapRef.current, 'resize');
+          miniMapRef.current.setCenter(start);
+        }
+      }, 300);
+    }
   }, [pano]);
+
+  // 미니맵 확대/축소 시 지도 리사이즈 + 중심 보정
+  useEffect(() => {
+    if (!miniMapRef.current || !window.naver) return;
+    const t = window.setTimeout(() => {
+      window.naver.maps.Event.trigger(miniMapRef.current, 'resize');
+      const p = miniMarkerRef.current?.getPosition?.();
+      if (p) miniMapRef.current.setCenter(p);
+    }, 60);
+    return () => window.clearTimeout(t);
+  }, [miniExpanded]);
 
   const closeRoadview = () => {
     if (panoRef.current) {
       try { panoRef.current.destroy(); } catch { /* noop */ }
       panoRef.current = null;
     }
+    miniMapRef.current = null;
+    miniMarkerRef.current = null;
+    setMiniExpanded(false);
     setPano(null);
     setPanoMsg(null);
   };
@@ -547,6 +610,46 @@ export function ViolationMapClient() {
               </button>
             </div>
             <div ref={panoElRef} style={{ flex: 1, width: '100%' }} />
+
+            {/* 미니맵 (우측 하단, 확대/축소 토글) — 패노라마 WebGL 캔버스 위에 확실히 올리려 fixed + 최상위 z-index */}
+            <div
+              style={{
+                position: 'fixed',
+                right: 16,
+                bottom: 16,
+                width: miniExpanded ? 'min(70vw, 420px)' : 180,
+                height: miniExpanded ? 'min(60vh, 320px)' : 130,
+                borderRadius: 10,
+                overflow: 'hidden',
+                border: '2px solid #fff',
+                boxShadow: '0 3px 12px rgba(0,0,0,.5)',
+                transition: 'width .15s, height .15s',
+                zIndex: 9999, // 패노라마 내부 캔버스(z-index ~100)보다 위에 올라오도록
+              }}
+            >
+              <div ref={miniElRef} style={{ width: '100%', height: '100%', background: '#e8e8e8' }} />
+              <button
+                onClick={() => setMiniExpanded((v) => !v)}
+                title={miniExpanded ? '미니맵 축소' : '미니맵 확대'}
+                style={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  width: 28,
+                  height: 28,
+                  background: 'rgba(255,255,255,.95)',
+                  border: 'none',
+                  borderRadius: 6,
+                  boxShadow: '0 1px 3px rgba(0,0,0,.3)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1,
+                }}
+                dangerouslySetInnerHTML={{ __html: miniExpanded ? ICON_SHRINK : ICON_EXPAND }}
+              />
+            </div>
             {panoMsg && (
               <div
                 style={{
