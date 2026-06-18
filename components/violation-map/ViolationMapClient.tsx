@@ -42,11 +42,15 @@ const ICON_COPY =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7684" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
 const ICON_CHECK =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+// https://lucide.dev/icons/eye (로드뷰 버튼용, 흰색)
+const ICON_ROADVIEW =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>';
 
 declare global {
   interface Window {
     naver: any;
     __violCopyAddr?: (el: HTMLElement, text: string) => void;
+    __violRoadview?: (lat: number, lon: number, label: string) => void;
   }
 }
 
@@ -59,10 +63,14 @@ export function ViolationMapClient() {
   const infoRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const panoElRef = useRef<HTMLDivElement>(null);
+  const panoRef = useRef<any>(null);
   const [scriptReady, setScriptReady] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pano, setPano] = useState<{ lat: number; lon: number; label: string } | null>(null);
+  const [panoMsg, setPanoMsg] = useState<string | null>(null);
 
   // 현재 지도 영역(bbox)으로 마커 로드. 이전 마커는 지우고 새로 그린다.
   const loadMarkers = useCallback(() => {
@@ -115,6 +123,12 @@ export function ViolationMapClient() {
       });
     };
 
+    // 로드뷰(거리뷰) 오버레이 열기
+    window.__violRoadview = (lat, lon, label) => {
+      setPanoMsg(null);
+      setPano({ lat, lon, label });
+    };
+
     mapRef.current = new naver.maps.Map(mapElRef.current, {
       center: new naver.maps.LatLng(37.4975, 126.848),
       zoom: 15,
@@ -129,6 +143,34 @@ export function ViolationMapClient() {
     });
     loadMarkers();
   }, [scriptReady, loadMarkers]);
+
+  // 로드뷰 오버레이가 열리면 해당 좌표의 거리뷰(Panorama) 생성
+  useEffect(() => {
+    if (!pano || !window.naver || !panoElRef.current) return;
+    const { naver } = window;
+    if (panoRef.current) {
+      try { panoRef.current.destroy(); } catch { /* noop */ }
+      panoRef.current = null;
+    }
+    panoRef.current = new naver.maps.Panorama(panoElRef.current, {
+      position: new naver.maps.LatLng(pano.lat, pano.lon),
+      pov: { pan: 0, tilt: 0, fov: 100 },
+      logoControl: false,
+      zoomControl: true,
+    });
+    naver.maps.Event.addListener(panoRef.current, 'pano_status', (status: string) => {
+      setPanoMsg(status === 'OK' ? null : '이 위치 주변에는 거리뷰가 없습니다.');
+    });
+  }, [pano]);
+
+  const closeRoadview = () => {
+    if (panoRef.current) {
+      try { panoRef.current.destroy(); } catch { /* noop */ }
+      panoRef.current = null;
+    }
+    setPano(null);
+    setPanoMsg(null);
+  };
 
   // 마커 클릭 시 InfoWindow 열기
   function openInfo(map: any, marker: any, it: ViolationItem) {
@@ -151,7 +193,11 @@ export function ViolationMapClient() {
               용도: <b style="color:#191F28">${it.useName}</b><br/>
               ${it.floors ? `지상 ${it.floors}층 · ` : ''}사용승인 ${fmtDay(it.useaprDay)}
             </div>
-            <div style="display:flex;gap:8px;margin-top:12px">
+            <button onclick="window.__violRoadview(${it.lat}, ${it.lon}, '${(it.jibun || it.name || '').replace(/'/g, '')}')"
+              style="width:100%;margin-top:12px;padding:10px 0;background:#191F28;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+              ${ICON_ROADVIEW}로드뷰로 실제 건물 보기
+            </button>
+            <div style="display:flex;gap:8px;margin-top:8px">
               <a href="/enforcement-fine" style="flex:1;text-align:center;padding:9px 0;background:#1B64DA;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">이행강제금 계산</a>
               <a href="/check" style="flex:1;text-align:center;padding:9px 0;background:#F7F8FA;color:#191F28;border:1px solid #E5E8EB;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">자가진단</a>
             </div>
@@ -171,7 +217,7 @@ export function ViolationMapClient() {
   return (
     <>
       <Script
-        src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${CLIENT_ID}`}
+        src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${CLIENT_ID}&submodules=panorama`}
         strategy="afterInteractive"
         onReady={() => setScriptReady(true)}
         onError={() => setError('네이버 지도 로드 실패 — Client ID/도메인 등록을 확인하세요.')}
@@ -226,6 +272,70 @@ export function ViolationMapClient() {
             }}
           >
             {error}
+          </div>
+        )}
+
+        {/* 로드뷰(거리뷰) 오버레이 */}
+        {pano && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 30,
+              background: '#000',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                background: '#191F28',
+                color: '#fff',
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                📍 {pano.label || '로드뷰'}
+              </div>
+              <button
+                onClick={closeRoadview}
+                style={{
+                  background: 'rgba(255,255,255,.15)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '7px 14px',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  marginLeft: 12,
+                }}
+              >
+                닫기 ✕
+              </button>
+            </div>
+            <div ref={panoElRef} style={{ flex: 1, width: '100%' }} />
+            {panoMsg && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: 0,
+                  right: 0,
+                  textAlign: 'center',
+                  color: '#fff',
+                  fontSize: 14,
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                }}
+              >
+                {panoMsg}
+              </div>
+            )}
           </div>
         )}
       </div>
