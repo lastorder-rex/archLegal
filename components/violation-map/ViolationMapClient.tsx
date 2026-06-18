@@ -75,6 +75,7 @@ export function ViolationMapClient() {
   const [error, setError] = useState<string | null>(null);
   const [pano, setPano] = useState<{ lat: number; lon: number; label: string } | null>(null);
   const [panoMsg, setPanoMsg] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'marker' | 'sigungu' | 'bjdong'>('marker');
 
   // 현재 지도 영역(bbox)으로 마커 로드. 이전 마커는 지우고 새로 그린다.
   const loadMarkers = useCallback(() => {
@@ -105,12 +106,62 @@ export function ViolationMapClient() {
           naver.maps.Event.addListener(marker, 'click', () => openInfo(map, marker, it));
           markersRef.current.push(marker);
         });
+        setViewMode('marker');
         setCount(d.total);
         setError(null);
       })
       .catch((e) => setError(e.message || '데이터를 불러오지 못했습니다.'))
       .finally(() => setLoading(false));
   }, []);
+
+  // 줌아웃 시 구/동 단위 집계(클러스터) 로드. 클릭하면 확대.
+  const loadClusters = useCallback((level: 'sigungu' | 'bjdong') => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+    setLoading(true);
+    fetch(`/api/violation/clusters?level=${level}`)
+      .then((r) => r.json())
+      .then((d: { ok: boolean; clusters: Array<{ code: string; name: string; count: number; lat: number; lon: number }> }) => {
+        if (!d.ok) throw new Error('집계 조회 실패');
+        const b = map.getBounds();
+        const sw = b.getSW();
+        const ne = b.getNE();
+        const inView = d.clusters.filter((c) => c.lat >= sw.lat() && c.lat <= ne.lat() && c.lon >= sw.lng() && c.lon <= ne.lng());
+        markersRef.current.forEach((m) => m.setMap(null));
+        markersRef.current = [];
+        inView.forEach((c) => {
+          const size = c.count >= 1000 ? 58 : c.count >= 300 ? 50 : c.count >= 80 ? 42 : 34;
+          const marker = new naver.maps.Marker({
+            position: new naver.maps.LatLng(c.lat, c.lon),
+            map,
+            title: `${c.name} ${c.count}건`,
+            icon: {
+              content: `<div style="display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:rgba(27,100,218,.92);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);color:#fff;font-size:${size >= 50 ? 15 : 13}px;font-weight:800;font-family:inherit;cursor:pointer">${c.count}</div>`,
+              anchor: new naver.maps.Point(size / 2, size / 2),
+            },
+          });
+          naver.maps.Event.addListener(marker, 'click', () => {
+            map.morph(new naver.maps.LatLng(c.lat, c.lon), Math.min(map.getZoom() + 3, 16));
+          });
+          markersRef.current.push(marker);
+        });
+        setViewMode(level);
+        setCount(inView.reduce((a, c) => a + c.count, 0));
+        setError(null);
+      })
+      .catch((e) => setError(e.message || '데이터를 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // 줌 레벨에 따라 개별 마커 / 동 클러스터 / 구 클러스터 선택
+  const refreshView = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const z = map.getZoom();
+    if (z >= 15) loadMarkers();
+    else loadClusters(z < 13 ? 'sigungu' : 'bjdong');
+  }, [loadMarkers, loadClusters]);
 
   // 지도 1회 초기화 + 이동(idle) 시 디바운스 로드
   useEffect(() => {
@@ -148,10 +199,10 @@ export function ViolationMapClient() {
 
     naver.maps.Event.addListener(mapRef.current, 'idle', () => {
       if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
-      loadTimerRef.current = setTimeout(loadMarkers, 250);
+      loadTimerRef.current = setTimeout(refreshView, 250);
     });
-    loadMarkers();
-  }, [scriptReady, loadMarkers]);
+    refreshView();
+  }, [scriptReady, refreshView]);
 
   // 로드뷰 오버레이가 열리면 해당 좌표의 거리뷰(Panorama) 생성
   useEffect(() => {
@@ -252,7 +303,13 @@ export function ViolationMapClient() {
         >
           <div style={{ fontSize: 17, fontWeight: 800, color: '#191F28' }}>위반건축물 지도</div>
           <div style={{ fontSize: 13, color: '#6B7684', marginTop: 4 }}>
-            {loading ? '불러오는 중…' : count == null ? '지도를 움직여 조회' : `현재 화면 · 주거 위반 ${count}건`}
+            {loading
+              ? '불러오는 중…'
+              : count == null
+                ? '지도를 움직여 조회'
+                : viewMode === 'marker'
+                  ? `현재 화면 · 주거 위반 ${count.toLocaleString()}건`
+                  : `${viewMode === 'sigungu' ? '구' : '동'}별 묶음 · ${count.toLocaleString()}건 (클릭·확대 시 개별 표시)`}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
             {Object.entries(USE_COLOR).map(([name, color]) => (
