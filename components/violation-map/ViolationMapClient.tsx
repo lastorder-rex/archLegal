@@ -4,28 +4,23 @@ import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // 위반건축물 지도 (네이버지도 + 마커).
-// 데이터: GET /api/violation/map (사전 수집 캐시). 좌표를 이미 갖고 있어
-// Geocoding 불필요 → NCP Maps Client ID(브라우저용)만 있으면 된다.
+// 데이터: GET /api/violation/map (Supabase). 지도를 움직일 때마다 화면 영역(bbox)으로
+// 조회해 보이는 마커만 렌더 → 서울·전국으로 데이터가 늘어도 가벼움.
 
 type ViolationItem = {
   pnu: string;
   name: string | null;
-  useCode: string;
+  jibun: string | null;
   useName: string;
   residential: boolean;
   floors: number | null;
   useaprDay: string | null;
-  jibun: string | null;
   lat: number;
   lon: number;
 };
 
 type ApiResponse = {
   ok: boolean;
-  region: string;
-  collectedAt: string;
-  counts: { buildings: number; violations: number; residentialViolations: number };
-  useDistribution: Record<string, number>;
   total: number;
   items: ViolationItem[];
 };
@@ -62,24 +57,52 @@ export function ViolationMapClient() {
   const mapElRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const infoRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
-  const [data, setData] = useState<ApiResponse | null>(null);
+  const [count, setCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 데이터 로드
-  useEffect(() => {
-    fetch('/api/violation/map?region=oryudong&residential=1')
+  // 현재 지도 영역(bbox)으로 마커 로드. 이전 마커는 지우고 새로 그린다.
+  const loadMarkers = useCallback(() => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+    const b = map.getBounds();
+    const sw = b.getSW();
+    const ne = b.getNE();
+    const bbox = `${sw.lat()},${sw.lng()},${ne.lat()},${ne.lng()}`;
+    setLoading(true);
+    fetch(`/api/violation/map?residential=1&bbox=${bbox}`)
       .then((r) => r.json())
       .then((d: ApiResponse) => {
         if (!d.ok) throw new Error('데이터 조회 실패');
-        setData(d);
+        markersRef.current.forEach((m) => m.setMap(null));
+        markersRef.current = [];
+        d.items.forEach((it) => {
+          const marker = new naver.maps.Marker({
+            position: new naver.maps.LatLng(it.lat, it.lon),
+            map,
+            title: it.name || it.useName,
+            icon: {
+              content: `<div style="width:14px;height:14px;border-radius:50%;background:${colorOf(it.useName)};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>`,
+              anchor: new naver.maps.Point(7, 7),
+            },
+          });
+          naver.maps.Event.addListener(marker, 'click', () => openInfo(map, marker, it));
+          markersRef.current.push(marker);
+        });
+        setCount(d.total);
+        setError(null);
       })
-      .catch((e) => setError(e.message || '데이터를 불러오지 못했습니다.'));
+      .catch((e) => setError(e.message || '데이터를 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
   }, []);
 
-  // 지도 + 마커 렌더
-  const renderMap = useCallback(() => {
-    if (!scriptReady || !data || !mapElRef.current || !window.naver) return;
+  // 지도 1회 초기화 + 이동(idle) 시 디바운스 로드
+  useEffect(() => {
+    if (!scriptReady || !mapElRef.current || mapRef.current || !window.naver) return;
     const { naver } = window;
 
     // InfoWindow(HTML 문자열)의 onclick에서 호출할 복사 핸들러. 성공 시 check 아이콘으로 잠깐 전환.
@@ -92,29 +115,23 @@ export function ViolationMapClient() {
       });
     };
 
-    if (!mapRef.current) {
-      mapRef.current = new naver.maps.Map(mapElRef.current, {
-        center: new naver.maps.LatLng(37.4975, 126.848),
-        zoom: 15,
-        zoomControl: true,
-        zoomControlOptions: { position: naver.maps.Position.TOP_RIGHT },
-      });
-      infoRef.current = new naver.maps.InfoWindow({ borderWidth: 0, disableAnchor: false, pixelOffset: new naver.maps.Point(0, -4) });
-    }
-    const map = mapRef.current;
+    mapRef.current = new naver.maps.Map(mapElRef.current, {
+      center: new naver.maps.LatLng(37.4975, 126.848),
+      zoom: 15,
+      zoomControl: true,
+      zoomControlOptions: { position: naver.maps.Position.TOP_RIGHT },
+    });
+    infoRef.current = new naver.maps.InfoWindow({ borderWidth: 0, disableAnchor: false, pixelOffset: new naver.maps.Point(0, -4) });
 
-    data.items.forEach((it) => {
-      const color = colorOf(it.useName);
-      const marker = new naver.maps.Marker({
-        position: new naver.maps.LatLng(it.lat, it.lon),
-        map,
-        title: it.name || it.useName,
-        icon: {
-          content: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>`,
-          anchor: new naver.maps.Point(7, 7),
-        },
-      });
-      naver.maps.Event.addListener(marker, 'click', () => {
+    naver.maps.Event.addListener(mapRef.current, 'idle', () => {
+      if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
+      loadTimerRef.current = setTimeout(loadMarkers, 250);
+    });
+    loadMarkers();
+  }, [scriptReady, loadMarkers]);
+
+  // 마커 클릭 시 InfoWindow 열기
+  function openInfo(map: any, marker: any, it: ViolationItem) {
         const nameHtml = it.name
           ? `<div style="font-size:16px;font-weight:800;color:#191F28;margin-bottom:4px">${it.name}</div>`
           : '';
@@ -141,13 +158,7 @@ export function ViolationMapClient() {
           </div>`;
         infoRef.current.setContent(html);
         infoRef.current.open(map, marker);
-      });
-    });
-  }, [scriptReady, data]);
-
-  useEffect(() => {
-    renderMap();
-  }, [renderMap]);
+  }
 
   if (!CLIENT_ID) {
     return (
@@ -184,18 +195,16 @@ export function ViolationMapClient() {
         >
           <div style={{ fontSize: 17, fontWeight: 800, color: '#191F28' }}>위반건축물 지도</div>
           <div style={{ fontSize: 13, color: '#6B7684', marginTop: 4 }}>
-            {data ? `${data.region} · 주거 위반 ${data.total}건` : '불러오는 중…'}
+            {loading ? '불러오는 중…' : count == null ? '지도를 움직여 조회' : `현재 화면 · 주거 위반 ${count}건`}
           </div>
-          {data && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
-              {Object.entries(USE_COLOR).map(([name, color]) => (
-                <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#6B7684' }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block' }} />
-                  {name.replace('생활시설', '')}
-                </div>
-              ))}
-            </div>
-          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+            {Object.entries(USE_COLOR).map(([name, color]) => (
+              <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#6B7684' }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block' }} />
+                {name.replace('생활시설', '')}
+              </div>
+            ))}
+          </div>
           <div style={{ fontSize: 11, color: '#9AA3AD', marginTop: 10, lineHeight: 1.5 }}>
             VWorld 등재(viol_bd_yn=1) 기준. 등재 누락분은 표시되지 않을 수 있습니다.
           </div>
