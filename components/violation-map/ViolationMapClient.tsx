@@ -45,12 +45,16 @@ const ICON_CHECK =
 // https://lucide.dev/icons/eye (로드뷰 버튼용, 흰색)
 const ICON_ROADVIEW =
   '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>';
+// https://lucide.dev/icons/x (InfoWindow 닫기)
+const ICON_X =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7684" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
 declare global {
   interface Window {
     naver: any;
     __violCopyAddr?: (el: HTMLElement, text: string) => void;
     __violRoadview?: (lat: number, lon: number, label: string) => void;
+    __violCloseInfo?: () => void;
   }
 }
 
@@ -129,6 +133,11 @@ export function ViolationMapClient() {
       setPano({ lat, lon, label });
     };
 
+    // InfoWindow 닫기 (X 버튼)
+    window.__violCloseInfo = () => {
+      try { infoRef.current?.close(); } catch { /* noop */ }
+    };
+
     mapRef.current = new naver.maps.Map(mapElRef.current, {
       center: new naver.maps.LatLng(37.4975, 126.848),
       zoom: 15,
@@ -154,7 +163,7 @@ export function ViolationMapClient() {
     }
     panoRef.current = new naver.maps.Panorama(panoElRef.current, {
       position: new naver.maps.LatLng(pano.lat, pano.lon),
-      pov: { pan: 0, tilt: 0, fov: 100 },
+      pov: { pan: 0, tilt: 0, fov: 80 }, // 중간 시야각 → 확대/축소 양방향 여유
       logoControl: false,
       zoomControl: true,
     });
@@ -185,7 +194,9 @@ export function ViolationMapClient() {
              </div>`
           : '';
         const html = `
-          <div style="padding:14px 16px;min-width:220px;font-family:inherit">
+          <div style="position:relative;padding:14px 16px;padding-right:40px;min-width:220px;font-family:inherit">
+            <button onclick="window.__violCloseInfo()" title="닫기"
+              style="position:absolute;top:10px;right:10px;background:none;border:none;padding:2px;cursor:pointer;display:flex;align-items:center;justify-content:center">${ICON_X}</button>
             <div style="font-size:11px;font-weight:800;color:#E5484D;margin-bottom:6px">위반건축물</div>
             ${nameHtml}
             ${addrHtml}
