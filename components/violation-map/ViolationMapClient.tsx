@@ -41,9 +41,17 @@ const colorOf = (useName: string) => USE_COLOR[useName] || '#6B7684';
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID;
 
+// Lucide 아이콘(인라인 SVG). InfoWindow가 HTML 문자열이라 컴포넌트 대신 마크업을 직접 넣는다.
+// https://lucide.dev/icons/copy , https://lucide.dev/icons/check
+const ICON_COPY =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7684" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+const ICON_CHECK =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
 declare global {
   interface Window {
     naver: any;
+    __violCopyAddr?: (el: HTMLElement, text: string) => void;
   }
 }
 
@@ -74,6 +82,16 @@ export function ViolationMapClient() {
     if (!scriptReady || !data || !mapElRef.current || !window.naver) return;
     const { naver } = window;
 
+    // InfoWindow(HTML 문자열)의 onclick에서 호출할 복사 핸들러. 성공 시 check 아이콘으로 잠깐 전환.
+    window.__violCopyAddr = (el, text) => {
+      navigator.clipboard.writeText(text).then(() => {
+        el.innerHTML = ICON_CHECK;
+        window.setTimeout(() => {
+          el.innerHTML = ICON_COPY;
+        }, 1200);
+      });
+    };
+
     if (!mapRef.current) {
       mapRef.current = new naver.maps.Map(mapElRef.current, {
         center: new naver.maps.LatLng(37.4975, 126.848),
@@ -103,8 +121,8 @@ export function ViolationMapClient() {
         const addrHtml = it.jibun
           ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:${it.name ? 13 : 16}px;font-weight:${it.name ? 400 : 800};color:#191F28">
                <span>📍 ${it.jibun}</span>
-               <span title="주소 복사" style="cursor:pointer;font-size:14px"
-                 onclick="navigator.clipboard.writeText('${it.jibun}').then(()=>{this.textContent='✅';setTimeout(()=>{this.textContent='📋'},1200)})">📋</span>
+               <span title="주소 복사" style="cursor:pointer;display:inline-flex;align-items:center"
+                 onclick="window.__violCopyAddr(this, '${it.jibun}')">${ICON_COPY}</span>
              </div>`
           : '';
         const html = `
