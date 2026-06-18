@@ -8,6 +8,8 @@ import { getUserNickname } from '@/lib/auth/user-utils';
 import { createFallbackBuildingInfo } from '@/lib/utils/building-info';
 import { consultationsResponseSchema } from '@/lib/validations/consultation';
 
+const REPRESENTATIVE_ATTACHMENT_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 7;
+
 // Types for request validation
 interface ConsultationRequest {
   name: string;
@@ -205,6 +207,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const representativeAttachment = consultationData.attachments.find(
+      attachment => attachment.storagePath && attachment.name
+    );
+    let representativeAttachmentUrl: string | null = null;
+
+    if (representativeAttachment) {
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from('consultation-attachments')
+        .createSignedUrl(
+          representativeAttachment.storagePath,
+          REPRESENTATIVE_ATTACHMENT_SIGNED_URL_TTL_SECONDS
+        );
+
+      if (signedUrlError) {
+        console.error('Representative attachment signed URL failed:', {
+          consultationId: consultation.id,
+          storagePath: representativeAttachment.storagePath,
+          error: signedUrlError
+        });
+      } else {
+        representativeAttachmentUrl = signedUrlData.signedUrl;
+      }
+    }
+
     // 텔레그램 알림 전송. 실패해도 상담 저장 응답은 유지한다.
     const notificationSent = await sendConsultationNotification({
       name: consultationData.name,
@@ -213,7 +239,10 @@ export async function POST(request: NextRequest) {
       address: consultationData.address,
       address_detail: consultationData.address_detail,
       main_purps: consultationData.main_purps,
-      message: consultationData.message
+      message: consultationData.message,
+      attachmentCount: consultationData.attachments.length,
+      representativeAttachmentName: representativeAttachment?.name ?? null,
+      representativeAttachmentUrl
     }).catch(error => {
       console.error('Telegram notification failed:', error);
       return false;

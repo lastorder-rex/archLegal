@@ -6,15 +6,33 @@ type ConsultationNotificationData = {
   address_detail?: string | null;
   main_purps?: string | null;
   message?: string | null;
+  attachmentCount?: number;
+  representativeAttachmentName?: string | null;
+  representativeAttachmentUrl?: string | null;
 };
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
 const TELEGRAM_REQUEST_TIMEOUT_MS = 5000;
 
+const buildNaverMapUrl = (address: string) =>
+  `https://map.naver.com/v5/search/${encodeURIComponent(address)}?searchCoord=0,0,15,0,0,0`;
+
 const composeMessage = (consultationData: ConsultationNotificationData) => {
   const fullAddress = `${consultationData.address}${
     consultationData.address_detail ? ` ${consultationData.address_detail}` : ''
   }`;
+  const naverMapUrl = buildNaverMapUrl(consultationData.address);
+  const attachmentSection = consultationData.attachmentCount
+    ? `
+📎 <b>첨부파일:</b> ${consultationData.attachmentCount}개${
+        consultationData.representativeAttachmentName && consultationData.representativeAttachmentUrl
+          ? `
+대표 파일: ${escapeHtml(consultationData.representativeAttachmentName)}
+🔗 <a href="${escapeHtml(consultationData.representativeAttachmentUrl)}">대표 파일 보기</a>`
+          : ''
+      }
+`
+    : '';
 
   return `
 🆕 <b>새 상담 요청이 등록되었습니다</b>
@@ -24,7 +42,9 @@ const composeMessage = (consultationData: ConsultationNotificationData) => {
 ${consultationData.email ? `📧 <b>이메일:</b> ${escapeHtml(consultationData.email)}` : ''}
 
 📍 <b>주소:</b> ${escapeHtml(fullAddress)}
+🗺 <a href="${escapeHtml(naverMapUrl)}">네이버 지도에서 보기</a>
 🏠 <b>건축물 용도:</b> ${escapeHtml(consultationData.main_purps || '확인 필요')}
+${attachmentSection}
 
 💬 <b>상담 내용:</b>
 ${escapeHtml(consultationData.message || '별도 요청사항 없음')}
@@ -65,6 +85,7 @@ export async function sendConsultationNotification(
         chat_id: channelId,
         text: message,
         parse_mode: 'HTML',
+        disable_web_page_preview: true,
       }),
     });
 

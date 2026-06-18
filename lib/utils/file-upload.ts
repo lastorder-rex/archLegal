@@ -29,6 +29,30 @@ export interface AttachmentFile {
   storagePath?: string;
 }
 
+function getAllowedFileExtension(file: File): string {
+  const allowedExtensions = ALLOWED_FILE_TYPES[file.type as keyof typeof ALLOWED_FILE_TYPES] as
+    | readonly string[]
+    | undefined;
+  const originalExtension = file.name.split('.').pop()?.toLowerCase();
+  const normalizedOriginalExtension = originalExtension ? `.${originalExtension.replace(/[^a-z0-9]/g, '')}` : '';
+
+  if (allowedExtensions?.includes(normalizedOriginalExtension)) {
+    return normalizedOriginalExtension;
+  }
+
+  return allowedExtensions?.[0] ?? '';
+}
+
+function createStorageFileName(file: File, timestamp: number): string {
+  const extension = getAllowedFileExtension(file);
+  const uniqueId =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 12);
+
+  return `${timestamp}_${uniqueId}${extension}`;
+}
+
 // Validate file type and size
 export function validateFile(file: File): { valid: boolean; error?: string } {
   // Check file size
@@ -75,13 +99,13 @@ export async function uploadFile(
   try {
     const supabase = createClientComponentClient();
 
-    // Use temp folder if no consultationId yet
-    const folder = consultationId || `temp_${Date.now()}`;
-
-    // Generate unique filename
     const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop() || '';
-    const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+    // Use temp folder if no consultationId yet
+    const folder = consultationId || `temp_${timestamp}`;
+
+    // Keep the original user-facing name in DB only. Storage paths use ASCII-safe generated names.
+    const fileName = createStorageFileName(file, timestamp);
     const filePath = `${userId}/${folder}/${fileName}`;
 
     // Resize image if needed (for large images)

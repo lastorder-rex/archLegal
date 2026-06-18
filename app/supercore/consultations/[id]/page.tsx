@@ -122,6 +122,7 @@ export default function ConsultationDetailPage() {
 
   const handleOpenRoadview = (provider: 'kakao' | 'naver') => {
     if (!consultation) return;
+    // 지도 검색은 상세주소보다 기본 주소가 더 안정적입니다.
     const encodedAddress = encodeURIComponent(consultation.address);
     const url =
       provider === 'kakao'
