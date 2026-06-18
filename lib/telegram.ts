@@ -9,6 +9,7 @@ type ConsultationNotificationData = {
   attachmentCount?: number;
   representativeAttachmentName?: string | null;
   representativeAttachmentUrl?: string | null;
+  createdAt?: string | Date | null;
 };
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
@@ -16,6 +17,22 @@ const TELEGRAM_REQUEST_TIMEOUT_MS = 5000;
 
 const buildNaverMapUrl = (address: string) =>
   `https://map.naver.com/v5/search/${encodeURIComponent(address)}?searchCoord=0,0,15,0,0,0`;
+
+const formatKoreanDateTime = (value?: string | Date | null) => {
+  const date = value ? new Date(value) : new Date();
+  const validDate = Number.isNaN(date.getTime()) ? new Date() : date;
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(validDate);
+};
 
 const composeMessage = (consultationData: ConsultationNotificationData) => {
   const fullAddress = `${consultationData.address}${
@@ -49,7 +66,7 @@ ${attachmentSection}
 💬 <b>상담 내용:</b>
 ${escapeHtml(consultationData.message || '별도 요청사항 없음')}
 
-⏰ <b>등록시간:</b> ${escapeHtml(new Date().toLocaleString('ko-KR'))}
+⏰ <b>등록시간:</b> ${escapeHtml(formatKoreanDateTime(consultationData.createdAt))}
 
 #새상담
   `.trim();

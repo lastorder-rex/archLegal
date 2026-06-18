@@ -40,6 +40,7 @@ describe('sendConsultationNotification', () => {
       attachmentCount: 2,
       representativeAttachmentName: '행복빌라 집합건축물 대장.pdf',
       representativeAttachmentUrl: 'https://example.com/file?token=abc&download=1',
+      createdAt: '2026-06-18T00:00:00.000Z',
     });
 
     expect(result).toBe(true);
@@ -67,6 +68,7 @@ describe('sendConsultationNotification', () => {
     expect(body.text).toContain('대표 파일: 행복빌라 집합건축물 대장.pdf');
     expect(body.text).toContain('https://example.com/file?token=abc&amp;download=1');
     expect(body.text).toContain('문의 내용에 &lt;태그&gt; &amp; 특수문자가 있습니다.');
+    expect(body.text).toContain('⏰ <b>등록시간:</b> 2026. 06. 18. 09:00:00');
   });
 
   it('does not call Telegram when configuration is missing', async () => {

@@ -242,7 +242,8 @@ export async function POST(request: NextRequest) {
       message: consultationData.message,
       attachmentCount: consultationData.attachments.length,
       representativeAttachmentName: representativeAttachment?.name ?? null,
-      representativeAttachmentUrl
+      representativeAttachmentUrl,
+      createdAt: consultation.created_at
     }).catch(error => {
       console.error('Telegram notification failed:', error);
       return false;
