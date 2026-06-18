@@ -205,10 +205,16 @@ export function ViolationMapClient() {
       position: pos,
       map,
       zIndex: 1000,
+      title: `${it.address} · 클릭하면 로드뷰`,
       icon: {
-        content: `<div style="transform:translate(-50%,-100%);filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">${ICON_PIN}</div>`,
+        content: `<div style="transform:translate(-50%,-100%);filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));cursor:pointer">${ICON_PIN}</div>`,
         anchor: new naver.maps.Point(0, 0),
       },
+    });
+    // 검색 핀 클릭 → 위반건축물이 아니어도 해당 위치 로드뷰 열기
+    naver.maps.Event.addListener(searchMarkerRef.current, 'click', () => {
+      setPanoMsg(null);
+      setPano({ lat: it.lat, lon: it.lon, label: it.address });
     });
   }, []);
 
