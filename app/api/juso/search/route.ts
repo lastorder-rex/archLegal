@@ -1,4 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { corsJson, corsPreflight } from '@/lib/api/cors';
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 // Juso API response types
 interface JusoResultItem {
@@ -106,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     // Input validation
     if (!query || typeof query !== 'string' || query.trim().length < 2) {
-      return NextResponse.json(
+      return corsJson(
         { error: '검색어는 2글자 이상 입력해주세요.' },
         { status: 400 }
       );
@@ -115,7 +120,7 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.JUSO_API_KEY;
     if (!apiKey) {
       console.error('JUSO_API_KEY is not configured');
-      return NextResponse.json(
+      return corsJson(
         { error: '주소 검색 서비스 설정이 올바르지 않습니다.' },
         { status: 500 }
       );
@@ -152,7 +157,7 @@ export async function POST(request: NextRequest) {
 
     // Handle API errors
     if (data.results.common.errorCode !== '0') {
-      return NextResponse.json(
+      return corsJson(
         {
           error: data.results.common.errorMessage || '주소 검색 중 오류가 발생했습니다.',
           code: data.results.common.errorCode
@@ -207,7 +212,7 @@ export async function POST(request: NextRequest) {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
 
-    return NextResponse.json({
+    return corsJson({
       addresses,
       pagination: {
         currentPage: parseInt(data.results.common.currentPage),
@@ -218,7 +223,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Juso API error:', error);
-    return NextResponse.json(
+    return corsJson(
       { error: '주소 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' },
       { status: 500 }
     );

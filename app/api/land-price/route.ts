@@ -1,6 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { buildPnu, fetchLandPrice } from '@/lib/services/land-price';
+import { corsJson, corsPreflight } from '@/lib/api/cors';
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 // 모바일 앱(이행강제금 계산기)용 개별공시지가 조회 프록시.
 // /api/juso/search 결과의 addressCode 또는 PNU(19자리)를 받아 VWorld 공시지가를 반환한다.
@@ -26,21 +31,21 @@ export async function POST(request: NextRequest) {
 
     if (!parsed.success) {
       const message = parsed.error.issues[0]?.message || '입력값을 확인해주세요.';
-      return NextResponse.json({ error: message }, { status: 400 });
+      return corsJson({ error: message }, { status: 400 });
     }
 
     const pnu = 'pnu' in parsed.data ? parsed.data.pnu : buildPnu(parsed.data.addressCode);
     const result = await fetchLandPrice(pnu);
 
     if (!result.ok) {
-      return NextResponse.json({ ok: false, pnu, reason: result.reason });
+      return corsJson({ ok: false, pnu, reason: result.reason });
     }
 
     const { raw: _raw, ...landPrice } = result.data;
-    return NextResponse.json({ ok: true, landPrice });
+    return corsJson({ ok: true, landPrice });
   } catch (error) {
     console.error('Land price lookup failed', error);
-    return NextResponse.json(
+    return corsJson(
       { error: '공시지가 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' },
       { status: 500 }
     );

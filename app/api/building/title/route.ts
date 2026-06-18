@@ -1,5 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { corsJson, corsPreflight } from '@/lib/api/cors';
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -204,7 +209,7 @@ export async function POST(request: NextRequest) {
 
     // Input validation
     if (!sigunguCd || !bjdongCd || !platGbCd || !bun || !ji) {
-      return NextResponse.json(
+      return corsJson(
         { error: '건축물 조회에 필요한 주소 정보가 부족합니다.' },
         { status: 400 }
       );
@@ -311,7 +316,7 @@ export async function POST(request: NextRequest) {
               source: 'national_api' // Indicate data source
             };
 
-            return NextResponse.json({
+            return corsJson({
               building: buildingInfo,
               summary: {
                 mainPurpose: building.mainPurpsCdNm || '정보없음',
@@ -362,7 +367,7 @@ export async function POST(request: NextRequest) {
 
     if (localData) {
       console.log('Found building data in local database');
-      return NextResponse.json({
+      return corsJson({
         ...transformLocalBuildingData(localData),
         fallback: true,
         apiError: apiError // Include API error info for debugging
@@ -371,7 +376,7 @@ export async function POST(request: NextRequest) {
 
     // STEP 3: Both sources failed - return error
     console.error('Building not found in both National API and local DB');
-    return NextResponse.json(
+    return corsJson(
       {
         error: '해당 주소의 건축물 정보를 찾을 수 없습니다.',
         details: '국토부 API와 로컬 데이터베이스 모두에서 정보를 찾을 수 없습니다.',
@@ -381,7 +386,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Building registry API error:', error);
-    return NextResponse.json(
+    return corsJson(
       { error: '건축물 정보 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' },
       { status: 500 }
     );
