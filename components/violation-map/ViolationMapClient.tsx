@@ -194,9 +194,9 @@ export function ViolationMapClient() {
              </div>`
           : '';
         const html = `
-          <div style="position:relative;padding:14px 16px;padding-right:40px;min-width:220px;font-family:inherit">
+          <div style="position:relative;padding:14px 16px;min-width:220px;font-family:inherit">
             <button onclick="window.__violCloseInfo()" title="닫기"
-              style="position:absolute;top:10px;right:10px;background:none;border:none;padding:2px;cursor:pointer;display:flex;align-items:center;justify-content:center">${ICON_X}</button>
+              style="position:absolute;top:8px;right:8px;background:none;border:none;padding:2px;cursor:pointer;display:flex;align-items:center;justify-content:center">${ICON_X}</button>
             <div style="font-size:11px;font-weight:800;color:#E5484D;margin-bottom:6px">위반건축물</div>
             ${nameHtml}
             ${addrHtml}
