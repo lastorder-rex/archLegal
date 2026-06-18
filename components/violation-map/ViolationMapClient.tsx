@@ -509,7 +509,7 @@ export function ViolationMapClient() {
             style={{
               position: 'absolute',
               inset: 0,
-              zIndex: 30,
+              zIndex: 1000, // 지도 줌 컨트롤(z-index ~100)이 위로 비쳐 보이지 않도록 충분히 높게
               background: '#000',
               display: 'flex',
               flexDirection: 'column',
