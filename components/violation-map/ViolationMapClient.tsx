@@ -414,7 +414,7 @@ export function ViolationMapClient() {
     }
     panoRef.current = new naver.maps.Panorama(panoElRef.current, {
       position: new naver.maps.LatLng(pano.lat, pano.lon),
-      pov: { pan: 0, tilt: 0, fov: 80 }, // 중간 시야각 → 확대/축소 양방향 여유
+      pov: { pan: 0, tilt: 0, fov: 100 }, // 최대 광각(fov 상한 100) → 가장 넓은 거리 보기
       logoControl: false,
       zoomControl: true,
     });
