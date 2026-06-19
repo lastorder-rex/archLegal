@@ -66,7 +66,7 @@ async function vworldWfs(params) {
 // 대상 시도의 구 목록 + bbox 조회
 async function getDistricts() {
   const xml = await vworldWfs({
-    TYPENAME: 'lt_c_adsigg', MAXFEATURES: '100', PROPERTYNAME: 'sig_cd,sig_kor_nm',
+    TYPENAME: 'lt_c_adsigg', MAXFEATURES: '500', PROPERTYNAME: 'sig_cd,sig_kor_nm',
     FILTER: `<Filter><PropertyIsLike wildCard="*" singleChar="?" escapeChar="\\"><PropertyName>sig_cd</PropertyName><Literal>${SIDO}*</Literal></PropertyIsLike></Filter>`,
   });
   return xml.split(/<sop:lt_c_adsigg[ >]/).slice(1).map((s) => {
