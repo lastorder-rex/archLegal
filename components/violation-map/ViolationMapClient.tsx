@@ -392,7 +392,7 @@ export function ViolationMapClient() {
       center: new naver.maps.LatLng(37.4975, 126.848),
       zoom: 15,
       zoomControl: true,
-      zoomControlOptions: { position: naver.maps.Position.TOP_RIGHT },
+      zoomControlOptions: { position: naver.maps.Position.RIGHT_BOTTOM },
     });
     infoRef.current = new naver.maps.InfoWindow({ borderWidth: 0, disableAnchor: false, pixelOffset: new naver.maps.Point(0, -4) });
 
