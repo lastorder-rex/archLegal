@@ -427,7 +427,8 @@ export function ViolationMapClient() {
       const start = new naver.maps.LatLng(pano.lat, pano.lon);
       miniMapRef.current = new naver.maps.Map(miniElRef.current, {
         center: start,
-        zoom: 16,
+        zoom: 15, // 한 단계 축소 → 더 넓은 영역 표시
+
         draggable: false,
         scrollWheel: false,
         pinchZoom: false,
