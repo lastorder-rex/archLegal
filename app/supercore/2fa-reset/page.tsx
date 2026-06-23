@@ -20,6 +20,7 @@ export default function TwoFactorResetPage() {
   const [code, setCode] = useState('');
   const [qrCode, setQrCode] = useState('');
   const [manualEntryKey, setManualEntryKey] = useState('');
+  const [isManualKeyCopied, setIsManualKeyCopied] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -55,6 +56,7 @@ export default function TwoFactorResetPage() {
 
       setQrCode(data.qrCode);
       setManualEntryKey(data.manualEntryKey);
+      setIsManualKeyCopied(false);
       setPassword('');
       setStep('scan');
     } catch (prepareError) {
@@ -161,6 +163,22 @@ export default function TwoFactorResetPage() {
             <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
               <p className="mb-1 text-xs text-slate-600">수동 입력 키</p>
               <p className="break-all font-mono text-sm text-slate-900">{manualEntryKey}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(manualEntryKey);
+                    setIsManualKeyCopied(true);
+                  } catch {
+                    setError('자동 복사에 실패했습니다. 수동 입력 키를 길게 눌러 직접 복사해주세요.');
+                  }
+                }}
+              >
+                {isManualKeyCopied ? '복사됨' : '수동 입력 키 복사'}
+              </Button>
             </div>
 
             <div className="space-y-2">
