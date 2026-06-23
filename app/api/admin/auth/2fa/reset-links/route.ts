@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'crypto';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 import { verifyAdminSession } from '@/lib/utils/admin-auth';
 
-const DEFAULT_EXPIRY_HOURS = 24;
+const DEFAULT_EXPIRY_HOURS = 72;
 const MAX_EXPIRY_HOURS = 72;
 
 function hashToken(token: string) {

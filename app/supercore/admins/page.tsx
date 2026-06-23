@@ -312,7 +312,7 @@ export default function AdminsPage() {
         credentials: 'include',
         body: JSON.stringify({
           targetAdminId: admin.id,
-          expiresInHours: 24
+          expiresInHours: 72
         })
       });
 
