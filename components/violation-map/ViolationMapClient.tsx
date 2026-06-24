@@ -56,8 +56,8 @@ const ICON_SHRINK =
 // 우측 툴바 아이콘 (stroke=currentColor로 활성/비활성 색 전환)
 const ICON_STREET =
   '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>';
-const ICON_LOCATE =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>';
+const ICON_AREA =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5 10 4l8 3 2 8-6 5-8-3-2-9.5Z"/><circle cx="10" cy="4" r="1.5" fill="currentColor" stroke="none"/><circle cx="18" cy="7" r="1.5" fill="currentColor" stroke="none"/><circle cx="20" cy="15" r="1.5" fill="currentColor" stroke="none"/><circle cx="14" cy="20" r="1.5" fill="currentColor" stroke="none"/><circle cx="6" cy="17" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="7.5" r="1.5" fill="currentColor" stroke="none"/></svg>';
 const ICON_RULER =
   '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>';
 // https://lucide.dev/icons/map-pin (검색 위치 핀)
@@ -88,8 +88,60 @@ function haversine(a: { lat: number; lon: number }, b: { lat: number; lon: numbe
   return 2 * R * Math.asin(Math.sqrt(x));
 }
 const fmtDist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(2)}km` : `${Math.round(m)}m`);
+const fmtArea = (sqm: number) => (sqm >= 10000 ? `${(sqm / 10000).toFixed(2)}ha` : `${Math.round(sqm).toLocaleString()}㎡`);
+const AREA_HINT_WIDTH = 166;
+const AREA_HINT_HEIGHT = 82;
+
+function totalDistance(points: Array<{ lat: number; lon: number }>) {
+  let d = 0;
+  for (let i = 1; i < points.length; i++) d += haversine(points[i - 1], points[i]);
+  return d;
+}
+
+function polygonArea(points: Array<{ lat: number; lon: number }>) {
+  if (points.length < 3) return 0;
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const avgLat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+  const projected = points.map((p) => ({
+    x: R * toRad(p.lon) * Math.cos(toRad(avgLat)),
+    y: R * toRad(p.lat),
+  }));
+  let area = 0;
+  for (let i = 0; i < projected.length; i++) {
+    const j = (i + 1) % projected.length;
+    area += projected[i].x * projected[j].y - projected[j].x * projected[i].y;
+  }
+  return Math.abs(area) / 2;
+}
+
+// 측정/면적 점 표시용 작은 원형 마커. 색만 바꿔 측정(파랑)·면적(초록)에 공통 사용.
+function dotMarker(naver: any, map: any, lat: number, lon: number, color: string) {
+  return new naver.maps.Marker({
+    position: new naver.maps.LatLng(lat, lon),
+    map,
+    icon: {
+      content: `<div style="width:10px;height:10px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.4)"></div>`,
+      anchor: new naver.maps.Point(5, 5),
+    },
+  });
+}
+
+// 마우스 커서 옆 힌트박스의 위치(컨테이너 안에 들어오도록 모서리에서 뒤집고 클램프).
+function computeHintPos(el: HTMLElement, e: MouseEvent) {
+  const rect = el.getBoundingClientRect();
+  let x = e.clientX - rect.left + 16;
+  let y = e.clientY - rect.top + 16;
+  if (x + AREA_HINT_WIDTH > rect.width) x = e.clientX - rect.left - AREA_HINT_WIDTH - 16;
+  if (y + AREA_HINT_HEIGHT > rect.height) y = e.clientY - rect.top - AREA_HINT_HEIGHT - 16;
+  return {
+    x: Math.max(8, Math.min(x, rect.width - AREA_HINT_WIDTH - 8)),
+    y: Math.max(8, Math.min(y, rect.height - AREA_HINT_HEIGHT - 8)),
+  };
+}
 
 export function ViolationMapClient() {
+  const mapWrapRef = useRef<HTMLDivElement>(null);
   const mapElRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const infoRef = useRef<any>(null);
@@ -116,12 +168,25 @@ export function ViolationMapClient() {
   const [mapReady, setMapReady] = useState(false);
   const [streetOn, setStreetOn] = useState(false);
   const [measureOn, setMeasureOn] = useState(false);
+  const [measureFinished, setMeasureFinished] = useState(false);
+  const [measurePointCount, setMeasurePointCount] = useState(0);
+  const [areaOn, setAreaOn] = useState(false);
+  const [areaFinished, setAreaFinished] = useState(false);
+  const [areaPointCount, setAreaPointCount] = useState(0);
   const [measureDist, setMeasureDist] = useState(0);
+  const [areaSize, setAreaSize] = useState(0);
+  const [measureHintPos, setMeasureHintPos] = useState<{ x: number; y: number } | null>(null);
+  const [areaHintPos, setAreaHintPos] = useState<{ x: number; y: number } | null>(null);
   const streetLayerRef = useRef<any>(null);
-  const locMarkerRef = useRef<any>(null);
   const measurePointsRef = useRef<Array<{ lat: number; lon: number }>>([]);
   const measureMarkersRef = useRef<any[]>([]);
   const measurePolylineRef = useRef<any>(null);
+  const measurePreviewPointRef = useRef<{ lat: number; lon: number } | null>(null);
+  const areaPointsRef = useRef<Array<{ lat: number; lon: number }>>([]);
+  const areaMarkersRef = useRef<any[]>([]);
+  const areaPolylineRef = useRef<any>(null);
+  const areaPolygonRef = useRef<any>(null);
+  const areaPreviewPointRef = useRef<{ lat: number; lon: number } | null>(null);
 
   // 현재 지도 영역(bbox)으로 마커 로드. 이전 마커는 지우고 새로 그린다.
   const loadMarkers = useCallback(() => {
@@ -263,7 +328,44 @@ export function ViolationMapClient() {
     measurePolylineRef.current?.setMap(null);
     measurePolylineRef.current = null;
     measurePointsRef.current = [];
+    measurePreviewPointRef.current = null;
+    setMeasureFinished(false);
+    setMeasurePointCount(0);
     setMeasureDist(0);
+    setMeasureHintPos(null);
+  }, []);
+
+  const clearArea = useCallback(() => {
+    areaMarkersRef.current.forEach((m) => m.setMap(null));
+    areaMarkersRef.current = [];
+    areaPolylineRef.current?.setMap(null);
+    areaPolylineRef.current = null;
+    areaPolygonRef.current?.setMap(null);
+    areaPolygonRef.current = null;
+    areaPointsRef.current = [];
+    areaPreviewPointRef.current = null;
+    setAreaFinished(false);
+    setAreaPointCount(0);
+    setAreaSize(0);
+    setAreaHintPos(null);
+  }, []);
+
+  const updateMeasureGeometry = useCallback((previewPoint?: { lat: number; lon: number }) => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+
+    const points = previewPoint ? [...measurePointsRef.current, previewPoint] : measurePointsRef.current;
+    const path = points.map((p) => new naver.maps.LatLng(p.lat, p.lon));
+    if (path.length >= 2 && measurePolylineRef.current) {
+      measurePolylineRef.current.setPath(path);
+    } else if (path.length >= 2) {
+      measurePolylineRef.current = new naver.maps.Polyline({ path, strokeColor: '#1B64DA', strokeWeight: 4, strokeOpacity: 0.9, map });
+    } else if (measurePolylineRef.current) {
+      measurePolylineRef.current.setMap(null);
+      measurePolylineRef.current = null;
+    }
+    setMeasureDist(totalDistance(points));
   }, []);
 
   const addMeasurePoint = useCallback((lat: number, lon: number) => {
@@ -271,23 +373,123 @@ export function ViolationMapClient() {
     const { naver } = window;
     if (!map || !naver) return;
     measurePointsRef.current.push({ lat, lon });
-    measureMarkersRef.current.push(
-      new naver.maps.Marker({
-        position: new naver.maps.LatLng(lat, lon),
+    measurePreviewPointRef.current = null;
+    setMeasureFinished(false);
+    setMeasurePointCount(measurePointsRef.current.length);
+    measureMarkersRef.current.push(dotMarker(naver, map, lat, lon, '#1B64DA'));
+    updateMeasureGeometry();
+  }, [updateMeasureGeometry]);
+
+  const finishMeasure = useCallback((finalPoint?: { lat: number; lon: number }) => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver || measurePointsRef.current.length < 1) return;
+
+    const pointToCommit = finalPoint || measurePreviewPointRef.current;
+    if (pointToCommit) {
+      const last = measurePointsRef.current[measurePointsRef.current.length - 1];
+      const duplicated = last && Math.abs(last.lat - pointToCommit.lat) < 0.0000001 && Math.abs(last.lon - pointToCommit.lon) < 0.0000001;
+      if (!duplicated) {
+        measurePointsRef.current.push(pointToCommit);
+        measureMarkersRef.current.push(dotMarker(naver, map, pointToCommit.lat, pointToCommit.lon, '#1B64DA'));
+      }
+    }
+
+    if (measurePointsRef.current.length < 2) return;
+    measurePreviewPointRef.current = null;
+    updateMeasureGeometry();
+    setMeasurePointCount(measurePointsRef.current.length);
+    setMeasureOn(false);
+    setMeasureFinished(true);
+    setMeasureHintPos(null);
+  }, [updateMeasureGeometry]);
+
+  const updateAreaGeometry = useCallback((previewPoint?: { lat: number; lon: number }) => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+
+    const points = previewPoint ? [...areaPointsRef.current, previewPoint] : areaPointsRef.current;
+    const path = points.map((p) => new naver.maps.LatLng(p.lat, p.lon));
+    const outlinePath = path.length >= 3 ? [...path, path[0]] : path;
+
+    if (outlinePath.length >= 2 && areaPolylineRef.current) {
+      areaPolylineRef.current.setPath(outlinePath);
+    } else if (outlinePath.length >= 2) {
+      areaPolylineRef.current = new naver.maps.Polyline({
+        path: outlinePath,
         map,
-        icon: {
-          content: '<div style="width:10px;height:10px;border-radius:50%;background:#1B64DA;border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.4)"></div>',
-          anchor: new naver.maps.Point(5, 5),
-        },
-      })
-    );
-    const path = measurePointsRef.current.map((p) => new naver.maps.LatLng(p.lat, p.lon));
-    if (measurePolylineRef.current) measurePolylineRef.current.setPath(path);
-    else measurePolylineRef.current = new naver.maps.Polyline({ path, strokeColor: '#1B64DA', strokeWeight: 4, strokeOpacity: 0.9, map });
-    let d = 0;
-    const pts = measurePointsRef.current;
-    for (let i = 1; i < pts.length; i++) d += haversine(pts[i - 1], pts[i]);
-    setMeasureDist(d);
+        strokeColor: '#16A34A',
+        strokeWeight: 3,
+        strokeOpacity: 0.95,
+      });
+    } else if (areaPolylineRef.current) {
+      areaPolylineRef.current.setMap(null);
+      areaPolylineRef.current = null;
+    }
+
+    if (path.length >= 3) {
+      if (areaPolygonRef.current) {
+        areaPolygonRef.current.setPaths(path);
+      } else {
+        areaPolygonRef.current = new naver.maps.Polygon({
+          paths: path,
+          map,
+          strokeColor: '#16A34A',
+          strokeWeight: 0,
+          strokeOpacity: 0,
+          fillColor: '#16A34A',
+          fillOpacity: 0.18,
+        });
+      }
+    } else if (areaPolygonRef.current) {
+      areaPolygonRef.current.setMap(null);
+      areaPolygonRef.current = null;
+    }
+
+    setAreaSize(polygonArea(points));
+  }, []);
+
+  const addAreaPoint = useCallback((lat: number, lon: number) => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver) return;
+    areaPointsRef.current.push({ lat, lon });
+    areaPreviewPointRef.current = null;
+    setAreaFinished(false);
+    setAreaPointCount(areaPointsRef.current.length);
+    areaMarkersRef.current.push(dotMarker(naver, map, lat, lon, '#16A34A'));
+    updateAreaGeometry();
+  }, [updateAreaGeometry]);
+
+  const finishArea = useCallback((finalPoint?: { lat: number; lon: number }) => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!map || !naver || areaPointsRef.current.length < 2) return;
+
+    const pointToCommit = finalPoint || areaPreviewPointRef.current;
+    if (pointToCommit) {
+      const last = areaPointsRef.current[areaPointsRef.current.length - 1];
+      const duplicated = last && Math.abs(last.lat - pointToCommit.lat) < 0.0000001 && Math.abs(last.lon - pointToCommit.lon) < 0.0000001;
+      if (!duplicated) {
+        areaPointsRef.current.push(pointToCommit);
+        areaMarkersRef.current.push(dotMarker(naver, map, pointToCommit.lat, pointToCommit.lon, '#16A34A'));
+      }
+    }
+
+    if (areaPointsRef.current.length < 3) return;
+    areaPreviewPointRef.current = null;
+    updateAreaGeometry();
+    setAreaPointCount(areaPointsRef.current.length);
+    setAreaOn(false);
+    setAreaFinished(true);
+    setAreaHintPos(null);
+  }, [updateAreaGeometry]);
+
+  const clearStreet = useCallback(() => {
+    streetLayerRef.current?.setMap(null);
+    streetLayerRef.current = null;
+    setStreetOn(false);
   }, []);
 
   // 거리뷰 레이어 토글 (네이버처럼 거리뷰 가능 도로를 파란 선으로 표시 → 클릭 시 로드뷰)
@@ -312,38 +514,26 @@ export function ViolationMapClient() {
   const toggleMeasure = useCallback(() => {
     setMeasureOn((prev) => {
       const next = !prev;
-      if (!next) clearMeasure();
+      if (next) {
+        setAreaOn(false);
+        clearArea();
+        clearMeasure();
+      } else clearMeasure();
       return next;
     });
-  }, [clearMeasure]);
+  }, [clearArea, clearMeasure]);
 
-  // 현재 위치
-  const goCurrentLocation = useCallback(() => {
-    const map = mapRef.current;
-    const { naver } = window;
-    if (!map || !naver) return;
-    if (!navigator.geolocation) {
-      setError('이 브라우저는 위치 정보를 지원하지 않습니다.');
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const pos = new naver.maps.LatLng(p.coords.latitude, p.coords.longitude);
-        map.morph(pos, 16);
-        if (locMarkerRef.current) locMarkerRef.current.setMap(null);
-        locMarkerRef.current = new naver.maps.Marker({
-          position: pos,
-          map,
-          zIndex: 900,
-          icon: {
-            content: '<div style="width:16px;height:16px;border-radius:50%;background:#1B64DA;border:3px solid #fff;box-shadow:0 0 0 2px rgba(27,100,218,.4),0 1px 3px rgba(0,0,0,.4)"></div>',
-            anchor: new naver.maps.Point(8, 8),
-          },
-        });
-      },
-      () => setError('현재 위치를 가져올 수 없습니다. (위치 권한 확인)')
-    );
-  }, []);
+  const toggleArea = useCallback(() => {
+    setAreaOn((prev) => {
+      const next = !prev;
+      if (next) {
+        setMeasureOn(false);
+        clearMeasure();
+        clearArea();
+      } else clearArea();
+      return next;
+    });
+  }, [clearArea, clearMeasure]);
 
   // 지도 클릭 → 측정 모드면 점 추가 / 거리뷰 모드면 로드뷰 열기
   useEffect(() => {
@@ -354,13 +544,131 @@ export function ViolationMapClient() {
       const lat = e.coord.lat();
       const lon = e.coord.lng();
       if (measureOn) addMeasurePoint(lat, lon);
+      else if (areaOn) addAreaPoint(lat, lon);
       else if (streetOn) {
         setPanoMsg(null);
         setPano({ lat, lon, label: '거리뷰' });
       }
     });
     return () => naver.maps.Event.removeListener(listener);
-  }, [mapReady, measureOn, streetOn, addMeasurePoint]);
+  }, [mapReady, measureOn, areaOn, streetOn, addMeasurePoint, addAreaPoint]);
+
+  useEffect(() => {
+    if (!streetOn) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      clearStreet();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [streetOn, clearStreet]);
+
+  // 거리 측정 중에는 다음 클릭 예정 지점까지 임시 선/거리를 계속 표시한다.
+  useEffect(() => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!mapReady || !measureOn || !map || !naver) return;
+    const listener = naver.maps.Event.addListener(map, 'mousemove', (e: { coord: { lat: () => number; lng: () => number } }) => {
+      if (measurePointsRef.current.length === 0) return;
+      const previewPoint = { lat: e.coord.lat(), lon: e.coord.lng() };
+      measurePreviewPointRef.current = previewPoint;
+      updateMeasureGeometry(previewPoint);
+    });
+    return () => naver.maps.Event.removeListener(listener);
+  }, [mapReady, measureOn, updateMeasureGeometry]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!mapReady || !measureOn || !map || !naver) return;
+    const listener = naver.maps.Event.addListener(map, 'rightclick', (e: { coord: { lat: () => number; lng: () => number } }) => {
+      finishMeasure({ lat: e.coord.lat(), lon: e.coord.lng() });
+    });
+    return () => naver.maps.Event.removeListener(listener);
+  }, [mapReady, measureOn, finishMeasure]);
+
+  useEffect(() => {
+    if (!measureOn) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      finishMeasure();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [measureOn, finishMeasure]);
+
+  useEffect(() => {
+    const el = mapWrapRef.current;
+    if (!measureOn || !el) return;
+    const moveHint = (e: MouseEvent) => {
+      if (measurePointsRef.current.length < 1) return;
+      setMeasureHintPos(computeHintPos(el, e));
+    };
+    const preventContextMenu = (e: MouseEvent) => {
+      if (measurePointsRef.current.length >= 1) e.preventDefault();
+    };
+    el.addEventListener('mousemove', moveHint, true);
+    el.addEventListener('contextmenu', preventContextMenu, true);
+    return () => {
+      el.removeEventListener('mousemove', moveHint, true);
+      el.removeEventListener('contextmenu', preventContextMenu, true);
+    };
+  }, [measureOn]);
+
+  // 면적 측정 중에는 다음 클릭 예정 지점까지 임시 선/면을 계속 표시한다.
+  useEffect(() => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!mapReady || !areaOn || !map || !naver) return;
+    const listener = naver.maps.Event.addListener(map, 'mousemove', (e: { coord: { lat: () => number; lng: () => number } }) => {
+      if (areaPointsRef.current.length === 0) return;
+      const previewPoint = { lat: e.coord.lat(), lon: e.coord.lng() };
+      areaPreviewPointRef.current = previewPoint;
+      updateAreaGeometry(previewPoint);
+    });
+    return () => naver.maps.Event.removeListener(listener);
+  }, [mapReady, areaOn, updateAreaGeometry]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const { naver } = window;
+    if (!mapReady || !areaOn || !map || !naver) return;
+    const listener = naver.maps.Event.addListener(map, 'rightclick', (e: { coord: { lat: () => number; lng: () => number } }) => {
+      finishArea({ lat: e.coord.lat(), lon: e.coord.lng() });
+    });
+    return () => naver.maps.Event.removeListener(listener);
+  }, [mapReady, areaOn, finishArea]);
+
+  useEffect(() => {
+    if (!areaOn) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      finishArea();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [areaOn, finishArea]);
+
+  useEffect(() => {
+    const el = mapWrapRef.current;
+    if (!areaOn || !el) return;
+    const moveHint = (e: MouseEvent) => {
+      if (areaPointsRef.current.length < 2) return;
+      setAreaHintPos(computeHintPos(el, e));
+    };
+    const preventContextMenu = (e: MouseEvent) => {
+      if (areaPointsRef.current.length >= 2) e.preventDefault();
+    };
+    el.addEventListener('mousemove', moveHint, true);
+    el.addEventListener('contextmenu', preventContextMenu, true);
+    return () => {
+      el.removeEventListener('mousemove', moveHint, true);
+      el.removeEventListener('contextmenu', preventContextMenu, true);
+    };
+  }, [areaOn]);
 
   // 지도 1회 초기화 + 이동(idle) 시 디바운스 로드
   useEffect(() => {
@@ -539,8 +847,122 @@ export function ViolationMapClient() {
         onReady={() => setScriptReady(true)}
         onError={() => setError('네이버 지도 로드 실패 — Client ID/도메인 등록을 확인하세요.')}
       />
-      <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
+      <div ref={mapWrapRef} style={{ position: 'relative', width: '100%', height: '100dvh' }}>
         <div ref={mapElRef} style={{ width: '100%', height: '100%' }} />
+
+        {/* 거리뷰 모드: 지도 정중앙에 페그맨(사람) + 원형 링 (네이버 스타일). 지도 이동해도 항상 중앙 고정. */}
+        {streetOn && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 12,
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {/* 바깥 원형(라운드) */}
+            <div
+              style={{
+                position: 'absolute',
+                width: 92,
+                height: 92,
+                borderRadius: '50%',
+                background: 'rgba(27,100,218,.12)',
+                border: '2px solid rgba(27,100,218,.55)',
+                boxShadow: '0 2px 10px rgba(0,0,0,.18)',
+              }}
+            />
+            {/* 흰색 배지 + 파란 사람 아이콘 */}
+            <div
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: '50%',
+                background: '#fff',
+                border: '2px solid #1B64DA',
+                boxShadow: '0 2px 6px rgba(0,0,0,.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="6" r="2.6" fill="#1B64DA" />
+                <path
+                  d="M12 9c-2.2 0-4 1.5-4 3.6V16h1.7v4.4a1 1 0 0 0 1 1h2.6a1 1 0 0 0 1-1V16H16v-3.4C16 10.5 14.2 9 12 9Z"
+                  fill="#1B64DA"
+                />
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {measureOn && measurePointCount >= 1 && measureHintPos && (
+          <div
+            style={{
+              position: 'absolute',
+              left: measureHintPos.x,
+              top: measureHintPos.y,
+              width: AREA_HINT_WIDTH,
+              boxSizing: 'border-box',
+              background: '#fff',
+              border: '1px solid #DDE2E7',
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,.18)',
+              padding: '10px 12px',
+              zIndex: 30,
+              pointerEvents: 'none',
+              fontSize: 12,
+              color: '#191F28',
+              lineHeight: 1.55,
+            }}
+          >
+            {measureDist > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr', alignItems: 'center', marginBottom: 8, fontWeight: 700 }}>
+                <span>총거리</span>
+                <span style={{ color: '#1B64DA' }}>{fmtDist(measureDist)}</span>
+              </div>
+            )}
+            <div>마우스 오른쪽 버튼 혹은</div>
+            <div>ESC키를 눌러 마침</div>
+          </div>
+        )}
+
+        {areaOn && areaPointCount >= 2 && areaHintPos && (
+          <div
+            style={{
+              position: 'absolute',
+              left: areaHintPos.x,
+              top: areaHintPos.y,
+              width: AREA_HINT_WIDTH,
+              boxSizing: 'border-box',
+              background: '#fff',
+              border: '1px solid #DDE2E7',
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,.18)',
+              padding: '10px 12px',
+              zIndex: 30,
+              pointerEvents: 'none',
+              fontSize: 12,
+              color: '#191F28',
+              lineHeight: 1.55,
+            }}
+          >
+            {areaSize > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr', alignItems: 'center', marginBottom: 8, fontWeight: 700 }}>
+                <span>총면적</span>
+                <span style={{ color: '#1B64DA' }}>{fmtArea(areaSize)}</span>
+              </div>
+            )}
+            <div>마우스 오른쪽 버튼 혹은</div>
+            <div>ESC키를 눌러 마침</div>
+          </div>
+        )}
 
         {/* 주소 검색창 (상단 중앙) */}
         <div
@@ -684,7 +1106,7 @@ export function ViolationMapClient() {
           </div>
         </div>
 
-        {/* 우측 세로 툴바 (거리뷰 / 현재위치 / 측정) */}
+        {/* 우측 세로 툴바 (거리뷰 / 면적 측정 / 거리 측정) */}
         <div
           style={{
             position: 'absolute',
@@ -699,7 +1121,7 @@ export function ViolationMapClient() {
           {(
             [
               { key: 'street', icon: ICON_STREET, label: '거리뷰', active: streetOn, onClick: toggleStreet },
-              { key: 'locate', icon: ICON_LOCATE, label: '현재 위치', active: false, onClick: goCurrentLocation },
+              { key: 'area', icon: ICON_AREA, label: '면적 측정', active: areaOn, onClick: toggleArea },
               { key: 'measure', icon: ICON_RULER, label: '거리 측정', active: measureOn, onClick: toggleMeasure },
             ] as const
           ).map((b) => (
@@ -727,7 +1149,7 @@ export function ViolationMapClient() {
         </div>
 
         {/* 측정 안내/결과 (하단 중앙) */}
-        {measureOn && (
+        {(measureOn || measureFinished || areaOn || areaFinished) && (
           <div
             style={{
               position: 'absolute',
@@ -747,10 +1169,15 @@ export function ViolationMapClient() {
             }}
           >
             <span>
-              {measurePointsRef.current.length < 2 ? '지도를 클릭해 거리를 측정하세요' : <b>총 {fmtDist(measureDist)}</b>}
+              {measureOn &&
+                (measureDist > 0 ? <b>총 {fmtDist(measureDist)}</b> : '지도를 클릭해 거리를 측정하세요')}
+              {measureFinished && <b>총 {fmtDist(measureDist)}</b>}
+              {areaOn &&
+                (areaSize > 0 ? <b>면적 {fmtArea(areaSize)}</b> : '지도를 클릭해 면적 경계를 지정하세요')}
+              {areaFinished && <b>면적 {fmtArea(areaSize)}</b>}
             </span>
             <button
-              onClick={clearMeasure}
+              onClick={measureOn || measureFinished ? clearMeasure : clearArea}
               style={{ background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 7, padding: '5px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
             >
               초기화

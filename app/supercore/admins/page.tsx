@@ -50,6 +50,13 @@ export default function AdminsPage() {
   const [setup2FAError, setSetup2FAError] = useState('');
   const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
   const [currentAdminFor2FA, setCurrentAdminFor2FA] = useState<Admin | null>(null);
+  const [resetLinkInfo, setResetLinkInfo] = useState<{
+    username: string;
+    resetUrl: string;
+    expiresAt: string;
+    copied: boolean;
+  } | null>(null);
+  const [isCreatingResetLinkFor, setIsCreatingResetLinkFor] = useState<string | null>(null);
 
   const loadAdmins = useCallback(async () => {
     setIsLoadingAdmins(true);
@@ -204,6 +211,16 @@ export default function AdminsPage() {
   };
 
   const handleSetup2FA = async (admin: Admin) => {
+    if (admin.two_factor_enabled) {
+      const shouldReset = confirm(
+        `"${admin.username}" 관리자의 2FA를 재설정하시겠습니까?\n\n새 QR 코드로 인증을 완료하면 기존 Google Authenticator 코드는 더 이상 사용할 수 없습니다.`
+      );
+
+      if (!shouldReset) {
+        return;
+      }
+    }
+
     setCurrentAdminFor2FA(admin);
     setSetup2FAError('');
     setIsSettingUp2FA(true);
@@ -259,7 +276,7 @@ export default function AdminsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert('2FA가 활성화되었습니다!');
+        alert(currentAdminFor2FA.two_factor_enabled ? '2FA가 재설정되었습니다!' : '2FA가 활성화되었습니다!');
         setShow2FASetup(false);
         setQrCode('');
         setSecret('');
@@ -277,29 +294,54 @@ export default function AdminsPage() {
     }
   };
 
-  const handleDisable2FA = async (admin: Admin) => {
-    const password = prompt(`"${admin.username}"의 2FA를 비활성화하려면 비밀번호를 입력하세요:`);
-    if (!password) return;
+  const handleCreate2FAResetLink = async (admin: Admin) => {
+    const shouldCreate = confirm(
+      `"${admin.username}" 관리자에게 보낼 원격 2FA 재설정 링크를 생성하시겠습니까?\n\n기존에 발급된 미사용 링크는 폐기됩니다.`
+    );
+
+    if (!shouldCreate) {
+      return;
+    }
+
+    setIsCreatingResetLinkFor(admin.id);
 
     try {
-      const response = await fetch('/api/admin/auth/2fa/disable', {
+      const response = await fetch('/api/admin/auth/2fa/reset-links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ password })
+        body: JSON.stringify({
+          targetAdminId: admin.id,
+          expiresInHours: 72
+        })
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        alert('2FA가 비활성화되었습니다.');
-        loadAdmins();
-      } else {
-        alert(data.error || '2FA 비활성화에 실패했습니다.');
+      if (!response.ok) {
+        alert(data.error || '2FA 재설정 링크 생성에 실패했습니다.');
+        return;
       }
+
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(data.resetUrl);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+
+      setResetLinkInfo({
+        username: data.username,
+        resetUrl: data.resetUrl,
+        expiresAt: data.expiresAt,
+        copied
+      });
     } catch (error) {
-      console.error('Disable 2FA error:', error);
-      alert('2FA 비활성화 중 오류가 발생했습니다.');
+      console.error('Create 2FA reset link error:', error);
+      alert('2FA 재설정 링크 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsCreatingResetLinkFor(null);
     }
   };
 
@@ -329,10 +371,10 @@ export default function AdminsPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
               <h3 className="text-xl font-semibold text-slate-900 mb-4">
-                Google Authenticator 설정
+                Google Authenticator {currentAdminFor2FA.two_factor_enabled ? '재설정' : '설정'}
               </h3>
               <p className="text-sm text-slate-600 mb-4">
-                Google Authenticator 앱으로 아래 QR 코드를 스캔하세요.
+                {currentAdminFor2FA.username} 관리자의 Google Authenticator 앱으로 아래 QR 코드를 스캔하세요.
               </p>
 
               {qrCode && (
@@ -393,6 +435,61 @@ export default function AdminsPage() {
                   </Button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Remote 2FA Reset Link Modal */}
+        {resetLinkInfo && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">
+                원격 2FA 재설정 링크
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">
+                {resetLinkInfo.username} 관리자에게 아래 링크를 전달하세요. 링크를 받은 관리자는 아이디와 비밀번호 확인 후 본인 브라우저에서 QR 코드를 스캔합니다.
+              </p>
+
+              <div className="space-y-2 mb-4">
+                <Label htmlFor="resetLink">재설정 링크</Label>
+                <Input
+                  id="resetLink"
+                  value={resetLinkInfo.resetUrl}
+                  readOnly
+                  className="font-mono text-xs"
+                  onFocus={(e) => e.target.select()}
+                />
+                <p className="text-xs text-slate-500">
+                  만료: {formatDateTime(resetLinkInfo.expiresAt)}
+                  {resetLinkInfo.copied ? ' · 클립보드에 복사됨' : ''}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setResetLinkInfo(null)}
+                >
+                  닫기
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  className="flex-1"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(resetLinkInfo.resetUrl);
+                      setResetLinkInfo({ ...resetLinkInfo, copied: true });
+                    } catch {
+                      alert('자동 복사에 실패했습니다. 링크 입력칸을 선택해 직접 복사해주세요.');
+                    }
+                  }}
+                >
+                  링크 복사
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -547,10 +644,19 @@ export default function AdminsPage() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 whitespace-nowrap"
-                                  onClick={() => handleDisable2FA(admin)}
+                                  className="h-6 px-2 text-xs text-blue-600 hover:bg-blue-50 whitespace-nowrap"
+                                  onClick={() => handleSetup2FA(admin)}
                                 >
-                                  해제
+                                  재설정
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 text-xs text-slate-600 hover:bg-slate-100 whitespace-nowrap"
+                                  disabled={isCreatingResetLinkFor === admin.id}
+                                  onClick={() => handleCreate2FAResetLink(admin)}
+                                >
+                                  {isCreatingResetLinkFor === admin.id ? '생성 중' : '원격 링크'}
                                 </Button>
                               </div>
                             ) : (
@@ -566,6 +672,15 @@ export default function AdminsPage() {
                                   onClick={() => handleSetup2FA(admin)}
                                 >
                                   설정
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 text-xs text-slate-600 hover:bg-slate-100 whitespace-nowrap"
+                                  disabled={isCreatingResetLinkFor === admin.id}
+                                  onClick={() => handleCreate2FAResetLink(admin)}
+                                >
+                                  {isCreatingResetLinkFor === admin.id ? '생성 중' : '원격 링크'}
                                 </Button>
                               </div>
                             )}
