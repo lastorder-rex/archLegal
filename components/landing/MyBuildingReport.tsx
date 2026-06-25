@@ -15,6 +15,7 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
+  Stethoscope,
 } from 'lucide-react';
 import { AddressSearchModal } from '@/components/consultation/AddressSearchModal';
 import type { AddressSearchResult } from '@/lib/validations/consultation';
@@ -190,6 +191,14 @@ function ReportView({
 }) {
   const d = daysLeft();
   const v = report.violation;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
+  const prescription =
+    v === true
+      ? '한시법 시한 안에 양성화(추인·신고·허가)를 검토하세요. 방치하면 이행강제금이 매년 가중됩니다.'
+      : v === false
+        ? '현재 위반 신호는 낮지만, 도면 대조·자가진단으로 한 번 더 확인을 권합니다.'
+        : '주소를 정확히 입력하거나, 1분 자가진단으로 가능성을 확인해 보세요.';
 
   const verdict =
     v === true
@@ -218,6 +227,19 @@ function ReportView({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+      {/* 브랜드 스트립 — "건물 건강검진서" 아이덴티티 */}
+      <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Stethoscope className="h-4 w-4" aria-hidden />
+          </span>
+          <span className="text-sm font-extrabold tracking-tight text-foreground">
+            양성화<span className="text-primary">.com</span> 건물 건강검진서
+          </span>
+        </div>
+        <span className="text-xs font-medium text-muted-foreground">진단일 {dateStr}</span>
+      </div>
+
       {/* 판정 배너 */}
       <div className={`flex items-start gap-4 border-b px-6 py-6 ${verdict.tone}`}>
         {verdict.icon}
@@ -334,6 +356,17 @@ function ReportView({
             처음으로
           </button>
         </div>
+      </div>
+
+      {/* 처방 + 면책 (검진서 하단) */}
+      <div className="border-t border-border px-6 py-4">
+        <p className="text-xs leading-5 text-muted-foreground">
+          <b className="text-foreground">처방</b> · {prescription}
+        </p>
+        <p className="mt-1.5 text-[11px] leading-4 text-muted-foreground/80">
+          본 진단은 공공데이터(건축물대장 · 국토교통부 VWorld) 기반 1차 정보입니다. 최종 양성화 가능 여부는
+          건축사 현장검토와 관할 지자체 기준에 따라 달라질 수 있습니다.
+        </p>
       </div>
     </div>
   );
