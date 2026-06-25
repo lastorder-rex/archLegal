@@ -160,7 +160,7 @@ const renderTimelineIcon = (type: TimelineIconKey) => {
   }
 };
 
-export function LandingPage() {
+export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
   const [isModalOpen, setModalOpen] = useState(false);
   const [consultationNextPath, setConsultationNextPath] = useState('/?consultation=open');
   const [consultationInitialMessage, setConsultationInitialMessage] = useState('');
@@ -738,6 +738,9 @@ export function LandingPage() {
           <span>Scroll</span>
         </div>
       </section>
+
+      {/* home-v2 실험용 슬롯: 라이브 /는 미전달이라 렌더 안 됨 */}
+      {kickSlot}
 
       {/* Interest */}
       <section
