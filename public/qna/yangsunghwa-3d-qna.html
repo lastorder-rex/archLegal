@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#15584a" />
+<meta name="description" content="3층 다가구주택 3D 모델 위에서 옥상·발코니·주차장·대지 위반건축물 사례를 직접 눌러 확인하고, 양성화(추인·신고·허가) 가능성과 관련 Q&A를 한 화면에서 검토하세요. 무료 자가진단·상담 제공." />
+<title>양성화.com — 내 집 위반건축물, 3D로 직접 짚어보는 진단·Q&A</title>
+<!-- 공유(카톡·SNS) 미리보기. og:image 는 대표 이미지 준비되면 추가 -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="내 집 위반건축물, 3D로 직접 짚어보는 진단·Q&A | 양성화.com" />
+<meta property="og:description" content="옥상·발코니·주차장 등 실제 위반 사례를 3D 건물에서 직접 눌러 확인하고 양성화 가능성을 검토하세요. 무료 자가진단·상담." />
+<meta name="twitter:card" content="summary_large_image" />
+<!-- favicon(inline SVG) — 별도 파일 없이 404 방지 -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%231f6f5c'/%3E%3Cpath d='M5 12l7-6 7 6v6H5z' fill='none' stroke='%23fff' stroke-width='1.7'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<link rel="stylesheet" href="/qna/current-model.css" />
+<link rel="stylesheet" href="/qna/qna.css" />
+</head>
+<body id="top">
+<div class="blueprint" aria-hidden="true"></div>
+
+<!-- ============================== TOP BAR ============================== -->
+<header class="topbar">
+  <div class="shell topbar__in">
+    <a class="brand" href="#top" aria-label="양성화닷컴 홈">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg>
+      </span>
+      <span><b>양성화<span style="color:var(--pine-l)">.com</span></b><small>BUILDING ACT · CASE MAP</small></span>
+    </a>
+    <nav class="topnav" aria-label="주요 메뉴">
+      <a href="#explore">위반사례 진단</a>
+      <a href="#qna">전문가 Q&amp;A</a>
+      <a href="#diagnosis">자가진단</a>
+      <a href="#process">진행 절차</a>
+      <a class="btn btn--ghost" href="#diagnosis">1분 자가진단</a>
+      <a class="btn btn--pine" href="#consult">무료 상담</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- ============================== HERO ============================== -->
+<section class="hero">
+  <div class="shell hero__grid">
+    <div class="hero__copy reveal">
+      <span class="eyebrow"><i aria-hidden="true"></i>위반건축물 · 양성화 진단</span>
+      <h1>내 집 어딘가도<br><span class="mark">위반건축물</span>일까요?</h1>
+      <p class="hero__lead">옥상 옥탑방, 발코니 확장, 주차장 창고… <b>실제 다가구·빌라에서 가장 많은 위반 사례</b>를 3D 건물 위에 그대로 올렸습니다. 닮은 부분을 눌러 위반 유형과 양성화(추인·신고·허가) 가능성을 바로 확인하세요.</p>
+      <div class="hero__cta">
+        <span id="qna-lookup-mount"></span>
+        <a class="btn btn--ghost btn--lg" href="#diagnosis">내 위반 유형 찾기</a>
+      </div>
+    </div>
+    <aside class="hero__index reveal" aria-label="대표 위반사례 인덱스">
+      <div class="hero__index-head">
+        <div>
+          <span>대표사례</span>
+          <strong>3층 다가구에서 자주 보이는 위반 유형</strong>
+        </div>
+        <div class="hero__index-total">10건</div>
+      </div>
+      <div class="hero__index-list">
+        <a class="hero__index-item" href="#explore"><b>옥상</b><span>옥탑방 · 창고 · 다락</span><em>3건</em></a>
+        <a class="hero__index-item" href="#explore"><b>외벽</b><span>발코니 · 패널 · 캐노피 · 외부계단</span><em>4건</em></a>
+        <a class="hero__index-item" href="#explore"><b>1층</b><span>필로티 창고 · 근린시설 주거사용</span><em>2건</em></a>
+        <a class="hero__index-item" href="#explore"><b>대지</b><span>조경 포장 · 컨테이너 적치</span><em>1건</em></a>
+      </div>
+      <p class="hero__index-note">각 항목은 3D 건물의 표시와 사례 답변으로 이어집니다.</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ============================== STAGE: 3D BUILDING + PANEL ============================== -->
+<section class="stage band" id="explore">
+  <div class="shell">
+    <div class="stage__head reveal">
+      <div>
+        <h2>3D 건물에서 위반 부위를 직접 짚어보세요</h2>
+        <p>건물을 돌려보고, 빨간 표시(<span class="mono" style="color:var(--red);font-weight:700">●</span>)를 누르면 해당 위반 유형·실제 예시·관련 Q&amp;A가 바로 펼쳐집니다. 건물은 그대로 둔 채 탐색이 이어집니다.</p>
+      </div>
+    </div>
+
+    <div class="stage__grid">
+      <!-- viewer -->
+      <div>
+        <div class="viewer viewer--current-model reveal" id="viewer">
+          <div class="viewer__sky" aria-hidden="true"></div>
+          <span class="viewer__tag mono">3F · 10개 대표 위반 사례</span>
+          <div class="viewer__bar qna2-legacy-controls" aria-hidden="true">
+            <button class="tool" id="tRotate" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>자동회전</button>
+            <button class="tool" id="tExplode" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v4M12 17v4M5 8l3 2M16 14l3 2M19 8l-3 2M8 14l-3 2"/></svg>층 펼치기</button>
+            <button class="tool" id="tMarkers" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>위반표시</button>
+          </div>
+          <div class="current-model">
+            <div class="model-stage" id="modelStage">
+              <canvas id="buildingCanvas" aria-label="10개 위반 사례가 적용된 3층 건물 3D 모델. 마우스로 회전하고 확대할 수 있습니다"></canvas>
+              <div class="model-case-count" aria-hidden="true"><b>10</b><span>대표 위반<br>사례</span></div>
+
+              <button class="model-pin case-extension" id="pinTerrace" data-zone="terrace" type="button" aria-label="1층 테라스 지붕 사례 보기">
+                <span class="model-pin__dot">01</span><span class="model-pin__label">테라스 지붕·천막</span>
+              </button>
+              <button class="model-pin case-extension flip" id="pinBalcony" data-zone="balcony" type="button" aria-label="3층 발코니 확장 사례 보기">
+                <span class="model-pin__dot">02</span><span class="model-pin__label">3층 발코니 확장</span>
+              </button>
+              <button class="model-pin case-extension flip" id="pinRoof" data-zone="roof" type="button" aria-label="옥상 무단 증축 사례 보기">
+                <span class="model-pin__dot">03</span><span class="model-pin__label">옥상 창고·옥탑방</span>
+              </button>
+              <button class="model-pin case-parking" id="pinParking" data-zone="parking" type="button" aria-label="1층 필로티 창고화 사례 보기">
+                <span class="model-pin__dot">04</span><span class="model-pin__label">필로티 주차장 창고</span>
+              </button>
+              <button class="model-pin case-use" id="pinUse" data-zone="use" type="button" aria-label="근린생활시설 원룸 사용 사례 보기">
+                <span class="model-pin__dot">05</span><span class="model-pin__label">근린시설 원룸 사용</span>
+              </button>
+              <button class="model-pin case-extension flip" id="pinAttic" data-zone="attic" type="button" aria-label="다락 주거사용 사례 보기">
+                <span class="model-pin__dot">06</span><span class="model-pin__label">다락 주거사용</span>
+              </button>
+              <button class="model-pin case-structure flip" id="pinStair" data-zone="stair" type="button" aria-label="외부 철골계단 사례 보기">
+                <span class="model-pin__dot">07</span><span class="model-pin__label">외부 철골계단</span>
+              </button>
+              <button class="model-pin case-structure" id="pinSplit" data-zone="split" type="button" aria-label="세대 쪼개기 사례 보기">
+                <span class="model-pin__dot">08</span><span class="model-pin__label">세대 쪼개기</span>
+              </button>
+              <button class="model-pin case-site" id="pinLandscape" data-zone="landscape" type="button" aria-label="조경 훼손 사례 보기">
+                <span class="model-pin__dot">09</span><span class="model-pin__label">조경 훼손·주차 전용</span>
+              </button>
+              <button class="model-pin case-extension flip" id="pinContainer" data-zone="container" type="button" aria-label="컨테이너 창고 사례 보기">
+                <span class="model-pin__dot">10</span><span class="model-pin__label">컨테이너·조립식 창고</span>
+              </button>
+
+              <div class="model-toolbar" aria-label="3D 모델 도구">
+                <button type="button" id="autoRotate" aria-pressed="false">↻ 자동회전</button>
+                <button type="button" id="toggleRed" class="is-on" aria-pressed="true">◉ 위반부위</button>
+                <button type="button" id="resetView">⌂ 시점초기화</button>
+                <span class="model-help">드래그 회전 · 휠 확대</span>
+              </div>
+            </div>
+            <div class="model-casebar" aria-label="건물에 적용된 위반 사례 목록">
+              <div class="model-casebar__rail">
+                <button type="button" class="case-chip" data-zone="terrace" data-category="extension"><i></i>테라스</button>
+                <button type="button" class="case-chip" data-zone="balcony" data-category="extension"><i></i>발코니</button>
+                <button type="button" class="case-chip" data-zone="roof" data-category="extension"><i></i>옥상 증축</button>
+                <button type="button" class="case-chip" data-zone="parking" data-category="parking"><i></i>필로티</button>
+                <button type="button" class="case-chip" data-zone="use" data-category="use"><i></i>용도변경</button>
+                <button type="button" class="case-chip" data-zone="attic" data-category="extension"><i></i>다락</button>
+                <button type="button" class="case-chip" data-zone="stair" data-category="structure"><i></i>외부계단</button>
+                <button type="button" class="case-chip" data-zone="split" data-category="structure"><i></i>세대분할</button>
+                <button type="button" class="case-chip" data-zone="landscape" data-category="site"><i></i>조경 훼손</button>
+                <button type="button" class="case-chip" data-zone="container" data-category="extension"><i></i>컨테이너</button>
+              </div>
+            </div>
+            <div class="model-summary">
+              <div class="model-summary__label">선택 사례</div>
+              <div class="model-summary__title" id="modelIssueTitle"><span>10개 위반사례</span> · 3층 입체 진단맵</div>
+            </div>
+          </div>
+          <div class="scene legacy-scene" id="scene" aria-hidden="true">
+            <div class="world" id="world">
+              <div class="stack" id="stack"><!-- floors injected by JS --></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- zone chips -->
+        <div class="zones qna2-legacy-controls" id="zones" role="tablist" aria-label="위반 구역">
+          <button class="zone is-active" data-zone="all">전체 <b>12</b></button>
+          <button class="zone" data-zone="roof">옥상부 <b>3</b></button>
+          <button class="zone" data-zone="facade">외벽·발코니 <b>4</b></button>
+          <button class="zone" data-zone="ground">1층·주차 <b>3</b></button>
+          <button class="zone" data-zone="site">구조·대지 <b>2</b></button>
+        </div>
+      </div>
+
+      <!-- detail panel -->
+      <aside class="panel" id="panel" aria-live="polite">
+        <button class="panel__close" id="panelClose" aria-label="닫기"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <div class="panel__empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/><circle cx="12" cy="11" r="1.4" fill="currentColor" stroke="none"/></svg>
+          <b>건물의 빨간 표시를 눌러보세요</b>
+          <span>옥상·발코니·주차장·대지 중<br>가장 닮은 부분부터 확인하면 됩니다.</span>
+        </div>
+        <div class="panel__body">
+          <div class="panel__top">
+            <div class="panel__no"><span id="pNo">위반 01</span><span class="floorpill mono" id="pFloor">3F</span></div>
+            <h3 id="pTitle">—</h3>
+            <p class="panel__short" id="pShort">—</p>
+            <div class="tagrow" id="pTags"></div>
+          </div>
+          <div class="panel__scroll">
+            <div class="exbox"><span>실제 예시</span><p id="pExample">—</p></div>
+            <div class="panel__qhead">관련 전문가 Q&amp;A <em id="pQCount">0건</em></div>
+            <div id="pQna"></div>
+          </div>
+          <div class="panel__cta">
+            <a class="btn btn--pine" href="#consult" id="pConsult">이 위반, 무료로 상담받기</a>
+            <small>사안별로 양성화 가능 여부가 다릅니다. 위치만 알려주셔도 됩니다.</small>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+<div class="sheet-back" id="sheetBack" aria-hidden="true"></div>
+
+<!-- ============================== VIOLATION TYPE EXPLORER ============================== -->
+<section class="band" id="types">
+  <div class="shell">
+    <div class="sec-head reveal">
+      <h2>위반은 보통 이 네 갈래에서 시작됩니다</h2>
+      <p>대부분의 다가구·빌라 위반은 ‘면적을 늘렸나’, ‘용도를 바꿨나’, ‘공용·주차를 막았나’, ‘구조를 손댔나’로 나뉩니다. 해당 갈래를 누르면 3D 건물의 관련 사례가 켜집니다.</p>
+    </div>
+    <div class="types reveal" id="typeGrid"><!-- injected --></div>
+  </div>
+</section>
+
+<!-- ============================== FULL Q&A ARCHIVE ============================== -->
+<section class="band band--tint" id="qna">
+  <div class="shell">
+    <div class="sec-head reveal">
+      <h2>검색 질문 그대로, 사례형 답변</h2>
+      <p>“테라스를 덮었는데 위반인가요?”처럼 실제로 많이 묻는 질문부터 답합니다. 각 답변은 결론 → 현장 확인 포인트 → 법적 근거 순서로 읽힙니다.</p>
+    </div>
+    <div class="qa-wrap reveal">
+      <div class="qa-filter" id="qaFilter"><!-- injected --></div>
+      <div>
+        <div class="qa-search">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input id="qaSearch" type="search" placeholder="질문·답변·법령을 검색하세요" aria-label="Q&A 검색" autocomplete="off" />
+          <span class="qa-count"><b id="qaCount">0</b>건</span>
+        </div>
+        <div id="qaList"></div>
+        <div class="qa-empty" id="qaEmpty">검색 결과가 없습니다. 다른 키워드나 분류를 선택해 보세요.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SELF DIAGNOSIS ============================== -->
+<section class="band" id="diagnosis">
+  <div class="shell">
+    <div class="sec-head reveal">
+      <h2>세 가지만 답하면, 닮은 위반사례를 찾아드려요</h2>
+      <p>법 조문을 몰라도 됩니다. 우리 집 상태에 가까운 쪽을 고르면, 3D 건물에서 닮은 위반사례를 찾아 보여드립니다. 양성화 <b>가능성 진단</b>은 <a href="/check">1분 자가진단</a>에서 따로 확인하세요.</p>
+    </div>
+
+    <div class="diag reveal" id="diag">
+      <div class="diag__bar"><i id="diagBar"></i></div>
+      <div class="diag__in" id="diagIn"><!-- steps injected --></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== PROCESS ============================== -->
+<section class="band band--tint" id="process">
+  <div class="shell">
+    <div class="sec-head reveal">
+      <h2>양성화 검토는 이 순서로 진행됩니다</h2>
+      <p>강제금만 낸다고 적법화되지는 않습니다. 위반 위치를 특정하고, 권리관계를 확인한 뒤, 추인·신고·허가 중 가능한 길을 찾는 흐름입니다.</p>
+    </div>
+    <div class="steps reveal">
+      <article class="step"><span class="step__n">STEP 01</span><div class="step__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg></div><h3>위치 특정</h3><p>옥상·전유·필로티·대지 중 어느 부분이, 얼마나 위반인지 사용승인 도면과 현재 상태를 비교해 특정합니다.</p></article>
+      <article class="step"><span class="step__n">STEP 02</span><div class="step__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.2"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></div><h3>권리·동의 확인</h3><p>소유·사용 권원과, 공용부분이면 구분소유자·관리단 동의가 필요한 구조인지 확인합니다.</p></article>
+      <article class="step"><span class="step__n">STEP 03</span><div class="step__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg></div><h3>적법화 경로 판단</h3><p>증축·대수선·용도변경 중 어떤 행위인지 가려, 추인·신고·허가 가능성과 필요한 보완을 검토합니다.</p></article>
+      <article class="step"><span class="step__n">STEP 04</span><div class="step__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg></div><h3>전문가·관할청 확정</h3><p>건축사·행정사·변호사와 현장·지자체 운영기준을 반영해 최종 신청 구조를 확정합니다.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== TRUST ============================== -->
+<section class="band" id="trust">
+  <div class="shell">
+    <div class="sec-head reveal">
+      <h2>방치하면 불리해지고, 빨리 확인하면 선택지가 생깁니다</h2>
+    </div>
+    <div class="trust reveal">
+      <div class="tcard">
+        <div class="tcard__ic is-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+        <h3>이행강제금·과태료를 함께 봅니다</h3>
+        <p>이행강제금은 시정 전까지 반복 부과될 수 있고, 특별조치법 신청 때는 체납 여부와 5회분 기준 과태료도 확인해야 합니다. 1년 내 납부 조건 가능성까지 함께 봅니다.</p>
+        <cite>근거: 건축법 제80조 · 특정건축물 특별조치법 제6조·제9조</cite>
+      </div>
+      <div class="tcard">
+        <div class="tcard__ic is-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h18M12 3v18"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3>강제금 납부 ≠ 적법화</h3>
+        <p>강제금을 내도 위반 상태 자체는 그대로입니다. 매매·대출·임대에서 ‘위반건축물’ 표기는 계속 불리하게 작용합니다.</p>
+        <cite>건축물대장 위반 표기는 시정 전까지 유지</cite>
+      </div>
+      <div class="tcard">
+        <div class="tcard__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m5 12 4 4L19 6"/></svg></div>
+        <h3>특별조치법 사용승인 가능성 검토</h3>
+        <p>추인·신고·허가뿐 아니라 2026년 12월 17일 시행 특별조치법상 신고·사용승인 대상인지 확인합니다. 완공시점, 주거용 비율, 면적, 제외구역, 주차·소방 기준을 함께 봅니다.</p>
+        <cite>특정건축물 특별조치법 제3조·제6조·제7조</cite>
+      </div>
+      <div class="tcard">
+        <div class="tcard__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6Z"/></svg></div>
+        <h3>건축사 서류·관할청 기준 확인</h3>
+        <p>특별조치법 신고에는 건축사가 작성한 설계도서와 현장조사서가 필요합니다. 건축물대장, 토지이용계획, 이행강제금 내역과 관할청 운영기준을 같이 확인합니다.</p>
+        <cite>특정건축물 특별조치법 제4조</cite>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== CONSULT ============================== -->
+<section class="band" id="consult" style="background:linear-gradient(160deg,var(--pine),var(--pine-d));border-block:0">
+  <div class="shell consult">
+    <div class="consult__copy reveal">
+      <h2>위치와 사진으로 먼저 분류하고, 서류로 확정합니다</h2>
+      <p>“옥상에 방이 있어요”, “주차장을 창고로 써요” 한 줄로 시작할 수 있습니다. 정확한 판단은 건축물대장, 완공시점, 면적, 제외구역, 체납 여부를 함께 확인합니다.</p>
+      <div class="consult__ways">
+        <!-- 실제 연락처로 교체하세요 (placeholder) -->
+        <a class="way" href="tel:0000000000">
+          <span class="way__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg></span>
+          <span><b>전화 상담</b><span>전화번호를 입력하세요 (예: 02-0000-0000)</span></span>
+        </a>
+        <a class="way" href="#" id="kakaoWay">
+          <span class="way__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.9 5.3 4.7 6.7-.2.7-.7 2.5-.8 2.9 0 0 0 .3.2.4.2 0 .4 0 .5-.1.3-.2 2.7-1.8 3.7-2.5.6.1 1.2.1 1.7.1 5.5 0 10-3.6 10-8S17.5 3 12 3Z"/></svg></span>
+          <span><b>카카오톡 채널</b><span>채널 링크를 연결하세요</span></span>
+        </a>
+      </div>
+    </div>
+
+    <form class="form reveal" id="consultForm" novalidate>
+      <h3>무료 상담 신청</h3>
+      <p>영업일 기준 24시간 내 회신해 드립니다.</p>
+      <div class="field"><label for="cName">이름</label><input id="cName" type="text" placeholder="홍길동" autocomplete="name" required /></div>
+      <div class="field"><label for="cPhone">연락처</label><input id="cPhone" type="tel" placeholder="010-0000-0000" autocomplete="tel" inputmode="numeric" required /></div>
+      <div class="field"><label for="cZone">위반 위치 (대략)</label>
+        <select id="cZone">
+          <option value="">선택하거나 비워두세요</option>
+          <option>옥상 (옥탑방·파고라·물탱크실)</option>
+          <option>외벽·발코니 (확장·패널·캐노피)</option>
+          <option>1층·주차장 (실내화·창고·점포)</option>
+          <option>용도변경 (근생→주거 등)</option>
+          <option>구조·세대 (외부계단·세대분할)</option>
+          <option>대지·조경 (마당 잠식 등)</option>
+          <option>아직 잘 모르겠어요</option>
+        </select>
+      </div>
+      <div class="field"><label for="cMemo">상황 메모 (선택)</label><textarea id="cMemo" placeholder="예) 3층 옥상에 컨테이너로 방을 하나 만들어 쓰고 있어요. 매매 앞두고 정리하고 싶습니다."></textarea></div>
+      <button class="btn btn--pine btn--lg btn--block" type="submit">무료 상담 신청하기</button>
+      <p class="form__note">제출 시 개인정보 처리방침에 동의하는 것으로 간주합니다. (데모: 실제 전송 연동 필요)</p>
+    </form>
+  </div>
+</section>
+</main>
+
+<!-- ============================== FOOTER ============================== -->
+<footer class="footer">
+  <div class="shell footer__in">
+    <div>
+      <div class="footer__brand">양성화.com<small>BUILDING ACT · CASE MAP · EXPERT Q&amp;A</small></div>
+      <p class="disc"><b>안내:</b> 이 화면은 제공된 질문·답변과 일반적인 법령 정보를 바탕으로 구성한 정보형 페이지입니다. 개별 사건의 양성화 가능 여부와 필요 서류는 위반 부위의 성격, 소유·사용 관계, 건축물 현황, 관할 지자체 운영기준에 따라 달라지므로, 실제 신청 전 관할 허가권자 또는 건축사·행정사·변호사 등 전문가의 확인이 필요합니다.</p>
+    </div>
+    <div class="footer__meta">CASE MAP / REV.10<br>03F · 10 VIOLATIONS<br>16 ANSWERS · SINGLE FILE</div>
+  </div>
+</footer>
+
+<!-- mobile sticky bar -->
+<div class="mbar">
+  <span id="qna-lookup-mount-mobile"></span>
+  <a class="btn btn--pine" href="#consult">무료 상담</a>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">상담 신청이 접수되었습니다.</div>
+
+<script src="/qna/qna-ui.js"></script>
+<script src="/qna/current-model.js"></script>
+</body>
+</html>
