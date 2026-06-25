@@ -22,24 +22,6 @@
 <div class="blueprint" aria-hidden="true"></div>
 
 <!-- ============================== TOP BAR ============================== -->
-<header class="topbar">
-  <div class="shell topbar__in">
-    <a class="brand" href="#top" aria-label="양성화닷컴 홈">
-      <span class="brand__mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg>
-      </span>
-      <span><b>양성화<span style="color:var(--pine-l)">.com</span></b><small>BUILDING ACT · CASE MAP</small></span>
-    </a>
-    <nav class="topnav" aria-label="주요 메뉴">
-      <a href="#explore">위반사례 진단</a>
-      <a href="#qna">전문가 Q&amp;A</a>
-      <a href="#diagnosis">자가진단</a>
-      <a href="#process">진행 절차</a>
-      <a class="btn btn--ghost" href="#diagnosis">1분 자가진단</a>
-      <a class="btn btn--pine" href="#consult">무료 상담</a>
-    </nav>
-  </div>
-</header>
 
 <main>
 <!-- ============================== HERO ============================== -->
@@ -310,11 +292,10 @@
       <h2>위치와 사진으로 먼저 분류하고, 서류로 확정합니다</h2>
       <p>“옥상에 방이 있어요”, “주차장을 창고로 써요” 한 줄로 시작할 수 있습니다. 정확한 판단은 건축물대장, 완공시점, 면적, 제외구역, 체납 여부를 함께 확인합니다.</p>
       <div class="consult__ways">
-        <!-- 실제 연락처로 교체하세요 (placeholder) -->
-        <a class="way" href="tel:0000000000">
+        <div class="way">
           <span class="way__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg></span>
-          <span><b>전화 상담</b><span>전화번호를 입력하세요 (예: 02-0000-0000)</span></span>
-        </a>
+          <span><b>전화 상담</b><span class="way__tel"><a href="tel:01087421008">010-8742-1008</a><span class="way__sep"> · </span><a href="tel:0263481009">02-6348-1009</a></span></span>
+        </div>
         <a class="way" href="#" id="kakaoWay">
           <span class="way__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.9 5.3 4.7 6.7-.2.7-.7 2.5-.8 2.9 0 0 0 .3.2.4.2 0 .4 0 .5-.1.3-.2 2.7-1.8 3.7-2.5.6.1 1.2.1 1.7.1 5.5 0 10-3.6 10-8S17.5 3 12 3Z"/></svg></span>
           <span><b>카카오톡 채널</b><span>채널 링크를 연결하세요</span></span>
@@ -322,27 +303,15 @@
       </div>
     </div>
 
-    <form class="form reveal" id="consultForm" novalidate>
+    <div class="form reveal">
       <h3>무료 상담 신청</h3>
       <p>영업일 기준 24시간 내 회신해 드립니다.</p>
-      <div class="field"><label for="cName">이름</label><input id="cName" type="text" placeholder="홍길동" autocomplete="name" required /></div>
-      <div class="field"><label for="cPhone">연락처</label><input id="cPhone" type="tel" placeholder="010-0000-0000" autocomplete="tel" inputmode="numeric" required /></div>
-      <div class="field"><label for="cZone">위반 위치 (대략)</label>
-        <select id="cZone">
-          <option value="">선택하거나 비워두세요</option>
-          <option>옥상 (옥탑방·파고라·물탱크실)</option>
-          <option>외벽·발코니 (확장·패널·캐노피)</option>
-          <option>1층·주차장 (실내화·창고·점포)</option>
-          <option>용도변경 (근생→주거 등)</option>
-          <option>구조·세대 (외부계단·세대분할)</option>
-          <option>대지·조경 (마당 잠식 등)</option>
-          <option>아직 잘 모르겠어요</option>
-        </select>
-      </div>
-      <div class="field"><label for="cMemo">상황 메모 (선택)</label><textarea id="cMemo" placeholder="예) 3층 옥상에 컨테이너로 방을 하나 만들어 쓰고 있어요. 매매 앞두고 정리하고 싶습니다."></textarea></div>
-      <button class="btn btn--pine btn--lg btn--block" type="submit">무료 상담 신청하기</button>
-      <p class="form__note">제출 시 개인정보 처리방침에 동의하는 것으로 간주합니다. (데모: 실제 전송 연동 필요)</p>
-    </form>
+      <p style="color:var(--ink-2);font-size:.93rem;line-height:1.62;margin:10px 0 18px">
+        주소를 확인하고 <b>카카오 로그인</b>만 하면 신청 끝 — 이름·연락처는 계정 정보로 자동 입력됩니다.
+        위반건축물 등재 여부도 함께 확인해요.
+      </p>
+      <span id="qna-lookup-mount-consult" style="display:block"></span>
+    </div>
   </div>
 </section>
 </main>

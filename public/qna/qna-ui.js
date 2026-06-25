@@ -418,16 +418,9 @@
 
   /* ----------------------------- CONSULT FORM ----------------------------- */
   const toast=$('#toast');
-  function showToast(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600);}
-  $('#consultForm').addEventListener('submit',e=>{
-    e.preventDefault();
-    const name=$('#cName').value.trim(), phone=$('#cPhone').value.trim();
-    if(!name||!phone){showToast('이름과 연락처를 입력해 주세요.');return;}
-    // TODO: 실제 전송 연동 (예: fetch POST to your endpoint)
-    showToast('상담 신청이 접수되었습니다. 곧 연락드릴게요.');
-    e.target.reset();
-  });
-  $('#kakaoWay').addEventListener('click',e=>{e.preventDefault();showToast('카카오톡 채널 링크를 연결해 주세요.');});
+  function showToast(msg){if(!toast)return;toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600);}
+  // 무료상담은 React 아일랜드(QnaAddressLookup)로 일원화: 주소조회 → 카카오 로그인 → /api/consultations
+  $('#kakaoWay')?.addEventListener('click',e=>{e.preventDefault();showToast('카카오톡 채널 링크를 연결해 주세요.');});
 
   /* ----------------------------- SCROLL REVEAL ----------------------------- */
   if(!reduced && 'IntersectionObserver' in window){

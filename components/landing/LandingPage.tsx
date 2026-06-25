@@ -18,6 +18,7 @@ import {
   ArrowBigUpDash,
   Bell,
   BookUp,
+  Building2,
   CheckLine,
   Handshake,
   Landmark,
@@ -70,6 +71,12 @@ const navigationItems: NavigationItem[] = [
     label: '우리의 역할',
     type: 'modal',
     icon: <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '위반사례 Q&A',
+    type: 'link',
+    href: '/qna',
+    icon: <Building2 className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
     label: '핵심정리',

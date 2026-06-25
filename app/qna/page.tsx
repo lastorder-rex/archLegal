@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import Script from 'next/script';
 import type { Metadata } from 'next';
 import { QnaAddressLookup } from '@/components/qna/QnaAddressLookup';
+import { QnaScripts } from '@/components/qna/QnaScripts';
+import { SiteHeader } from '@/components/layout/SiteHeader';
 // 스타일은 import로 로드(Next 권장 — no-css-tags). current-model.css 먼저, qna.css 나중
 // (원본 로드 순서 = cascade 보존). Pretendard는 qna.css 최상단 @import로 흡수.
 import './current-model.css';
@@ -64,13 +65,15 @@ export default function QnaPage() {
       />
       <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
 
+      <SiteHeader />
+
       <div className="qna-page" dangerouslySetInnerHTML={{ __html: body }} />
 
       {/* 히어로 #qna-lookup-mount 로 portal되는 주소 위반조회 아일랜드 */}
       <QnaAddressLookup />
 
-      <Script src="/qna/qna-ui.js" strategy="afterInteractive" />
-      <Script src="/qna/current-model.js" strategy="afterInteractive" />
+      {/* 3D 엔진·UI 스크립트 (mount마다 실행 → 클라이언트 내비게이션에서도 캔버스 초기화) */}
+      <QnaScripts />
     </>
   );
 }

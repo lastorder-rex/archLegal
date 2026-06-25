@@ -371,7 +371,7 @@ section[id]{scroll-margin-top:80px}
 
 /* consultation */
 .consult{display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
-@media(min-width:880px){.consult{grid-template-columns:1fr 1fr}}
+@media(min-width:880px){.consult{grid-template-columns:1.15fr 1fr}}
 .consult__copy h2{font-size:clamp(1.5rem,4vw,2.1rem);font-weight:850;letter-spacing:-.03em;color:#fff}
 .consult__copy p{margin-top:14px;color:rgba(255,255,255,.82);font-size:1rem}
 .consult__ways{margin-top:22px;display:flex;flex-direction:column;gap:10px}
@@ -380,6 +380,10 @@ section[id]{scroll-margin-top:80px}
 .way__ic svg{width:19px;height:19px}
 .way b{font-size:.95rem;display:block}
 .way span{font-size:.78rem;color:rgba(255,255,255,.65)}
+.way .way__tel{font-size:.94rem;color:rgba(255,255,255,.85)}
+.way .way__tel a{color:inherit;text-decoration:none}
+.way .way__tel a:hover{text-decoration:underline}
+.way__sep{opacity:.5}
 .form{background:var(--paper-3);border-radius:var(--r-xl);padding:clamp(22px,4vw,30px);box-shadow:var(--shadow-l)}
 .form h3{font-size:1.16rem;font-weight:800;letter-spacing:-.02em}
 .form p{margin-top:5px;color:var(--ink-3);font-size:.86rem}

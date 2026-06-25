@@ -33,6 +33,40 @@ const updateProfileSchema = z.object({
     .refine(value => value === true, { message: '개인정보 처리방침에 동의해주세요.' })
 });
 
+// 로그인 사용자의 프로필 조회 (이름/연락처 자동세팅용 — qna 무료상담 등 클라이언트에서 사용)
+export async function GET() {
+  const cookieStore = cookies();
+
+  if (isUserSessionExpired(cookieStore)) {
+    return createExpiredSessionResponse();
+  }
+
+  const supabase = createRouteHandlerClient({ cookies });
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+
+  if (!session?.user) {
+    return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('auth_id, full_name, email, phone, legal_name, contact_phone, profile_completed')
+    .eq('auth_id', session.user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Failed to load profile', {
+      userId: session.user.id,
+      message: (error as { message?: string }).message ?? 'unknown'
+    });
+    return NextResponse.json({ error: '회원정보를 불러오지 못했습니다.' }, { status: 500 });
+  }
+
+  return NextResponse.json({ profile: data });
+}
+
 export async function PUT(request: Request) {
   const cookieStore = cookies();
 

@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, ClipboardCheck, FileText, HouseHeart, MessageCircle } from 'lucide-react';
+import { ArrowRight, ClipboardCheck, FileText, MessageCircle } from 'lucide-react';
 import { SiteFooter } from '@/components/layout/SiteFooter';
+import { SiteHeader } from '@/components/layout/SiteHeader';
 
 export const revalidate = 0;
 
@@ -117,32 +118,12 @@ const checks = [
 export default function CampaignPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-muted-foreground transition hover:text-primary"
-          >
-            <Image src="/docu/logo.png" alt="" width={28} height={28} aria-hidden="true" />
-            <span>양성화.com</span>
-          </Link>
-          <nav className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 transition hover:border-primary hover:text-primary"
-            >
-              <HouseHeart className="h-4 w-4" aria-hidden="true" />
-              홈으로 돌아가기
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>
         <section className="border-b border-border bg-muted/30">
           <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-14 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center lg:py-20">
             <div className="space-y-6">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Yangseonghwa.com Campaign</p>
               <div className="space-y-4">
                 <h1 className="max-w-3xl text-4xl font-extrabold leading-tight text-foreground sm:text-5xl lg:text-6xl">
                   양성화.com
