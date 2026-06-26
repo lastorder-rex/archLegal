@@ -74,7 +74,7 @@ const navigationItems: NavigationItem[] = [
     icon: <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
-    label: '위반사례 Q&A',
+    label: '3D 위반사례',
     type: 'link',
     href: '/qna',
     icon: <Building2 className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />

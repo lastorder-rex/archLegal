@@ -11,7 +11,7 @@ import { BookUp, Building2, Megaphone, Menu, Newspaper, X } from 'lucide-react';
 // 헤더를 바꾸려면 이 파일 한 곳만 고치면 모든 페이지에 반영.
 
 const NAV_LINKS = [
-  { label: '위반사례 Q&A', href: '/qna', icon: <Building2 className="h-4 w-4" aria-hidden /> },
+  { label: '3D 위반사례', href: '/qna', icon: <Building2 className="h-4 w-4" aria-hidden /> },
   { label: '핵심정리', href: '/card-news', icon: <BookUp className="h-4 w-4" aria-hidden /> },
   { label: '캠페인', href: '/campaign', icon: <Megaphone className="h-4 w-4" aria-hidden /> },
   { label: '언론보도', href: '/press', icon: <Newspaper className="h-4 w-4" aria-hidden /> },

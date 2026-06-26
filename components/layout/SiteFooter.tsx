@@ -12,7 +12,7 @@ export function SiteFooter() {
               지역별 위반현황
             </Link>
             <Link href="/qna" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
-              위반사례 Q&amp;A
+              3D 위반사례
             </Link>
             <Link href="/check" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
               1분 자가진단
