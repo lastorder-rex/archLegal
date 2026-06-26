@@ -700,9 +700,7 @@ export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
                 무료 상담 신청
               </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
-                <Link href="/check" target="_blank" rel="noopener noreferrer">
-                  1분 자가진단
-                </Link>
+                <Link href="/check">1분 자가진단</Link>
               </CTAButton>
               {/* <CTAButton tone="secondary" className="sm:w-auto" asChild>
                 <Link href="/calc" target="_blank" rel="noopener noreferrer">
