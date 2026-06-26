@@ -370,7 +370,7 @@ function ReportView({
           <b className="text-foreground">처방</b> · {prescription}
         </p>
         <p className="mt-1.5 text-[11px] leading-4 text-muted-foreground/80">
-          본 진단은 공공데이터(건축물대장 · 국토교통부 VWorld) 기반 1차 정보입니다. 최종 양성화 가능 여부는
+          본 진단은 공공데이터 기반 1차 정보입니다. 최종 양성화 가능 여부는
           건축사 현장검토와 관할 지자체 기준에 따라 달라질 수 있습니다.
         </p>
       </div>
