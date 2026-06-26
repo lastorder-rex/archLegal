@@ -119,7 +119,7 @@ export function MyBuildingReport() {
 // ── 입력 전(후크) ────────────────────────────────────────────────────────────
 function IdleHero({ onStart }: { onStart: () => void }) {
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.1fr_minmax(0,0.9fr)] lg:items-center">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
       <div className="space-y-5">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
           <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
@@ -165,15 +165,18 @@ function IdleHero({ onStart }: { onStart: () => void }) {
 // ── 로딩 ─────────────────────────────────────────────────────────────────────
 function LoadingState() {
   return (
-    <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-      <div className="flex items-center gap-3 text-muted-foreground">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        건축물대장·위반등재 조회 중…
-      </div>
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {[0, 1, 2].map(i => (
-          <div key={i} className="h-28 animate-pulse rounded-xl bg-muted/60" />
-        ))}
+    <div className="overflow-hidden rounded-2xl border border-[#26262c] bg-[#0b0b0d] shadow-2xl">
+      <div className="h-1 w-full bg-gradient-to-r from-[#f6042e] via-[#ff4628] to-[#ffae2e]" />
+      <div className="p-8">
+        <div className="flex items-center gap-3 text-[#c7c7cf]">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#f6042e] border-t-transparent" />
+          건축물대장·위반등재 조회 중…
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="h-28 animate-pulse rounded-xl bg-[#16161a]" />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -203,76 +206,82 @@ function ReportView({
   const verdict =
     v === true
       ? {
-          tone: 'bg-red-50 border-red-200 text-red-700',
-          icon: <AlertTriangle className="h-7 w-7 shrink-0 text-red-600" aria-hidden />,
+          wrap: 'border-l-4 border-[#f6042e] bg-[#f6042e]/10',
+          accent: 'text-[#ff6a4d]',
+          icon: <AlertTriangle className="h-7 w-7 shrink-0 text-[#ff4628]" aria-hidden />,
           tag: '위반건축물 등재',
           title: '위반건축물로 등재돼 있습니다',
           desc: '건축물대장에 위반 표시가 있는 상태입니다. 한시법 기간 안에 양성화를 검토하는 것이 유리합니다.',
         }
       : v === false
         ? {
-            tone: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-            icon: <CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-600" aria-hidden />,
+            wrap: 'border-l-4 border-[#b8c8d7] bg-[#b8c8d7]/10',
+            accent: 'text-[#b8c8d7]',
+            icon: <CheckCircle2 className="h-7 w-7 shrink-0 text-[#b8c8d7]" aria-hidden />,
             tag: '등재 미확인',
             title: '위반 등재가 확인되지 않습니다',
             desc: "다만 '합법' 확정은 아닙니다 — 일부 지역은 위반정보가 제공되지 않아, 도면 대조·자가진단으로 한 번 더 확인하길 권합니다.",
           }
         : {
-            tone: 'bg-muted border-border text-foreground',
-            icon: <HelpCircle className="h-7 w-7 shrink-0 text-muted-foreground" aria-hidden />,
+            wrap: 'border-l-4 border-[#3a3a42] bg-white/5',
+            accent: 'text-[#8a8a93]',
+            icon: <HelpCircle className="h-7 w-7 shrink-0 text-[#8a8a93]" aria-hidden />,
             tag: '조회 불가',
             title: '이 주소는 조회되지 않았습니다',
             desc: '주소를 특정하지 못했거나 해당 지역 위반정보가 제공되지 않을 수 있습니다.',
           };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+    <div className="overflow-hidden rounded-2xl border border-[#26262c] bg-[#0b0b0d] shadow-2xl ring-1 ring-black/40">
+      {/* 문서 상단 액센트 바 */}
+      <div className="h-1 w-full bg-gradient-to-r from-[#f6042e] via-[#ff4628] to-[#ffae2e]" />
+
       {/* 브랜드 스트립 — "건물 건강검진서" 아이덴티티 */}
-      <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-[#26262c] px-6 py-3.5">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#f6042e] text-white">
             <Stethoscope className="h-4 w-4" aria-hidden />
           </span>
-          <span className="text-sm font-extrabold tracking-tight text-foreground">
-            양성화<span className="text-primary">.com</span> 건물 건강검진서
+          <span className="text-sm font-extrabold tracking-tight text-[#f4f4f5]">
+            양성화<span className="text-[#f6042e]">.com</span> 건물 건강검진서
           </span>
         </div>
-        <span className="text-xs font-medium text-muted-foreground">진단일 {dateStr}</span>
+        <span className="text-xs font-medium text-[#8a8a93]">진단일 {dateStr}</span>
       </div>
 
       {/* 판정 배너 */}
-      <div className={`flex items-start gap-4 border-b px-6 py-6 ${verdict.tone}`}>
+      <div className={`flex items-start gap-4 border-b border-[#26262c] px-6 py-6 ${verdict.wrap}`}>
         {verdict.icon}
         <div className="min-w-0">
-          <p className="text-xs font-extrabold tracking-wide">{verdict.tag}</p>
-          <h3 className="mt-0.5 text-xl font-extrabold tracking-tight sm:text-2xl">{verdict.title}</h3>
-          <p className="mt-1.5 flex items-center gap-1 text-sm font-medium opacity-90">
+          <p className={`text-xs font-extrabold tracking-wide ${verdict.accent}`}>{verdict.tag}</p>
+          <h3 className="mt-0.5 text-xl font-extrabold tracking-tight text-[#f4f4f5] sm:text-2xl">{verdict.title}</h3>
+          <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-[#c7c7cf]">
             <MapPin className="h-4 w-4 shrink-0" aria-hidden />
             <span className="truncate">{report.address}</span>
           </p>
-          <p className="mt-2 text-sm leading-6 opacity-90">{verdict.desc}</p>
+          <p className="mt-2 text-sm leading-6 text-[#c7c7cf]">{verdict.desc}</p>
         </div>
       </div>
 
       {/* 시한 카운트다운 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-foreground px-6 py-4 text-background">
-        <div className="flex items-center gap-2.5">
-          <Clock className="h-5 w-5 shrink-0" aria-hidden />
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#26262c] bg-[#16161a] px-6 py-4">
+        <div className="flex items-center gap-2.5 text-[#f4f4f5]">
+          <Clock className="h-5 w-5 shrink-0 text-[#ffae2e]" aria-hidden />
           <span className="text-sm font-semibold">특별조치법 한시 — 지금 시작해야 안전합니다</span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-sm opacity-80">신청 마감까지</span>
-          <span className="text-2xl font-black tabular-nums text-amber-400">D-{d.toLocaleString()}</span>
-          <span className="text-xs opacity-70">(~2028.06.16)</span>
+          <span className="text-sm text-[#8a8a93]">신청 마감까지</span>
+          <span className="text-2xl font-black tabular-nums text-[#ffae2e]">D-{d.toLocaleString()}</span>
+          <span className="text-xs text-[#8a8a93]">(~2028.06.16)</span>
         </div>
       </div>
 
       {/* 3카드 */}
-      <div className="grid gap-px bg-border sm:grid-cols-3">
+      <div className="grid gap-px bg-[#26262c] sm:grid-cols-3">
         {/* 건축물대장 */}
-        <div className="bg-card p-5">
-          <p className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
-            <Building2 className="h-4 w-4 text-primary" aria-hidden />
+        <div className="bg-[#0f0f12] p-5">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-[#8a8a93]">
+            <Building2 className="h-4 w-4 text-[#ff4628]" aria-hidden />
             건축물대장
           </p>
           <dl className="mt-3 space-y-1.5 text-sm">
@@ -292,49 +301,49 @@ function ReportView({
         </div>
 
         {/* 이행강제금 */}
-        <Link href="/calc" className="group block bg-card p-5 transition hover:bg-muted/40">
-          <p className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
-            <Receipt className="h-4 w-4 text-primary" aria-hidden />
+        <Link href="/calc" className="group block bg-[#0f0f12] p-5 transition hover:bg-[#16161a]">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-[#8a8a93]">
+            <Receipt className="h-4 w-4 text-[#ff4628]" aria-hidden />
             이행강제금
           </p>
-          <p className="mt-3 text-sm leading-6 text-card-foreground">
-            위반은 시정 시까지 <b className="text-red-600">매년 반복·가중</b> 부과됩니다. 전국 평균
-            <b> 건당 약 141만 원</b>.
+          <p className="mt-3 text-sm leading-6 text-[#c7c7cf]">
+            위반은 시정 시까지 <b className="text-[#ff6a4d]">매년 반복·가중</b> 부과됩니다. 전국 평균
+            <b className="text-[#f4f4f5]"> 건당 약 141만 원</b>.
           </p>
-          <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-primary">
+          <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#ff4628]">
             내 건물 정확히 계산 <ChevronRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
           </span>
         </Link>
 
         {/* 양성화 가능성 */}
-        <Link href="/check" className="group block bg-card p-5 transition hover:bg-muted/40">
-          <p className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
-            <Landmark className="h-4 w-4 text-primary" aria-hidden />
+        <Link href="/check" className="group block bg-[#0f0f12] p-5 transition hover:bg-[#16161a]">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-[#8a8a93]">
+            <Landmark className="h-4 w-4 text-[#ff4628]" aria-hidden />
             양성화 가능성
           </p>
-          <p className="mt-3 text-sm leading-6 text-card-foreground">
+          <p className="mt-3 text-sm leading-6 text-[#c7c7cf]">
             {v === true
               ? '특별조치법 검토 대상일 수 있습니다. 완공시점·면적·구역 기준으로 가능성을 좁혀보세요.'
               : '대장 기준 1차 점검 후, 완공시점·구역 등으로 가능성을 확인하세요.'}
           </p>
-          <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-primary">
+          <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#ff4628]">
             1분 정밀 자가진단 <ChevronRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
           </span>
         </Link>
       </div>
 
       {/* CTA */}
-      <div className="flex flex-col gap-3 border-t border-border bg-muted/30 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[#26262c] bg-[#0f0f12] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2.5">
           <Link
             href="/qna"
-            className="inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 text-base font-extrabold text-primary-foreground transition hover:opacity-90"
+            className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#f6042e] px-6 text-base font-extrabold text-white shadow-lg shadow-[#f6042e]/25 transition hover:bg-[#ff4628]"
           >
             이 위반, 무료 상담받기
           </Link>
           <Link
             href="/qna"
-            className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-card px-5 text-base font-bold text-foreground transition hover:border-primary hover:text-primary"
+            className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#34343c] px-5 text-base font-bold text-[#f4f4f5] transition hover:border-[#ff4628] hover:text-[#ff4628]"
           >
             3D로 위반 부위 보기
           </Link>
@@ -343,7 +352,7 @@ function ReportView({
           <button
             type="button"
             onClick={onRetry}
-            className="inline-flex items-center gap-1 font-semibold text-muted-foreground transition hover:text-primary"
+            className="inline-flex items-center gap-1 font-semibold text-[#8a8a93] transition hover:text-[#f4f4f5]"
           >
             <RotateCcw className="h-4 w-4" aria-hidden />
             다른 주소
@@ -351,7 +360,7 @@ function ReportView({
           <button
             type="button"
             onClick={onReset}
-            className="font-semibold text-muted-foreground transition hover:text-foreground"
+            className="font-semibold text-[#8a8a93] transition hover:text-[#f4f4f5]"
           >
             처음으로
           </button>
@@ -359,11 +368,11 @@ function ReportView({
       </div>
 
       {/* 처방 + 면책 (검진서 하단) */}
-      <div className="border-t border-border px-6 py-4">
-        <p className="text-xs leading-5 text-muted-foreground">
-          <b className="text-foreground">처방</b> · {prescription}
+      <div className="border-t border-[#26262c] px-6 py-4">
+        <p className="text-xs leading-5 text-[#c7c7cf]">
+          <b className="text-[#ffae2e]">처방</b> · {prescription}
         </p>
-        <p className="mt-1.5 text-[11px] leading-4 text-muted-foreground/80">
+        <p className="mt-1.5 text-[11px] leading-4 text-[#6f6f78]">
           본 진단은 공공데이터(건축물대장 · 국토교통부 VWorld) 기반 1차 정보입니다. 최종 양성화 가능 여부는
           건축사 현장검토와 관할 지자체 기준에 따라 달라질 수 있습니다.
         </p>
@@ -375,8 +384,8 @@ function ReportView({
 function Row({ k, val }: { k: string; val: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="shrink-0 text-muted-foreground">{k}</dt>
-      <dd className="text-right font-semibold text-card-foreground">{val}</dd>
+      <dt className="shrink-0 text-[#8a8a93]">{k}</dt>
+      <dd className="text-right font-semibold text-[#f4f4f5]">{val}</dd>
     </div>
   );
 }
