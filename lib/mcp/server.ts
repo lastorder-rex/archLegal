@@ -13,6 +13,9 @@ type McpToolResult = {
   isError?: boolean;
 };
 
+type EaisJobResult = NonNullable<Awaited<ReturnType<typeof getEaisIssueJobResult>>>;
+type EaisJobResultFile = EaisJobResult['files'][number];
+
 const addressJobInputSchema = {
   type: 'object',
   properties: {
@@ -199,7 +202,7 @@ async function getAddressJobResult(args: Record<string, unknown>): Promise<McpTo
   return textResult(formatDoneResult(result), result);
 }
 
-function formatDoneResult(result: any) {
+function formatDoneResult(result: EaisJobResult) {
   const fileLabels: Record<string, string> = {
     building_register_pdf: '건축물대장 PDF',
     building_register_total_pdf: '총괄표제부 PDF',
@@ -208,8 +211,8 @@ function formatDoneResult(result: any) {
   };
 
   const links = result.files
-    .filter((file) => file.driveUrl)
-    .map((file) => {
+    .filter((file: EaisJobResultFile) => file.driveUrl)
+    .map((file: EaisJobResultFile) => {
       const label = fileLabels[file.type] ?? file.fileName ?? file.type;
       const name = file.fileName ? ` (${file.fileName})` : '';
       return `- ${label}${name}: ${file.driveUrl}`;
