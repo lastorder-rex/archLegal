@@ -140,7 +140,6 @@ function IdleHero({ onStart }: { onStart: () => void }) {
           <Search className="h-5 w-5" aria-hidden />
           내 집 주소로 진단 시작
         </button>
-        <p className="text-xs text-muted-foreground">전국 7만+ 위반건축물 데이터 · 건축물대장 실시간 조회 기반</p>
       </div>
 
       <Link
