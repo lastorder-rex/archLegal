@@ -31,7 +31,8 @@ import {
   Search,
   ShieldCheck,
   UserRoundCog,
-  Newspaper
+  Newspaper,
+  MapPinned
 } from 'lucide-react';
 import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
@@ -77,6 +78,12 @@ const navigationItems: NavigationItem[] = [
     type: 'link',
     href: '/qna',
     icon: <Building2 className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '지역별 현황',
+    type: 'link',
+    href: '/region',
+    icon: <MapPinned className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
     label: '핵심정리',

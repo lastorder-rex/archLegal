@@ -7,8 +7,25 @@ export function SiteFooter() {
     <footer className="border-t border-border bg-background/80">
       <div className="mx-auto w-full max-w-6xl px-6 py-10 text-sm text-muted-foreground">
         <div className="space-y-10">
-          
-          
+          <nav aria-label="주요 메뉴" className="flex flex-wrap gap-x-5 gap-y-2">
+            <Link href="/region" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              지역별 위반현황
+            </Link>
+            <Link href="/qna" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              위반사례 Q&amp;A
+            </Link>
+            <Link href="/check" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              1분 자가진단
+            </Link>
+            <Link href="/calc" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              이행강제금 계산기
+            </Link>
+            <Link href="/card-news" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              핵심정리
+            </Link>
+          </nav>
+
+
           {/*
                 <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-primary">회사 소개</p>
