@@ -144,8 +144,48 @@ const waitJobsInputSchema = {
   additionalProperties: false,
 };
 
+const issueAddressJobInputSchema = {
+  type: 'object',
+  properties: {
+    ...addressJobInputSchema.properties,
+    maxWaitSeconds: {
+      type: 'number',
+      default: 180,
+      description: '발급 완료를 기다릴 최대 초. 기본 180초, 최대 240초입니다.',
+    },
+  },
+  required: ['address'],
+  additionalProperties: false,
+};
+
+const issueAddressJobsInputSchema = {
+  type: 'object',
+  properties: {
+    items: addressJobsInputSchema.properties.items,
+    maxWaitSeconds: {
+      type: 'number',
+      default: 180,
+      description: '여러 작업 전체의 완료를 기다릴 최대 초. 기본 180초, 최대 240초입니다.',
+    },
+  },
+  required: ['items'],
+  additionalProperties: false,
+};
+
 export function listMcpTools(): ToolDefinition[] {
   return [
+    {
+      name: 'issue_address_job',
+      title: '건축물대장 발급 후 Drive 링크 반환',
+      description: '사용자가 “대장 뽑아줘”, “건축물대장 발급해줘”처럼 요청하면 기본으로 이 도구를 사용하세요. 주소 1건의 발급 작업을 생성하고 완료될 때까지 기다린 뒤 최종 Google Drive 링크를 사용자에게 반환합니다.',
+      inputSchema: issueAddressJobInputSchema,
+    },
+    {
+      name: 'issue_address_jobs',
+      title: '여러 건축물대장 발급 후 Drive 링크 반환',
+      description: '사용자가 여러 주소의 대장 발급을 요청하면 기본으로 이 도구를 사용하세요. 주소별 작업을 생성하고 완료될 때까지 기다린 뒤 주소별 Google Drive 링크를 사용자에게 반환합니다.',
+      inputSchema: issueAddressJobsInputSchema,
+    },
     {
       name: 'create_address_job',
       title: '주소 기반 세움터 발급 작업 생성',
@@ -211,6 +251,10 @@ function getNumber(value: unknown, fallback: number) {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getIssueWaitSeconds(value: unknown) {
+  return Math.max(1, Math.min(240, getNumber(value, 180)));
 }
 
 async function createJob(args: Record<string, unknown>) {
@@ -414,6 +458,48 @@ async function waitAddressJobResult(args: Record<string, unknown>): Promise<McpT
   );
 }
 
+async function waitJobResult(jobId: string, maxWaitSeconds: number) {
+  const deadline = Date.now() + maxWaitSeconds * 1000;
+  let result = await getEaisIssueJobResult(jobId);
+
+  if (!result) {
+    throw new Error('작업을 찾을 수 없습니다.');
+  }
+
+  while (!isTerminal(result) && Date.now() < deadline) {
+    await sleep(2000);
+    result = await getEaisIssueJobResult(jobId);
+    if (!result) {
+      throw new Error('작업을 찾을 수 없습니다.');
+    }
+  }
+
+  return result;
+}
+
+async function issueAddressJob(args: Record<string, unknown>): Promise<McpToolResult> {
+  const job = await createJob(args);
+  const maxWaitSeconds = getIssueWaitSeconds(args.maxWaitSeconds);
+  const result = await waitJobResult(job.id, maxWaitSeconds);
+
+  if (result.job.status === 'done') {
+    return textResult(formatDoneResult(result), result);
+  }
+
+  if (result.job.status === 'failed') {
+    return textResult(`발급 작업이 실패했습니다. 오류: ${result.job.errorMessage ?? '원인 미상'}`, result);
+  }
+
+  if (result.job.status === 'cancelled') {
+    return textResult('발급 작업이 취소되었습니다.', result);
+  }
+
+  return textResult(
+    `발급 작업을 생성했지만 아직 완료되지 않았습니다. 작업 ID: ${job.id}, 현재 상태: ${result.job.status}. 같은 작업 ID로 wait_address_job_result를 호출하면 완료 링크를 확인할 수 있습니다.`,
+    result
+  );
+}
+
 function formatBatchResult(results: EaisJobResult[]) {
   const done = results.filter((result) => result.job.status === 'done');
   const failed = results.filter((result) => result.job.status === 'failed');
@@ -477,8 +563,53 @@ async function waitAddressJobsResult(args: Record<string, unknown>): Promise<Mcp
   return textResult(formatBatchResult(results), { results, counts });
 }
 
+async function issueAddressJobs(args: Record<string, unknown>): Promise<McpToolResult> {
+  const items = getRecordArray(args.items, 'items');
+  const maxWaitSeconds = getIssueWaitSeconds(args.maxWaitSeconds);
+  const jobs = [];
+
+  for (const item of items) {
+    jobs.push(await createJob(item));
+  }
+
+  const jobIds = jobs.map((job) => job.id);
+  const deadline = Date.now() + maxWaitSeconds * 1000;
+  let results = await Promise.all(jobIds.map(async (jobId) => {
+    const result = await getEaisIssueJobResult(jobId);
+    if (!result) {
+      throw new Error(`작업을 찾을 수 없습니다: ${jobId}`);
+    }
+    return result;
+  }));
+
+  while (results.some((result) => !isTerminal(result)) && Date.now() < deadline) {
+    await sleep(2000);
+    results = await Promise.all(jobIds.map(async (jobId) => {
+      const result = await getEaisIssueJobResult(jobId);
+      if (!result) {
+        throw new Error(`작업을 찾을 수 없습니다: ${jobId}`);
+      }
+      return result;
+    }));
+  }
+
+  const counts = {
+    total: results.length,
+    done: results.filter((result) => result.job.status === 'done').length,
+    active: results.filter((result) => !isTerminal(result)).length,
+    failed: results.filter((result) => result.job.status === 'failed').length,
+    cancelled: results.filter((result) => result.job.status === 'cancelled').length,
+  };
+
+  return textResult(formatBatchResult(results), { jobs, results, counts });
+}
+
 export async function callMcpTool(name: string, args: Record<string, unknown>): Promise<McpToolResult> {
   switch (name) {
+    case 'issue_address_job':
+      return issueAddressJob(args);
+    case 'issue_address_jobs':
+      return issueAddressJobs(args);
     case 'create_address_job':
       return createAddressJob(args);
     case 'create_address_jobs':

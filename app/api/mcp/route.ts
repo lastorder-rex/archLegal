@@ -3,6 +3,7 @@ import { callMcpTool, listMcpTools } from '@/lib/mcp/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 300;
 
 type JsonRpcRequest = {
   jsonrpc?: '2.0';
