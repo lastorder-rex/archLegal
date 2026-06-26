@@ -222,7 +222,7 @@ export async function claimNextEaisIssueJob(workerId: string) {
   }
 
   const row = Array.isArray(data) ? data[0] : data;
-  return row ? publicJob(mapJob(row)) : null;
+  return row?.id ? publicJob(mapJob(row)) : null;
 }
 
 export async function startEaisIssueJob(jobId: string, workerId: string) {
