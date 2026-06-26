@@ -7,7 +7,7 @@ import { LandingBrandPoster } from './LandingBrandPoster';
 export function LandingKick() {
   return (
     <>
-      <section className="border-y border-border bg-muted/20" aria-label="내 집 양성화 리포트">
+      <section id="my-building-report" className="border-y border-border bg-muted/20" aria-label="내 집 양성화 리포트">
         <div className="mx-auto w-full max-w-6xl px-6 py-14 lg:py-20">
           <MyBuildingReport />
         </div>
