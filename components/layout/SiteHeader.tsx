@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser } from '@supabase/auth-helpers-react';
-import { BookUp, Building2, Megaphone, Menu, Newspaper, X } from 'lucide-react';
+import { BookUp, Building2, MapPinned, Megaphone, Menu, Newspaper, X } from 'lucide-react';
 
 // 콘텐츠 페이지 공용 헤더 (qna/card-news/campaign/press/procedure 공유 — 통일감).
 // 랜딩의 공개 메뉴를 밝은 헤더로 보여준다(경량판: 페이지 링크 + 로그인. 모달/알림 등 랜딩 전용 요소 제외).
@@ -12,6 +12,7 @@ import { BookUp, Building2, Megaphone, Menu, Newspaper, X } from 'lucide-react';
 
 const NAV_LINKS = [
   { label: '3D 위반사례', href: '/qna', icon: <Building2 className="h-4 w-4" aria-hidden /> },
+  { label: '지역별 현황', href: '/region', icon: <MapPinned className="h-4 w-4" aria-hidden /> },
   { label: '핵심정리', href: '/card-news', icon: <BookUp className="h-4 w-4" aria-hidden /> },
   { label: '캠페인', href: '/campaign', icon: <Megaphone className="h-4 w-4" aria-hidden /> },
   { label: '언론보도', href: '/press', icon: <Newspaper className="h-4 w-4" aria-hidden /> },
