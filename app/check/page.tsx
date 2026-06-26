@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LegalizationCheckClient } from '@/components/diagnosis/LegalizationCheckClient';
+import { SiteHeader } from '@/components/layout/SiteHeader';
 import './diagnosis.css';
 
 export const revalidate = 0;
@@ -64,6 +65,7 @@ export default function CheckPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
+      <SiteHeader />
       <LegalizationCheckClient />
     </>
   );

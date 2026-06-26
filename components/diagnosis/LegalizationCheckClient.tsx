@@ -1,9 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import Script from 'next/script';
-import { Moon, Sun } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ConsultationModal } from '@/components/landing/ConsultationModal';
@@ -142,7 +139,7 @@ export function LegalizationCheckClient() {
   const [copyText, setCopyText] = useState('');
   const [progress, setProgress] = useState({ done: 0, total: 12, percent: 0 });
   const [toast, setToast] = useState('');
-  const [isDark, setIsDark] = useState(false);
+  const [isDark] = useState(false);
   const [isConsultationOpen, setConsultationOpen] = useState(false);
   const [consultationInitialMessage, setConsultationInitialMessage] = useState('');
 
@@ -254,16 +251,6 @@ export function LegalizationCheckClient() {
   // const scrollToInfo = () => {
   //   document.getElementById('info-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   // };
-
-  const jumpToContact = () => {
-    if (view === 'result') {
-      document.getElementById('contact-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
-    }
-
-    setToast('자가진단 결과 화면에서 상담 폼이 함께 표시됩니다. 먼저 진단을 진행해주세요.');
-    void startDiagnosis();
-  };
 
   const answer = async (optionId: string) => {
     if (!question) {
@@ -384,33 +371,6 @@ export function LegalizationCheckClient() {
         />
       ) : null}
       <div className="app-shell">
-        <header className="topbar">
-          <Link href="/" className="brand" aria-label="양성화.com 홈페이지로 이동">
-            <div className="brand-mark">
-              <Image src="/docu/archlegal-fa-p-transparent.png" alt="ArchLegal" width={30} height={30} />
-            </div>
-            <div className="brand-title">
-              <strong>양성화.com</strong>
-              <span>특정건축물 정리에 관한 특별조치법 자가진단</span>
-            </div>
-          </Link>
-          <div className="top-actions">
-            <button
-              className="ghost-btn theme-toggle-btn"
-              type="button"
-              onClick={() => setIsDark(current => !current)}
-              aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
-              title={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
-            >
-              <span className="sr-only">테마 전환</span>
-              {isDark ? <Sun className="theme-toggle-icon" aria-hidden="true" /> : <Moon className="theme-toggle-icon" aria-hidden="true" />}
-            </button>
-            <button className="primary-btn" type="button" onClick={jumpToContact}>
-              상담 연결
-            </button>
-          </div>
-        </header>
-
         <main>
           <section className={`view ${view === 'landing' ? 'active' : ''}`}>
             <div className="hero-grid">
