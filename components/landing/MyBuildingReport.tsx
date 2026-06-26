@@ -202,22 +202,25 @@ function ReportView({
   const verdict =
     v === true
       ? {
-          tone: 'bg-red-50 border-red-200 text-red-700',
-          icon: <AlertTriangle className="h-7 w-7 shrink-0 text-red-600" aria-hidden />,
+          bar: 'border-l-rose-500',
+          chip: 'bg-rose-600 text-white',
+          icon: <AlertTriangle className="h-7 w-7 shrink-0 text-rose-600" aria-hidden />,
           tag: '위반건축물 등재',
           title: '위반건축물로 등재돼 있습니다',
           desc: '건축물대장에 위반 표시가 있는 상태입니다. 한시법 기간 안에 양성화를 검토하는 것이 유리합니다.',
         }
       : v === false
         ? {
-            tone: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+            bar: 'border-l-emerald-500',
+            chip: 'bg-emerald-600 text-white',
             icon: <CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-600" aria-hidden />,
             tag: '등재 미확인',
             title: '위반 등재가 확인되지 않습니다',
             desc: "다만 '합법' 확정은 아닙니다 — 일부 지역은 위반정보가 제공되지 않아, 도면 대조·자가진단으로 한 번 더 확인하길 권합니다.",
           }
         : {
-            tone: 'bg-muted border-border text-foreground',
+            bar: 'border-l-slate-300',
+            chip: 'bg-slate-500 text-white',
             icon: <HelpCircle className="h-7 w-7 shrink-0 text-muted-foreground" aria-hidden />,
             tag: '조회 불가',
             title: '이 주소는 조회되지 않았습니다',
@@ -239,17 +242,21 @@ function ReportView({
         <span className="text-xs font-medium text-muted-foreground">진단일 {dateStr}</span>
       </div>
 
-      {/* 판정 배너 */}
-      <div className={`flex items-start gap-4 border-b px-6 py-6 ${verdict.tone}`}>
+      {/* 판정 배너 — 파스텔 채움 대신 좌측 강조바 + 상태칩(깔끔·의도적) */}
+      <div className={`flex items-start gap-4 border-b border-l-4 border-border bg-card px-6 py-6 ${verdict.bar}`}>
         {verdict.icon}
         <div className="min-w-0">
-          <p className="text-xs font-extrabold tracking-wide">{verdict.tag}</p>
-          <h3 className="mt-0.5 text-xl font-extrabold tracking-tight sm:text-2xl">{verdict.title}</h3>
-          <p className="mt-1.5 flex items-center gap-1 text-sm font-medium opacity-90">
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-extrabold tracking-wide ${verdict.chip}`}
+          >
+            {verdict.tag}
+          </span>
+          <h3 className="mt-1.5 text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">{verdict.title}</h3>
+          <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0" aria-hidden />
             <span className="truncate">{report.address}</span>
           </p>
-          <p className="mt-2 text-sm leading-6 opacity-90">{verdict.desc}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{verdict.desc}</p>
         </div>
       </div>
 
