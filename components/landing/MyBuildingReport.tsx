@@ -104,7 +104,7 @@ export function MyBuildingReport() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
+    <div className="w-full">
       {phase === 'idle' && <IdleHero onStart={() => setOpen(true)} />}
       {phase === 'loading' && <LoadingState />}
       {phase === 'report' && report && (
@@ -119,8 +119,8 @@ export function MyBuildingReport() {
 // ── 입력 전(후크) ────────────────────────────────────────────────────────────
 function IdleHero({ onStart }: { onStart: () => void }) {
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
-      <div className="space-y-5">
+    <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-16">
+      <div className="flex-1 space-y-5">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
           <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
           30초 무료 진단 · 로그인 불필요
@@ -146,7 +146,7 @@ function IdleHero({ onStart }: { onStart: () => void }) {
       <Link
         href="/qna"
         aria-label="3D 위반건축물 진단으로 이동"
-        className="group relative hidden overflow-hidden rounded-2xl border border-border bg-card shadow-lg lg:block"
+        className="group relative hidden overflow-hidden rounded-2xl border border-border bg-card shadow-lg lg:block lg:flex-1"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -165,7 +165,7 @@ function IdleHero({ onStart }: { onStart: () => void }) {
 // ── 로딩 ─────────────────────────────────────────────────────────────────────
 function LoadingState() {
   return (
-    <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+    <div className="mx-auto w-full max-w-5xl rounded-2xl border border-border bg-card p-8 shadow-sm">
       <div className="flex items-center gap-3 text-muted-foreground">
         <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         건축물대장·위반등재 조회 중…
@@ -226,7 +226,7 @@ function ReportView({
           };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+    <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
       {/* 브랜드 스트립 — "건물 건강검진서" 아이덴티티 */}
       <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-3">
         <div className="flex items-center gap-2">
