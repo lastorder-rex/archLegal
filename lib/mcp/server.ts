@@ -188,14 +188,14 @@ export function listMcpTools(): ToolDefinition[] {
     },
     {
       name: 'create_address_job',
-      title: '주소 기반 세움터 발급 작업 생성',
-      description: '주소 1건의 세움터 건축물대장 발급/추출 작업을 생성합니다. 사용자의 최종 목적은 Drive 링크 확인이므로, 작업 생성 후 반드시 wait_address_job_result를 같은 jobId로 반복 호출해 최종 링크를 사용자에게 보여주세요. 여러 주소는 create_address_jobs를 사용하세요.',
+      title: '주소 기반 세움터 발급 후 Drive 링크 반환',
+      description: '주소 1건의 세움터 건축물대장 발급/추출 작업을 생성하고 완료될 때까지 기다린 뒤 최종 Google Drive 링크를 사용자에게 반환합니다. 사용자가 “대장 뽑아줘”라고 요청하면 링크까지 반드시 보여주세요.',
       inputSchema: addressJobInputSchema,
     },
     {
       name: 'create_address_jobs',
-      title: '여러 주소 세움터 발급 작업 생성',
-      description: '사용자가 여러 주소의 건축물대장 발급을 요청할 때 주소별 작업을 한 번에 생성합니다. 생성 후 반드시 wait_address_jobs_result를 jobIds로 반복 호출해 주소별 최종 Drive 링크를 사용자에게 보여주세요.',
+      title: '여러 주소 세움터 발급 후 Drive 링크 반환',
+      description: '여러 주소의 세움터 건축물대장 발급/추출 작업을 생성하고 완료될 때까지 기다린 뒤 주소별 최종 Google Drive 링크를 사용자에게 반환합니다.',
       inputSchema: addressJobsInputSchema,
     },
     {
@@ -282,16 +282,7 @@ async function createJob(args: Record<string, unknown>) {
 }
 
 async function createAddressJob(args: Record<string, unknown>): Promise<McpToolResult> {
-  const job = await createJob(args);
-
-  return textResult(
-    [
-      `발급 작업을 생성했습니다. 작업 ID: ${job.id}, 상태: ${job.status}`,
-      '최종 Drive 링크를 사용자에게 보여주려면 wait_address_job_result 도구를 이 작업 ID로 호출하세요.',
-      '아직 진행 중이면 사용자가 중단하지 않는 한 같은 작업 ID로 wait_address_job_result를 다시 호출하세요.',
-    ].join('\n'),
-    { job }
-  );
+  return issueAddressJob(args);
 }
 
 function getRecordArray(value: unknown, fieldName: string) {
@@ -331,27 +322,7 @@ function getStringArray(value: unknown, fieldName: string) {
 }
 
 async function createAddressJobs(args: Record<string, unknown>): Promise<McpToolResult> {
-  const items = getRecordArray(args.items, 'items');
-  const jobs = [];
-
-  for (const item of items) {
-    jobs.push(await createJob(item));
-  }
-
-  const lines = jobs.map((job, index) => {
-    const label = [job.address, job.docType !== 'auto' ? job.docType : '', job.dongHo].filter(Boolean).join(' ');
-    return `${index + 1}. ${label}: ${job.id} (${job.status})`;
-  });
-
-  return textResult(
-    [
-      `${jobs.length}건의 발급 작업을 생성했습니다.`,
-      ...lines,
-      '최종 Drive 링크를 사용자에게 보여주려면 wait_address_jobs_result 도구를 위 jobIds로 호출하세요.',
-      '진행 중인 작업이 남아 있으면 사용자가 중단하지 않는 한 같은 jobIds로 wait_address_jobs_result를 다시 호출하세요.',
-    ].join('\n'),
-    { jobs }
-  );
+  return issueAddressJobs(args);
 }
 
 async function getAddressJobStatus(args: Record<string, unknown>): Promise<McpToolResult> {
