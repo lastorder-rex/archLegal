@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { QnaAddressLookup } from '@/components/qna/QnaAddressLookup';
 import { QnaScripts } from '@/components/qna/QnaScripts';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { SiteFooter } from '@/components/layout/SiteFooter';
 // 스타일은 import로 로드(Next 권장 — no-css-tags). current-model.css 먼저, qna.css 나중
 // (원본 로드 순서 = cascade 보존). Pretendard는 qna.css 최상단 @import로 흡수.
 import './current-model.css';
@@ -43,7 +44,10 @@ function getQnaBody(): string {
   const start = html.indexOf(startMarker);
   const end = html.indexOf(endMarker);
   if (start === -1 || end === -1) return '';
-  return html.slice(start + startMarker.length, end);
+  const body = html.slice(start + startMarker.length, end);
+  // qna 자체 푸터(.footer) 제거 → 공통 SiteFooter로 대체(다른 페이지와 통일).
+  // 푸터 뒤 모바일 스티키바(.mbar)·토스트는 보존.
+  return body.replace(/<footer class="footer">[\s\S]*?<\/footer>/, '');
 }
 
 export default function QnaPage() {
@@ -74,6 +78,9 @@ export default function QnaPage() {
 
       {/* 3D 엔진·UI 스크립트 (mount마다 실행 → 클라이언트 내비게이션에서도 캔버스 초기화) */}
       <QnaScripts />
+
+      {/* 공통 푸터 (다른 페이지와 통일) */}
+      <SiteFooter />
     </>
   );
 }
