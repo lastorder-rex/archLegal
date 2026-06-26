@@ -701,7 +701,7 @@ export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
               </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
                 <Link href="/check" target="_blank" rel="noopener noreferrer">
-                  자가진단 하기
+                  1분 자가진단
                 </Link>
               </CTAButton>
               {/* <CTAButton tone="secondary" className="sm:w-auto" asChild>
