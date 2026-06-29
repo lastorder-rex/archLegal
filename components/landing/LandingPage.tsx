@@ -46,6 +46,7 @@ import { Timeline } from './Timeline';
 import { FAQAccordion } from './FAQAccordion';
 import { handleUserLogout } from '@/lib/auth/logout';
 import { AuthButton } from './AuthButton';
+import { MyBuildingReport } from './MyBuildingReport';
 import { CONTACTS } from '@/lib/constants/contacts';
 import {
   interestItems,
@@ -76,7 +77,7 @@ const navigationItems: NavigationItem[] = [
   {
     label: '3D 위반사례',
     type: 'link',
-    href: '/qna',
+    href: '/qna3d',
     icon: <Building2 className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
@@ -167,7 +168,12 @@ const renderTimelineIcon = (type: TimelineIconKey) => {
   }
 };
 
-export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
+export function LandingPage({
+  kickSlot,
+  addressHero = false,
+}: { kickSlot?: ReactNode; addressHero?: boolean } = {}) {
+  // home-v2: 히어로 우측 카드를 「내 집 양성화 리포트」 주소박스로 교체하고, 좌측 1차 CTA를 주소조회로.
+  const [addressOpenSignal, setAddressOpenSignal] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
   const [consultationNextPath, setConsultationNextPath] = useState('/?consultation=open');
   const [consultationInitialMessage, setConsultationInitialMessage] = useState('');
@@ -465,7 +471,7 @@ export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
               <span>양성화.com</span>
             </a>
             <div className="flex items-center gap-3">
-              <nav className="hidden items-center gap-6 text-base font-medium text-white/80 lg:flex">
+              <nav className="hidden items-center gap-5 text-sm font-medium text-white/80 lg:flex">
                 {navigationItems.map(item => {
                   if (item.requiresAuth && !sessionUser) {
                     return null;
@@ -477,7 +483,7 @@ export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
                         key={item.label}
                         type="button"
                         onClick={() => setAboutModalOpen(true)}
-                        className="flex items-center gap-2 bg-transparent transition hover:text-white focus:outline-none"
+                        className="flex items-center gap-2 whitespace-nowrap bg-transparent transition hover:text-white focus:outline-none"
                       >
                         {icon}
                         <span>{item.label}</span>
@@ -489,7 +495,7 @@ export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="flex items-center gap-2 transition hover:text-white"
+                        className="flex items-center gap-2 whitespace-nowrap transition hover:text-white"
                       >
                         {icon}
                         <span>{item.label}</span>
@@ -549,7 +555,7 @@ export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
                       key={item.target}
                       href={`#${item.target}`}
                       onClick={event => handleSectionNavigate(event, item.target)}
-                      className="flex items-center gap-2 transition hover:text-white"
+                      className="flex items-center gap-2 whitespace-nowrap transition hover:text-white"
                     >
                       {icon}
                       <span>{item.label}</span>
@@ -696,9 +702,15 @@ export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
               시행일부터 18개월 한시 — 지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
-              <CTAButton className="sm:w-auto" onClick={openConsultationModal}>
-                무료 상담 신청
-              </CTAButton>
+              {addressHero ? (
+                <CTAButton className="sm:w-auto" onClick={() => setAddressOpenSignal(n => n + 1)}>
+                  주소로 30초 확인
+                </CTAButton>
+              ) : (
+                <CTAButton className="sm:w-auto" onClick={openConsultationModal}>
+                  무료 상담 신청
+                </CTAButton>
+              )}
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
                 <Link href="/check">1분 자가진단</Link>
               </CTAButton>
@@ -713,21 +725,25 @@ export function LandingPage({ kickSlot }: { kickSlot?: ReactNode } = {}) {
             </div>
           </div>
           <div className="flex-1">
-            <div className="rounded-3xl border border-white bg-white/10 p-8 shadow-2xl backdrop-blur">
-              <h2 className="text-xl font-semibold text-white">필수 일정 요약</h2>
-              <dl className="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-100 sm:grid-cols-2">
-                {interestItems.map((item) => (
-                  <div key={item.title} className="rounded-2xl border border-white bg-white/10 p-4">
-                    <dt className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-100">{item.title}</dt>
-                    <dd className="mt-2 text-xl font-semibold text-white">{item.highlight}</dd>
-                    <p className="mt-2 text-sm text-white/90">{item.description}</p>
-                  </div>
-                ))}
-              </dl>
-              <p className="mt-6 inline-flex items-center rounded-full border border-white/70 bg-white/90 px-4 py-1 text-sm font-semibold text-amber-500 shadow-sm">
-                빠르게 준비해야 안전합니다.
-              </p>
-            </div>
+            {addressHero ? (
+              <MyBuildingReport variant="hero" openSignal={addressOpenSignal} />
+            ) : (
+              <div className="rounded-3xl border border-white bg-white/10 p-8 shadow-2xl backdrop-blur">
+                <h2 className="text-xl font-semibold text-white">필수 일정 요약</h2>
+                <dl className="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-100 sm:grid-cols-2">
+                  {interestItems.map((item) => (
+                    <div key={item.title} className="rounded-2xl border border-white bg-white/10 p-4">
+                      <dt className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-100">{item.title}</dt>
+                      <dd className="mt-2 text-xl font-semibold text-white">{item.highlight}</dd>
+                      <p className="mt-2 text-sm text-white/90">{item.description}</p>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-6 inline-flex items-center rounded-full border border-white/70 bg-white/90 px-4 py-1 text-sm font-semibold text-amber-500 shadow-sm">
+                  빠르게 준비해야 안전합니다.
+                </p>
+              </div>
+            )}
           </div>
         </div>
         <div

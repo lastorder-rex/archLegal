@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>양성화.com — 위반건축물 3D 입체 진단맵 (LAB)</title>
+<meta name="robots" content="noindex,nofollow" />
+<style>
+  :root{
+    --ink:#19212b; --muted:#5b6772; --faint:#8b96a0;
+    --line:rgba(25,33,43,.10); --line2:rgba(25,33,43,.16);
+    --green:#15584a; --green2:#1d7a64; --amber:#cf8a2b; --red:#d8453a;
+    --card:rgba(255,255,255,.86); --glass:rgba(255,255,255,.72);
+    --mono:'SF Mono',ui-monospace,'Roboto Mono',Menlo,monospace;
+    --sans:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI',Roboto,sans-serif;
+    --shadow:0 18px 50px -22px rgba(20,30,40,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:var(--sans); color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 70% 8%, #f4f6f7 0%, #eceef0 38%, #e3e0d8 78%, #dcd7cd 100%);
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  #app{position:fixed; inset:0; display:flex; flex-direction:column}
+
+  /* ── header ───────────────────────────────────────────── */
+  header.bar{
+    position:relative; z-index:6; display:flex; align-items:center; gap:14px;
+    padding:14px 20px; background:linear-gradient(#ffffffd9,#ffffff66 60%,#ffffff00);
+    backdrop-filter:blur(6px);
+  }
+  .brand{display:flex; align-items:center; gap:10px; min-width:0}
+  .brand .logo{
+    width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;
+    background:linear-gradient(140deg,var(--green),#0e3f35); color:#fff; box-shadow:0 6px 16px -6px rgba(21,88,74,.7);
+  }
+  .brand h1{font-size:15px; font-weight:800; letter-spacing:-.2px; margin:0; line-height:1.1}
+  .brand h1 b{color:var(--green)}
+  .brand p{margin:1px 0 0; font-size:11px; color:var(--muted); font-weight:600; letter-spacing:.2px}
+  .bar .spacer{flex:1}
+  .tools{display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end}
+  .tbtn{
+    appearance:none; border:1px solid var(--line2); background:#fff; color:var(--ink);
+    font-family:inherit; font-weight:700; font-size:12.5px; border-radius:999px;
+    padding:8px 13px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    transition:.16s ease; white-space:nowrap; box-shadow:0 1px 2px rgba(20,30,40,.04);
+  }
+  .tbtn:hover{border-color:var(--green2); color:var(--green)}
+  .tbtn .ic{width:15px;height:15px;display:block}
+  .tbtn.on{background:var(--green); border-color:var(--green); color:#fff; box-shadow:0 6px 16px -8px rgba(21,88,74,.8)}
+
+  /* ── stage ────────────────────────────────────────────── */
+  #stage{position:relative; flex:1; min-height:0}
+  #gl{position:absolute; inset:0; display:block; touch-action:none}
+  #labels{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:4}
+  #labels > *{pointer-events:auto}
+
+  .pin{
+    --c:var(--red);
+    transform:translate(-50%,-50%); cursor:pointer; user-select:none;
+    display:flex; align-items:center; gap:0; transition:opacity .25s ease;
+  }
+  .pin .dot{
+    width:27px;height:27px;border-radius:50%;flex:none; display:grid;place-items:center;
+    font-family:var(--mono); font-weight:700; font-size:12px; color:#fff; background:var(--c);
+    border:2px solid #fff; box-shadow:0 4px 12px -2px rgba(20,30,40,.5), 0 0 0 1px rgba(20,30,40,.06);
+    transition:transform .16s ease, box-shadow .16s ease;
+  }
+  .pin .tip{
+    margin-left:7px; background:#fff; color:var(--ink); font-size:11.5px; font-weight:700;
+    padding:4px 9px; border-radius:999px; white-space:nowrap; box-shadow:var(--shadow);
+    border:1px solid var(--line); opacity:0; transform:translateX(-6px); transition:.16s ease; pointer-events:none;
+  }
+  .pin:hover .dot,.pin.sel .dot{transform:scale(1.16)}
+  .pin:hover .tip{opacity:1; transform:translateX(0)}
+  .pin.sel .dot{box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 30%,transparent),0 6px 16px -2px rgba(20,30,40,.55)}
+  .pin.sel .dot::after{content:""; position:absolute; inset:-3px; border-radius:50%; border:2px solid var(--c);
+    animation:selPulse 1.15s ease-out infinite}
+  @keyframes selPulse{0%{opacity:.8; transform:scale(1)} 70%{opacity:0; transform:scale(1.85)} 100%{opacity:0; transform:scale(1.85)}}
+  @media (prefers-reduced-motion: reduce){ .pin.sel .dot::after{animation:none; opacity:0} }
+  .pin.amber{--c:var(--amber)} .pin.red{--c:var(--red)}
+  .pin.dim{opacity:.14; pointer-events:none}
+  .pin.hide{display:none}
+
+  .think{transform:translate(-50%,-100%); background:#fff; border:1px solid var(--line); border-radius:12px;
+    padding:5px 11px; font-size:11.5px; font-weight:800; color:var(--ink); box-shadow:var(--shadow);
+    white-space:nowrap; pointer-events:none !important; position:relative}
+  .think::after{content:""; position:absolute; left:16px; bottom:-5px; width:10px; height:10px; background:#fff;
+    border-right:1px solid var(--line); border-bottom:1px solid var(--line); transform:rotate(45deg)}
+  .think.calm{background:var(--green); color:#fff; border-color:var(--green)}
+  .think.calm::after{background:var(--green); border-color:var(--green)}
+  .pin .dot{position:relative}
+
+  /* ── case rail ────────────────────────────────────────── */
+  .rail-wrap{position:absolute; left:0; right:0; bottom:0; z-index:5; padding:12px 16px 16px;
+    background:linear-gradient(#ffffff00,#ffffffcc 55%); }
+  .rail{display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; cursor:grab; scroll-behavior:smooth}
+  .rail::-webkit-scrollbar{display:none}
+  .rail.grabbing{cursor:grabbing; scroll-behavior:auto; user-select:none}
+  .rail-wrap{position:absolute}
+  .rail-wrap::before,.rail-wrap::after{content:""; position:absolute; bottom:16px; width:34px; height:42px; pointer-events:none; z-index:1}
+  .rail-wrap::before{left:16px; background:linear-gradient(90deg,#fff,transparent)}
+  .rail-wrap::after{right:16px; background:linear-gradient(270deg,#fff,transparent)}
+  .chip{
+    flex:none; appearance:none; border:1px solid var(--line2); background:#fff; cursor:pointer;
+    font-family:inherit; font-weight:700; font-size:12.5px; color:var(--ink); border-radius:999px;
+    padding:8px 13px 8px 9px; display:inline-flex; align-items:center; gap:7px; transition:.16s ease;
+    box-shadow:0 1px 2px rgba(20,30,40,.05);
+  }
+  .chip .n{font-family:var(--mono); font-size:11px; color:#fff; background:var(--faint);
+    width:20px;height:20px;border-radius:6px;display:grid;place-items:center; flex:none}
+  .chip[data-cat="red"] .n{background:var(--red)} .chip[data-cat="amber"] .n{background:var(--amber)}
+  .chip:hover{border-color:var(--green2)}
+  .chip.sel{background:var(--green); border-color:var(--green); color:#fff}
+  .chip.sel .n{background:rgba(255,255,255,.25)}
+  .chip.dim{opacity:.38}
+
+  .filters{display:flex; gap:7px; margin-bottom:10px; flex-wrap:wrap}
+  .fbtn{appearance:none;border:1px solid var(--line2); background:#ffffffcc; cursor:pointer; font-family:inherit;
+    font-weight:700; font-size:12px; color:var(--muted); border-radius:999px; padding:6px 12px; transition:.16s}
+  .fbtn:hover{color:var(--green)}
+  .fbtn.on{background:#16261f; border-color:#16261f; color:#fff}
+
+  /* ── detail panel ─────────────────────────────────────── */
+  #panel{
+    position:absolute; top:14px; right:14px; bottom:96px; width:374px; max-width:calc(100vw - 28px); z-index:7;
+    background:var(--card); backdrop-filter:blur(14px); border:1px solid var(--line);
+    border-radius:20px; box-shadow:var(--shadow); display:flex; flex-direction:column;
+    opacity:0; transform:translateX(18px) scale(.99); pointer-events:none; transition:.28s cubic-bezier(.2,.7,.3,1);
+  }
+  #panel.show{opacity:1; transform:none; pointer-events:auto}
+  .p-head{padding:18px 18px 14px; border-bottom:1px solid var(--line); position:relative}
+  .p-badge{display:inline-flex; align-items:center; gap:7px; font-size:11px; font-weight:800; letter-spacing:.3px}
+  .p-badge .no{font-family:var(--mono); color:#fff; background:var(--red); border-radius:6px; padding:2px 7px}
+  .p-badge.amber .no{background:var(--amber)}
+  .p-badge .zone{color:var(--muted); text-transform:uppercase}
+  .p-title{font-size:21px; font-weight:800; letter-spacing:-.4px; margin:11px 0 0; line-height:1.22}
+  .p-tags{display:flex; gap:6px; flex-wrap:wrap; margin-top:11px}
+  .p-tags span{font-size:11px; font-weight:700; color:var(--green); background:color-mix(in srgb,var(--green) 11%,#fff);
+    border:1px solid color-mix(in srgb,var(--green) 24%,transparent); border-radius:999px; padding:3px 9px}
+  .p-close{position:absolute; top:14px; right:14px; width:30px;height:30px; border-radius:9px; border:1px solid var(--line2);
+    background:#fff; cursor:pointer; display:grid; place-items:center; color:var(--muted); transition:.15s}
+  .p-close:hover{color:var(--ink); border-color:var(--ink)}
+  .p-body{padding:16px 18px 20px; overflow:auto; flex:1}
+  .p-body::-webkit-scrollbar{width:8px} .p-body::-webkit-scrollbar-thumb{background:var(--line2); border-radius:8px}
+  .p-lead{font-size:14px; line-height:1.55; color:var(--ink); font-weight:600; margin:0 0 12px}
+  .p-sec{margin-top:16px}
+  .p-sec h4{font-size:11px; font-weight:800; letter-spacing:.6px; color:var(--faint); text-transform:uppercase; margin:0 0 7px}
+  .p-ex{font-size:13.5px; line-height:1.62; color:var(--muted); margin:0; padding:13px 14px; border-radius:13px;
+    background:color-mix(in srgb,var(--amber) 9%,#fff); border:1px solid color-mix(in srgb,var(--amber) 22%,transparent)}
+  .qa{border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-top:8px; background:#fff}
+  .qa>button{width:100%; text-align:left; appearance:none; border:0; background:transparent; cursor:pointer;
+    font-family:inherit; font-size:13px; font-weight:700; color:var(--ink); padding:12px 14px; display:flex; gap:9px; align-items:flex-start}
+  .qa>button .q{flex:1; line-height:1.4} .qa>button .ar{color:var(--faint); transition:.2s; margin-top:2px}
+  .qa.open>button .ar{transform:rotate(90deg); color:var(--green)}
+  .qa .ans{max-height:0; overflow:hidden; transition:max-height .3s ease}
+  .qa.open .ans{max-height:420px}
+  .qa .ans-in{padding:0 14px 13px; font-size:12.8px; line-height:1.6; color:var(--muted)}
+  .qa .refs{display:flex; gap:5px; flex-wrap:wrap; margin-top:9px}
+  .qa .refs i{font-style:normal; font-size:10.5px; font-family:var(--mono); color:var(--green); background:color-mix(in srgb,var(--green) 9%,#fff);
+    border:1px solid color-mix(in srgb,var(--green) 20%,transparent); border-radius:6px; padding:2px 6px}
+  .p-foot{padding:12px 16px; border-top:1px solid var(--line); font-size:11px; color:var(--faint); line-height:1.5}
+
+  /* hint when nothing selected */
+  .hint{position:absolute; left:16px; top:16px; z-index:4; max-width:300px;
+    background:var(--glass); backdrop-filter:blur(10px); border:1px solid var(--line); border-radius:16px;
+    padding:14px 16px; box-shadow:var(--shadow); transition:opacity .3s}
+  .hint.gone{opacity:0; pointer-events:none}
+  .hint b{display:block; font-size:13.5px; font-weight:800; margin-bottom:5px}
+  .hint p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.5}
+  .count{display:inline-flex; align-items:baseline; gap:4px; margin-top:10px; color:var(--green); font-weight:800}
+  .count b{font-size:22px; line-height:1} .count span{font-size:11px; color:var(--muted); font-weight:700}
+
+  #loading{position:absolute; inset:0; z-index:20; display:grid; place-items:center; background:#eceef0; transition:opacity .5s}
+  #loading.gone{opacity:0; pointer-events:none}
+  .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line2); border-top-color:var(--green); animation:rot 1s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  @media (max-width:820px){
+    #panel{top:auto; bottom:0; right:0; left:0; width:auto; max-width:none; border-radius:20px 20px 0 0;
+      max-height:62vh; transform:translateY(20px)}
+    #panel.show{transform:none}
+    .rail-wrap{display:none}
+    .brand p{display:none}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="bar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-7h6v7"/></svg>
+      </div>
+      <div>
+        <h1>양성화<b>.com</b> · 위반건축물 3D 진단맵</h1>
+        <p>3층 다가구주택 모델 위 12개 대표 위반사례 — 부위를 눌러 확인하세요</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="tools">
+      <button class="tbtn on" id="btnRed" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>위반부위</button>
+      <button class="tbtn" id="btnRotate" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>자동회전</button>
+      <button class="tbtn" id="btnReset"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 1 9 9"/><path d="M3 12V7M3 12h5"/></svg>시점초기화</button>
+    </div>
+  </header>
+
+  <div id="stage">
+    <canvas id="gl"></canvas>
+    <div id="labels"></div>
+
+    <div class="hint" id="hint">
+      <b>건물의 위반 부위를 직접 짚어보세요</b>
+      <p>붉은·주황으로 표시된 부위(또는 번호 핀)를 클릭하면 적발 사유·양성화 검토·연결 Q&amp;A가 열립니다. 드래그로 회전, 휠로 확대.</p>
+      <span class="count"><b>12</b><span>대표 위반사례</span></span>
+    </div>
+
+    <aside id="panel" aria-live="polite">
+      <div class="p-head">
+        <div class="p-badge" id="pBadge"><span class="no">00</span><span class="zone">ZONE</span></div>
+        <h2 class="p-title" id="pTitle">사례</h2>
+        <div class="p-tags" id="pTags"></div>
+        <button class="p-close" id="pClose" aria-label="닫기">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="p-body">
+        <p class="p-lead" id="pShort"></p>
+        <div class="p-sec">
+          <h4>흔한 적발 사례</h4>
+          <p class="p-ex" id="pEx"></p>
+        </div>
+        <div class="p-sec">
+          <h4>연결 Q&amp;A</h4>
+          <div id="pQa"></div>
+        </div>
+      </div>
+      <div class="p-foot">공공데이터·건축법 기준 1차 정보입니다. 최종 양성화 가능 여부는 건축사 현장검토와 관할 지자체 기준에 따라 달라질 수 있습니다.</div>
+    </aside>
+
+    <div class="rail-wrap">
+      <div class="filters" id="filters">
+        <button class="fbtn on" data-f="all">전체 12</button>
+        <button class="fbtn" data-f="roof">옥상부 3</button>
+        <button class="fbtn" data-f="facade">외벽·발코니 4</button>
+        <button class="fbtn" data-f="ground">1층·주차·용도 3</button>
+        <button class="fbtn" data-f="site">구조·세대·대지 2</button>
+      </div>
+      <div class="rail" id="rail"></div>
+    </div>
+
+    <div id="loading"><div class="spin"></div></div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ===================== DATA (qna-ui.js VIOLATIONS/QNA 원본) ===================== */
+const VIOLATIONS = [
+  {id:'roof-room', no:'01', zone:'roof', cat:'red', title:'옥탑방·옥상 구조물', tags:['증축','허가','옥상'],
+    short:'옥상에 지붕·벽이 있는 방·창고를 올린 경우.',
+    example:'3층 옥상에 컨테이너·조립식으로 방 하나를 만들어 주거·창고로 사용 — 바닥면적·층수·높이가 늘어 무단 증축으로 보기 쉬움.', qa:[1,13,14]},
+  {id:'roof-pergola', no:'02', zone:'roof', cat:'amber', title:'파고라·고정 차양', tags:['증축','옥상'],
+    short:'옥상에 지붕 역할을 하는 고정 구조물을 설치.',
+    example:'옥상에 기둥+지붕의 파고라를 고정 설치해 사실상 실내처럼 사용 — 분리 가능한 일시 시설인지, 고정 구조인지가 갈림길.', qa:[2,13]},
+  {id:'roof-service', no:'03', zone:'roof', cat:'red', title:'계단탑·물탱크실 전용', tags:['용도변경','옥상'],
+    short:'설비·피난용 부속실을 주거로 사용.',
+    example:'옥상 계단탑·물탱크실에 싱크대·침대를 놓고 방으로 사용 — 용도·면적·높이 문제와 무단 증축이 함께 발생.', qa:[3,13]},
+  {id:'balcony', no:'04', zone:'facade', cat:'red', title:'발코니·베란다 확장', tags:['증축','구조','피난'],
+    short:'대피공간·방화 기준 없이 발코니를 확장.',
+    example:'3층 발코니를 새시로 막아 거실로 확장 — 면적뿐 아니라 대피공간·방화문 훼손이면 안전 문제로 본다.', qa:[4,15]},
+  {id:'panel', no:'05', zone:'facade', cat:'red', title:'샷시·패널 외부 확장', tags:['증축','허가'],
+    short:'벽·기둥·지붕 역할 구조로 외부를 둘러 면적 증가.',
+    example:'뒷벽·측면을 경량철골+패널로 둘러 방·주방을 넓힘 — 바닥면적이 늘면 증축, 캐노피·처마와는 구분 필요.', qa:[5,13]},
+  {id:'canopy', no:'06', zone:'facade', cat:'amber', title:'처마·캐노피 1m 이상', tags:['증축','건폐율'],
+    short:'1m를 넘는 차양·처마는 건축면적에 산입.',
+    example:'점포·현관 앞에 1m 넘는 캐노피를 설치 — 건축면적에 들어가 건폐율 초과로 이어질 수 있다.', qa:[6]},
+  {id:'stair', no:'07', zone:'facade', cat:'amber', title:'외부 철골계단 증설', tags:['구조','증축'],
+    short:'세대·피난용 외부계단을 새로 증설.',
+    example:'옥상·세대 출입을 위해 측면에 철골계단을 증설 — 증축·대수선 또는 세대수 증가와 연결될 수 있다.', qa:[7,13]},
+  {id:'piloti', no:'08', zone:'ground', cat:'red', title:'필로티 실내화', tags:['주차','증축'],
+    short:'주차·피난용 필로티를 벽으로 막아 실내화.',
+    example:'1층 필로티를 새시·벽으로 막아 방·점포로 사용 — 주차대수 부족과 무단 증축이 동시에 문제된다.', qa:[8,15]},
+  {id:'parking-use', no:'09', zone:'ground', cat:'red', title:'주차장 창고·점포 전용', tags:['주차','용도변경'],
+    short:'주차구획을 창고·가게·적치로 점유.',
+    example:'법정 주차구획에 컨테이너·집기를 두고 창고로 사용 — 주차장법·용도 위반, 적치·고정 여부가 쟁점.', qa:[9,14]},
+  {id:'use-change', no:'10', zone:'ground', cat:'red', title:'근생→주거 용도변경', tags:['용도변경'],
+    short:'근린생활시설을 원룸 주거로 사용.',
+    example:'1층 소매점(근생)을 칸막이해 원룸으로 임대 — 대장 용도와 실제가 달라 무단 용도변경, 주차·소방 기준도 함께 본다.', qa:[10,13]},
+  {id:'unit-split', no:'11', zone:'site', cat:'red', title:'세대 쪼개기', tags:['구조','용도변경'],
+    short:'칸막이로 세대수를 무단 증가.',
+    example:'한 세대를 칸막이·계량기 분리로 두세 세대로 나눠 임대 — 무단 대수선·세대수 증가, 다세대 전환 문제와 얽힌다.', qa:[11,16]},
+  {id:'site-cover', no:'12', zone:'site', cat:'amber', title:'마당·조경 잠식', tags:['조경','건폐율'],
+    short:'대지 조경·공지를 구조물로 잠식.',
+    example:'조경 면적·공개공지에 창고·평상·주차를 들여 일반 이용을 막음 — 조경 훼손은 강제금 사유가 된다.', qa:[12,15]},
+];
+const QNA = [
+  {id:1, q:'옥상에 옥탑방·창고를 지어 쓰면 위반인가요?', a:'지붕과 벽이 있는 구조물을 올리면 바닥면적·층수·건물 높이가 늘어 무단 증축으로 보는 경우가 많습니다. 옥상은 공용부분인 경우가 많아 권리관계도 함께 확인합니다.', refs:['건축법 제11조','제14조','제79조','제80조']},
+  {id:2, q:'옥상 파고라·차양은 괜찮은 거 아닌가요?', a:'고정식으로 지붕 역할을 하면 면적·높이 산정 대상이 될 수 있습니다. 분리 가능한 일시 시설인지, 고정 구조인지가 판단의 갈림길입니다.', refs:['건축법 제2조','제14조']},
+  {id:3, q:'계단탑·물탱크실을 방으로 쓰면 문제가 되나요?', a:'설비·피난을 위한 부속공간을 주거로 쓰면 용도·면적·높이 문제와 무단 증축이 함께 생길 수 있습니다. 도면상 명칭과 실제 사용을 비교합니다.', refs:['건축법 제19조','제79조']},
+  {id:4, q:'발코니 확장은 무조건 불법인가요?', a:'무조건은 아닙니다. 적법 절차와 대피공간·방화 기준을 지키지 않은 확장이 문제입니다. 면적뿐 아니라 피난·안전 훼손 여부가 핵심입니다.', refs:['건축법 시행령 피난·방화 기준','제79조']},
+  {id:5, q:'샷시·패널로 외부를 둘러 공간을 넓혔어요.', a:'벽·기둥·지붕 역할을 하는 구조로 외부를 둘러 바닥면적이 늘면 증축으로 봅니다. 단순 차양·처마와는 구분이 필요합니다.', refs:['건축법 제11조','제14조']},
+  {id:6, q:'입구에 처마·캐노피를 달았는데 괜찮나요?', a:'1m를 넘는 차양·처마는 건축면적에 산입돼 건폐율에 영향을 줄 수 있습니다. 길이와 고정 방식이 쟁점입니다.', refs:['건축법 시행령 건축면적 산정','제55조']},
+  {id:7, q:'외부 철골계단을 새로 달았어요.', a:'피난·세대 사용을 위한 외부계단 증설은 증축·대수선 또는 구조 변경으로 판단될 수 있고, 세대수 증가와 연결되기도 합니다.', refs:['건축법 제11조','제79조']},
+  {id:8, q:'필로티 주차장을 벽으로 막아 실내로 썼어요.', a:'주차·피난을 위한 필로티를 실내화하면 주차대수 부족과 무단 증축이 동시에 문제됩니다. 특별조치법상 사용승인 검토 때도 주차 기준은 따로 보며, 세대·가구·호수 증가나 근린생활시설 주택 사용이면 주차장 설치 또는 비용 납부가 요구될 수 있습니다.', refs:['주차장법','건축법 제79조','특별조치법 제7조']},
+  {id:9, q:'주차장을 창고·가게로 쓰면 위반인가요?', a:'주차구획을 다른 용도로 점유하면 주차장법·용도 위반이 됩니다. 적치인지 고정 구조인지에 따라 조치가 달라지고, 특별조치법 검토에서도 세대수 증가형이거나 근린생활시설을 주택으로 쓴 경우에는 주차장 설치 또는 비용 납부 여부를 함께 확인합니다.', refs:['주차장법 제19조의4','건축법 제79조','특별조치법 제7조']},
+  {id:10, q:'근린생활시설을 원룸으로 바꿔 임대해요.', a:'대장상 용도와 실제 사용이 다르면 무단 용도변경입니다. 특별조치법상 근린생활시설 주택 사용은 2023년 12월 31일 이전부터 사실상 주택으로 사용된 경우에 한해 대상 가능성을 봅니다. 주거용 비율, 면적 기준, 주차·피난·소방 기준도 함께 확인합니다.', refs:['건축법 제19조','제79조','특별조치법 제3조','제6조']},
+  {id:11, q:'다가구를 칸막이로 나눠 세대를 늘렸어요(세대 쪼개기).', a:'경계벽·계량기·출입구를 늘려 세대수를 증가시키면 무단 대수선·용도 위반이 될 수 있고, 다세대 전환 문제와 얽힙니다. 특별조치법에서도 세대·가구·호수 증가형은 피난·방화·소방 기준과 주차 부담을 별도로 확인해야 합니다.', refs:['건축법 제19조','제79조','특별조치법 제6조','제7조']},
+  {id:12, q:'마당·조경 자리에 구조물을 놨어요.', a:'대지 조경·공개공지를 잠식하거나 일반 이용을 막으면 위반입니다. 조경 면적 훼손은 강제금 사유가 됩니다.', refs:['건축법 제42조','제80조']},
+  {id:13, q:'양성화는 무엇이고, 다 가능한가요?', a:'양성화는 위반 상태를 추인·신고·허가, 특별조치법상 신고·사용승인, 또는 일부 철거로 적법화할 수 있는지 보는 검토입니다. 특별조치법은 2026년 12월 17일부터 시행되고 18개월간 한시 적용되며, 2023년 12월 31일 당시 사실상 완공된 주거용 특정건축물인지, 면적 기준과 제외구역에 걸리지 않는지를 먼저 봅니다. 모든 사례가 가능한 것은 아닙니다.', refs:['건축법 제11조','제14조','제19조','특별조치법 제3조']},
+  {id:14, q:'강제금만 내면 그냥 둬도 되나요?', a:'아닙니다. 이행강제금은 시정 전까지 반복 부과될 수 있고, 위반 표기와 매매·대출 불이익도 그대로 남습니다. 특별조치법상 사용승인 검토에서도 과태료와 이행강제금 체납이 없어야 합니다.', refs:['건축법 제80조','특별조치법 제6조']},
+  {id:15, q:'이행강제금은 얼마나, 몇 번 나오나요?', a:'일반 이행강제금은 시가표준액·위반면적·요율로 산정되고, 시정 전까지 반복 부과될 수 있습니다. 특별조치법 적용 대상이 사용승인을 받는 경우에는 이행강제금 5회분 기준의 과태료가 문제되며, 이미 5회 미만 납부한 이력이 있으면 그 납부액을 차감하는 방식으로 계산됩니다.', refs:['건축법 제80조','특별조치법 제9조']},
+  {id:16, q:'위반인지 어떻게 적발되나요?', a:'항공·드론 판독, 민원, 정기 점검, 매매·인허가 과정에서 드러납니다. 표기 후 시정명령 → 이행강제금 순으로 진행됩니다.', refs:['건축법 제79조','제80조']},
+];
+const QMAP = Object.fromEntries(QNA.map(x=>[x.id,x]));
+const VMAP = Object.fromEntries(VIOLATIONS.map(x=>[x.id,x]));
+const ZONE_LABEL = {roof:'옥상부', facade:'외벽·발코니', ground:'1층·주차·용도', site:'구조·세대·대지'};
+
+/* ===================== THREE 셋업 ===================== */
+const stage = document.getElementById('stage');
+const canvas = document.getElementById('gl');
+const labelsEl = document.getElementById('labels');
+
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.04;
+
+const labelRenderer = new CSS2DRenderer({element: labelsEl});
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 400);
+const HOME = {pos:new THREE.Vector3(20.5,15.5,25.5), tgt:new THREE.Vector3(0,5.6,0)};
+camera.position.copy(HOME.pos);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.target.copy(HOME.tgt);
+controls.minDistance = 16; controls.maxDistance = 60;
+controls.maxPolarAngle = Math.PI*0.49; controls.minPolarAngle = Math.PI*0.12;
+controls.enablePan = false;
+controls.autoRotateSpeed = 0.9;
+
+// 환경맵(PBR 반사) — 유리·금속 질감
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+// 조명
+scene.add(new THREE.HemisphereLight(0xf3f1ea, 0x9a9486, 0.85));
+const sun = new THREE.DirectionalLight(0xfff4e2, 2.5);
+sun.position.set(18, 28, 14);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 90;
+sun.shadow.camera.left=-26; sun.shadow.camera.right=26; sun.shadow.camera.top=26; sun.shadow.camera.bottom=-26;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(sun);
+const rim = new THREE.DirectionalLight(0xbfe0ff, 0.4); rim.position.set(-16,10,-14); scene.add(rim);
+
+// 지면
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(60, 64),
+  new THREE.MeshStandardMaterial({color:0xd8d3c8, roughness:1, metalness:0})
+);
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+// 대지 경계(석재 데크)
+const deck = new THREE.Mesh(
+  new THREE.BoxGeometry(20, 0.4, 18),
+  new THREE.MeshStandardMaterial({color:0xd7d2c7, roughness:.95})
+);
+deck.position.y = 0.2; deck.receiveShadow = true; scene.add(deck);
+
+// 대지 식재(조경) — 생활감 + '조경 훼손' 위반의 맥락
+function tree(x,z,s=1){
+  const g=new THREE.Group();
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.18*s,0.26*s,1.7*s,6),
+    new THREE.MeshStandardMaterial({color:0x7c6a4f,roughness:.92}));
+  trunk.position.y=0.85*s; trunk.castShadow=true; g.add(trunk);
+  const folMat=new THREE.MeshStandardMaterial({color:0x6f9e5b,roughness:.96});
+  [[0,2.1,0,1.5],[0.55,2.8,0.3,1.0],[-0.45,2.7,-0.25,0.95]].forEach(([fx,fy,fz,r])=>{
+    const f=new THREE.Mesh(new THREE.IcosahedronGeometry(r*s,0), folMat);
+    f.position.set(fx*s,fy*s,fz*s); f.castShadow=true; f.receiveShadow=true; g.add(f);
+  });
+  g.position.set(x,0,z); scene.add(g);
+}
+tree(-10.6,1.2,1.0); tree(10.4,-1.8,1.12); tree(-8.4,-7.6,0.92); tree(8.2,-7.4,0.86);
+
+// 정면 왼쪽 나무 옆 — 나무보다 작은 자동차(저폴리)
+function car(x,z,rot=0,s=1){
+  const g=new THREE.Group();
+  const bodyMat=new THREE.MeshStandardMaterial({color:0xaeccec, roughness:.62, metalness:.12});
+  const cabinMat=new THREE.MeshStandardMaterial({color:0x93b4dc, roughness:.6, metalness:.14});
+  const tireMat=new THREE.MeshStandardMaterial({color:0x232629, roughness:.85});
+  const b=new THREE.Mesh(new THREE.BoxGeometry(2.7*s,0.72*s,1.35*s), bodyMat); b.position.y=0.72*s; b.castShadow=true; b.receiveShadow=true; g.add(b);
+  const c=new THREE.Mesh(new THREE.BoxGeometry(1.5*s,0.62*s,1.2*s), cabinMat); c.position.set(-0.1*s,1.22*s,0); c.castShadow=true; g.add(c);
+  const winMat=new THREE.MeshStandardMaterial({color:0x2a3640, roughness:.15, metalness:.5});
+  const win=new THREE.Mesh(new THREE.BoxGeometry(1.52*s,0.4*s,1.22*s), winMat); win.position.set(-0.1*s,1.2*s,0); g.add(win);
+  const wheel=new THREE.CylinderGeometry(0.34*s,0.34*s,0.28*s,14);
+  [[0.9,0.66],[0.9,-0.66],[-0.9,0.66],[-0.9,-0.66]].forEach(([wx,wz])=>{
+    const w=new THREE.Mesh(wheel,tireMat); w.rotation.x=Math.PI/2; w.position.set(wx*s,0.34*s,wz*s); w.castShadow=true; g.add(w);
+  });
+  g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
+}
+car(-12.4, 5.2, 0.55);
+
+// 건물 정면 앞 — 걱정하는 남자 + 안심시키는 친구(둘 다 나무보다 작게)
+function person(x,z,rot,opts={}){
+  const {shirt:shirtCol=0x8fbf9e, bubble='', bubbleClass='think', pose='think', bubbleY=1.98}=opts;
+  const g=new THREE.Group();
+  const skin=new THREE.MeshStandardMaterial({color:0xf1c49d, roughness:.85});
+  const shirt=new THREE.MeshStandardMaterial({color:shirtCol, roughness:.78});
+  const pants=new THREE.MeshStandardMaterial({color:0x5b6470, roughness:.85});
+  const hair=new THREE.MeshStandardMaterial({color:0x2b2521, roughness:.95});
+  const leg=new THREE.BoxGeometry(0.17,0.52,0.19);
+  [-0.11,0.11].forEach(lx=>{const m=new THREE.Mesh(leg,pants); m.position.set(lx,0.26,0); m.castShadow=true; g.add(m);});
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(0.44,0.56,0.26), shirt); torso.position.y=0.8; torso.castShadow=true; g.add(torso);
+  const armL=new THREE.Mesh(new THREE.BoxGeometry(0.11,0.44,0.13), shirt); armL.position.set(-0.29,0.8,0); armL.castShadow=true; g.add(armL);
+  if(pose==='think'){
+    // 턱에 손 — 생각하는 포즈
+    const armR=new THREE.Mesh(new THREE.BoxGeometry(0.11,0.4,0.13), shirt); armR.position.set(0.26,0.9,0.08); armR.rotation.x=-1.15; armR.castShadow=true; g.add(armR);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(0.075,12,12), skin); hand.position.set(0.26,1.12,0.2); g.add(hand);
+  } else {
+    // 팔 번쩍 — 안심·응원 포즈
+    const armR=new THREE.Mesh(new THREE.BoxGeometry(0.11,0.46,0.13), shirt); armR.position.set(0.34,1.04,0); armR.rotation.z=-0.85; armR.castShadow=true; g.add(armR);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(0.08,12,12), skin); hand.position.set(0.52,1.32,0); g.add(hand);
+  }
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.21,24,24), skin); head.position.y=1.22; head.castShadow=true; g.add(head);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(0.225,24,24,0,Math.PI*2,0,Math.PI*0.6), hair); cap.position.y=1.235; g.add(cap);
+  g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
+  if(bubble){
+    const el=document.createElement('div'); el.className=bubbleClass; el.textContent=bubble;
+    const bub=new CSS2DObject(el); bub.position.set(x+0.35,bubbleY,z); scene.add(bub);
+  }
+}
+person(-1.8, 8.4, 2.4, {shirt:0x8fbf9e, bubble:'이 건물, 위반은…?', pose:'think'});
+person( 0.9, 8.6, 1.85, {shirt:0xb3a6d8, bubble:'걱정 마! 1분 자가진단부터', bubbleClass:'think calm', pose:'cheer', bubbleY:2.25});
+
+// 상단 햇님 — 코어 + 헤일로 + 광선(unlit)
+function sunDecor(x,y,z){
+  const g=new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.0,28,28), new THREE.MeshBasicMaterial({color:0xffd24a})));
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.7,28,28), new THREE.MeshBasicMaterial({color:0xffe28c, transparent:true, opacity:0.25})));
+  const rayMat=new THREE.MeshBasicMaterial({color:0xffcb3e});
+  for(let i=0;i<12;i++){
+    const a=i/12*Math.PI*2;
+    const r=new THREE.Mesh(new THREE.BoxGeometry(0.26,1.5,0.26), rayMat);
+    r.position.set(Math.cos(a)*3.4, Math.sin(a)*3.4, 0); r.rotation.z=a-Math.PI/2; g.add(r);
+  }
+  g.scale.setScalar(0.8); // 크기 80%
+  g.position.set(x,y,z); scene.add(g);
+}
+sunDecor(7, 15, 8);
+
+/* ===================== 머티리얼 ===================== */
+const M = {
+  wall:  new THREE.MeshStandardMaterial({color:0xd2ccbe, roughness:.82, metalness:.02}),
+  wall2: new THREE.MeshStandardMaterial({color:0xdcd6c9, roughness:.8,  metalness:.02}),
+  slab:  new THREE.MeshStandardMaterial({color:0xb3ab9c, roughness:.78, metalness:.03}),
+  col:   new THREE.MeshStandardMaterial({color:0xc6bfb1, roughness:.7,  metalness:.05}),
+  glass: new THREE.MeshStandardMaterial({color:0x33424c, roughness:.12, metalness:.55, envMapIntensity:1.1}),
+  frame: new THREE.MeshStandardMaterial({color:0x6a6357, roughness:.5,  metalness:.3}),
+  door:  new THREE.MeshStandardMaterial({color:0x3a4047, roughness:.4,  metalness:.4}),
+  steel: new THREE.MeshStandardMaterial({color:0x8a8f93, roughness:.45, metalness:.65}),
+  parapet:new THREE.MeshStandardMaterial({color:0xc9c2b4, roughness:.8}),
+};
+const CAT = {
+  red:  {color:0xd8453a, emissive:0xff5a48},
+  amber:{color:0xdc922a, emissive:0xffb43a},
+};
+
+const building = new THREE.Group(); scene.add(building);
+function box(w,h,d, mat, x,y,z, parent=building, shadow=true){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+  m.position.set(x,y,z); m.castShadow=shadow; m.receiveShadow=true; parent.add(m); return m;
+}
+
+/* ── 건물 본체: 3층 다가구주택 ───────────────────────────
+   footprint 상부 W=16,D=11 / 층고 FH=3.6 / 1층은 인셋(필로티/오버행) */
+const W=16, D=11, FH=3.6;
+const y1=FH/2, y2=FH*1.5, y3=FH*2.5;        // 각 층 중심 y
+const roofY = FH*3;                           // 옥상 슬래브 윗면 근처
+// 1층(인셋) + 필로티 기둥
+const W1=W-2.2, D1=D-2.2;
+box(W1, FH, D1, M.wall, 0, y1, 0);
+// 슬래브(층 사이 띠) — 살짝 오버행
+function slab(y){ box(W+0.5, 0.45, D+0.5, M.slab, 0, y, 0); }
+slab(FH); slab(FH*2);
+// 2·3층 본체
+box(W, FH, D, M.wall2, 0, y2, 0);
+box(W, FH, D, M.wall, 0, y3, 0);
+// 옥상 슬래브 + 파라펫
+box(W+0.5, 0.5, D+0.5, M.slab, 0, roofY+0.25, 0);
+[[0,(D)/2],[0,-(D)/2]].forEach(([x,z])=> box(W+0.5,0.7,0.3,M.parapet,x,roofY+0.6,z));
+[[(W)/2,0],[-(W)/2,0]].forEach(([x,z])=> box(0.3,0.7,D+0.5,M.parapet,x,roofY+0.6,z));
+// 필로티 기둥 4본(전면 오버행 지지)
+[-5.4,-1.8,1.8,5.4].forEach(x=> box(0.5, FH, 0.5, M.col, x, y1, D1/2+0.55));
+// 1층 출입문 + 점포 유리
+box(1.5, 2.5, 0.2, M.door, -3.2, 1.25, D1/2+0.05);
+box(4.6, 2.4, 0.2, M.glass, 3.0, 1.3, D1/2+0.05);
+box(4.8, 0.2, 0.25, M.frame, 3.0, 2.55, D1/2+0.06);
+
+// 창문 그리드(전/측/후)
+function windowRow(y, count, spanX, z, w=1.5, h=1.9){
+  for(let i=0;i<count;i++){
+    const x = -spanX/2 + spanX*(i/(count-1));
+    box(w, h, 0.16, M.glass, x, y, z);
+    box(w+0.18, h+0.18, 0.1, M.frame, x, y, z-0.04, building, false);
+  }
+}
+function windowRowZ(x, y, count, spanZ, w=1.5, h=1.9){
+  for(let i=0;i<count;i++){
+    const z = -spanZ/2 + spanZ*(i/(count-1));
+    box(0.16, h, w, M.glass, x, y, z);
+    box(0.1, h+0.18, w+0.18, M.frame, x-0.04, y, z, building, false);
+  }
+}
+[y2,y3].forEach(y=>{
+  windowRow(y, 4, 12, D/2+0.05);     // 전면 +z
+  windowRow(y, 4, 12, -D/2-0.05);    // 후면 -z
+  windowRowZ(W/2+0.05, y, 3, 7.5);   // 우 +x
+  windowRowZ(-W/2-0.05, y, 3, 7.5);  // 좌 -x
+});
+
+// 옥상 12시(뒤쪽) — 회사명 깨알 홍보. 상공에서 내려다볼 때 읽히게 바닥에 눕혀 새김.
+(function rooftopBrand(){
+  const cv=document.createElement('canvas'); cv.width=1024; cv.height=180;
+  const c=cv.getContext('2d');
+  c.fillStyle='rgba(74,68,58,0.9)';
+  c.font='800 104px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  c.textAlign='center'; c.textBaseline='middle';
+  c.fillText('인터월드건축사사무소', cv.width/2, cv.height/2+6);
+  const tex=new THREE.CanvasTexture(cv); tex.anisotropy=8;
+  const m=new THREE.Mesh(
+    new THREE.PlaneGeometry(6.2, 1.09),
+    new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false})
+  );
+  m.rotation.x=-Math.PI/2;          // 옥상 바닥에 눕힘
+  m.position.set(1.1, roofY+0.56, -4.0); // 12시(뒤쪽), 오른쪽으로 이동(3번 구조물 가림 회피)
+  m.renderOrder=2;
+  building.add(m);
+})();
+
+/* ===================== 위반 사례 메쉬 + 핀 ===================== */
+const pickables = [];          // 레이캐스트 대상
+const vGroups = {};            // id -> {meshes:[], pin, data, anchor}
+function vmat(cat){
+  const c = CAT[cat];
+  return new THREE.MeshStandardMaterial({color:c.color, emissive:c.emissive, emissiveIntensity:0.0, roughness:.55, metalness:.1});
+}
+function addV(id, anchor, builder){
+  const data = VMAP[id];
+  const g = new THREE.Group(); building.add(g);
+  const mat = vmat(data.cat);
+  const meshes = builder(g, mat);
+  meshes.forEach(m=>{ m.castShadow=true; m.receiveShadow=true; m.userData.vid=id; pickables.push(m); });
+  // 핀
+  const el = document.createElement('div');
+  el.className = `pin ${data.cat}`;
+  el.innerHTML = `<div class="dot">${data.no}</div><div class="tip">${data.title}</div>`;
+  el.addEventListener('click', (e)=>{ e.stopPropagation(); select(id, true); });
+  const pin = new CSS2DObject(el); pin.position.copy(anchor); scene.add(pin);
+  vGroups[id] = {meshes, pin, data, anchor, mat, el};
+}
+const V = (w,h,d,g,mat,x,y,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z); g.add(m); return m; };
+
+// 01 옥탑방
+addV('roof-room', new THREE.Vector3(3.4, roofY+3.4, 1.2), (g,mat)=>[ V(3.6,2.6,3.2,g,mat,3.4,roofY+1.8,1.0) ]);
+// 02 파고라(지붕 슬랫 + 기둥)
+addV('roof-pergola', new THREE.Vector3(-3.6, roofY+2.6, 2.0), (g,mat)=>{
+  const arr=[]; arr.push(V(4.2,0.18,3.2,g,mat,-3.6,roofY+1.9,1.8));
+  for(let i=0;i<6;i++) arr.push(V(4.2,0.1,0.18,g,mat,-3.6,roofY+2.0,0.4+i*0.5));
+  [[-5.4,0.4],[-1.8,0.4],[-5.4,3.0],[-1.8,3.0]].forEach(([x,z])=>arr.push(V(0.18,2.0,0.18,g,mat,x,roofY+1.0,z)));
+  return arr;
+});
+// 03 계단탑·물탱크실 전용
+addV('roof-service', new THREE.Vector3(-4.0, roofY+3.6, -2.0), (g,mat)=>[ V(2.6,3.0,2.6,g,mat,-4.0,roofY+2.0,-2.0) ]);
+// 04 발코니 확장(전면 3F 돌출)
+addV('balcony', new THREE.Vector3(4.6, y3, D/2+1.7), (g,mat)=>{
+  const arr=[ V(3.4,2.3,1.5,g,mat,4.6,y3,D/2+0.8) ];
+  arr.push(V(3.6,0.15,1.7,g,M.frame,4.6,y3-1.2,D/2+0.9));
+  return arr;
+});
+// 05 샷시·패널(우측 2F 확장)
+addV('panel', new THREE.Vector3(W/2+1.4, y2, -1.0), (g,mat)=>[ V(1.5,3.0,4.2,g,mat,W/2+0.7,y2,-1.0) ]);
+// 06 캐노피(전면 1층 입구 위 오버행)
+addV('canopy', new THREE.Vector3(-3.2, FH+0.2, D1/2+1.9), (g,mat)=>[ V(4.0,0.28,2.2,g,mat,-3.2,FH-0.1,D1/2+1.4) ]);
+// 07 외부 철골계단(우측면, 지그재그)
+addV('stair', new THREE.Vector3(W/2+2.2, FH*1.4, 2.2), (g,mat)=>{
+  const arr=[]; let x=W/2+1.4;
+  for(let i=0;i<10;i++) arr.push(V(1.6,0.16,0.7,g,mat,x,0.5+i*0.62,3.4-i*0.42));
+  arr.push(V(1.7,0.14,1.4,g,mat,x,3.1,-0.4)); arr.push(V(1.7,0.14,1.4,g,mat,x,6.3,2.2));
+  arr.push(V(0.12,7.5,0.12,g,M.steel,x+0.7,3.8,2.0)); arr.push(V(0.12,7.5,0.12,g,M.steel,x-0.7,3.8,2.0));
+  return arr;
+});
+// 08 필로티 실내화(전면 좌측 베이를 벽으로 막음)
+addV('piloti', new THREE.Vector3(-5.4, FH*0.5, D1/2+0.6), (g,mat)=>[ V(3.2,FH-0.3,0.3,g,mat,-5.4,y1,D1/2+0.4) ]);
+// 09 주차장 창고(전면 마당 컨테이너)
+addV('parking-use', new THREE.Vector3(-6.5, 1.6, D/2+3.0), (g,mat)=>[ V(2.6,2.0,3.0,g,mat,-6.5,1.0,D/2+2.6) ]);
+// 10 근생→주거 용도변경(1F 전면 우측 패널)
+addV('use-change', new THREE.Vector3(5.6, FH*0.62, D1/2+0.5), (g,mat)=>[ V(3.0,2.4,0.22,g,mat,5.6,1.4,D1/2+0.12) ]);
+// 11 세대 쪼개기(2F 전면 좌측 — 계량기/칸막이 표식)
+addV('unit-split', new THREE.Vector3(-5.2, y2, D/2+0.6), (g,mat)=>{
+  const arr=[ V(3.0,2.0,0.22,g,mat,-5.2,y2,D/2+0.12) ];
+  for(let i=0;i<3;i++) arr.push(V(0.4,0.6,0.3,g,M.frame,-6.2+i*0.9,y2-0.2,D/2+0.28));
+  return arr;
+});
+// 12 마당·조경 잠식(전면 우측, 지붕 있는 평상/창고 — 대지 위 구조물로 또렷이)
+addV('site-cover', new THREE.Vector3(6.3, 1.9, D/2+1.7), (g,mat)=>{
+  const arr=[ V(2.8,1.3,2.2,g,mat,6.3,0.85,D/2+1.5) ];
+  arr.push(V(3.1,0.22,2.5,g,M.frame,6.3,1.6,D/2+1.5));   // 지붕
+  return arr;
+});
+
+/* ===================== 상태 & 인터랙션 ===================== */
+let showRed=true, filter='all', selected=null, hovered=null;
+const raycaster = new THREE.Raycaster(); const pointer = new THREE.Vector2();
+
+function setEmissive(id, v){ vGroups[id].mat.emissiveIntensity = v; }
+function refresh(){
+  Object.entries(vGroups).forEach(([id,g])=>{
+    const inFilter = (filter==='all' || g.data.zone===filter);
+    // 위반표시 off거나 필터 밖이면 → 골조색으로 빼고 핀 숨김(매칭만 또렷하게)
+    const neutral = !showRed || !inFilter;
+    g.mat.color.setHex(neutral ? 0xcabfb0 : CAT[g.data.cat].color);
+    setEmissive(id, neutral ? 0.0 : (id===selected ? 0.95 : 0.46));
+    g.mat.transparent = false; g.mat.opacity = 1;
+    g.el.classList.toggle('hide', neutral);
+    g.el.classList.toggle('sel', id===selected);
+  });
+  document.querySelectorAll('.chip').forEach(c=>{
+    const z = VMAP[c.dataset.id].zone;
+    c.classList.toggle('dim', filter!=='all' && z!==filter);
+    c.classList.toggle('sel', c.dataset.id===selected);
+  });
+}
+
+const panel=document.getElementById('panel'), hint=document.getElementById('hint');
+function select(id, focus){
+  selected=id; const d=VMAP[id];
+  document.getElementById('pBadge').className = 'p-badge '+(d.cat==='amber'?'amber':'');
+  document.getElementById('pBadge').innerHTML = `<span class="no">${d.no}</span><span class="zone">${ZONE_LABEL[d.zone]}</span>`;
+  document.getElementById('pTitle').textContent = d.title;
+  document.getElementById('pTags').innerHTML = d.tags.map(t=>`<span>${t}</span>`).join('');
+  document.getElementById('pShort').textContent = d.short;
+  document.getElementById('pEx').textContent = d.example;
+  document.getElementById('pQa').innerHTML = d.qa.map(qid=>{
+    const q=QMAP[qid]; if(!q) return '';
+    return `<div class="qa"><button type="button" data-qa><span class="q">${q.q}</span><span class="ar">▸</span></button>
+      <div class="ans"><div class="ans-in">${q.a}<div class="refs">${q.refs.map(r=>`<i>${r}</i>`).join('')}</div></div></div>`;
+  }).join('');
+  document.querySelectorAll('#pQa [data-qa]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));
+  panel.classList.add('show'); hint.classList.add('gone');
+  refresh();
+  if(focus){ const a=vGroups[id].anchor; flyTo(a); }
+}
+function deselect(){ selected=null; panel.classList.remove('show'); refresh(); fly={from:controls.target.clone(), to:HOME.tgt.clone(), t:0}; }
+document.getElementById('pClose').addEventListener('click', deselect);
+
+// 카메라 포커스(타깃을 사례 쪽으로 살짝 이동)
+let fly=null;
+function flyTo(anchor){
+  const ty = Math.min(7.5, Math.max(4, anchor.y*0.55+1.5));
+  const gt = new THREE.Vector3(anchor.x*0.4, ty, anchor.z*0.4);
+  fly = {from:controls.target.clone(), to:gt, t:0};
+}
+
+// 포인터
+function setPointer(e){ const r=canvas.getBoundingClientRect(); pointer.x=((e.clientX-r.left)/r.width)*2-1; pointer.y=-((e.clientY-r.top)/r.height)*2+1; }
+canvas.addEventListener('pointermove', e=>{
+  setPointer(e);
+  raycaster.setFromCamera(pointer,camera);
+  const hit = showRed ? raycaster.intersectObjects(pickables,false)[0] : null;
+  const id = hit?.object.userData.vid || null;
+  const valid = id && (filter==='all'||VMAP[id].zone===filter);
+  canvas.style.cursor = valid ? 'pointer' : 'grab';
+  if(hovered && hovered!==selected) setEmissive(hovered, showRed && (filter==='all'||VMAP[hovered].zone===filter)?0.32:0);
+  hovered = valid ? id : null;
+  if(hovered && hovered!==selected) setEmissive(hovered, 0.7);
+});
+let downXY=null;
+canvas.addEventListener('pointerdown', e=>{ downXY=[e.clientX,e.clientY]; });
+canvas.addEventListener('pointerup', e=>{
+  if(!downXY) return; const moved=Math.abs(e.clientX-downXY[0])+Math.abs(e.clientY-downXY[1]);
+  downXY=null; if(moved>5||!showRed) return;
+  setPointer(e); raycaster.setFromCamera(pointer,camera);
+  const hit = raycaster.intersectObjects(pickables,false)[0];
+  const id = hit?.object.userData.vid;
+  if(id && (filter==='all'||VMAP[id].zone===filter)) select(id,true); else if(!id) deselect();
+});
+
+/* ── 칩 / 필터 / 툴바 ── */
+const rail=document.getElementById('rail');
+VIOLATIONS.forEach(d=>{
+  const b=document.createElement('button'); b.className='chip'; b.dataset.id=d.id; b.dataset.cat=d.cat;
+  b.innerHTML=`<span class="n">${d.no}</span>${d.title}`;
+  b.addEventListener('click',()=>select(d.id,true)); rail.appendChild(b);
+});
+// 칩 레일 좌우 드래그-스크롤 + 휠→가로 스크롤 (마우스로 끝 항목까지 도달)
+// 주의: setPointerCapture를 쓰면 click이 칩이 아니라 레일로 가서 select가 안 불림 → window 리스너로 처리.
+(function railScroll(){
+  let down=false, moved=false, sx=0, sl=0;
+  rail.addEventListener('pointerdown', e=>{ if(e.button!==0) return; down=true; moved=false; sx=e.clientX; sl=rail.scrollLeft; });
+  window.addEventListener('pointermove', e=>{ if(!down) return; const dx=e.clientX-sx; if(Math.abs(dx)>4){ if(!moved){ moved=true; rail.classList.add('grabbing'); } rail.scrollLeft=sl-dx; } });
+  window.addEventListener('pointerup', ()=>{ if(!down) return; down=false; rail.classList.remove('grabbing'); });
+  rail.addEventListener('click', e=>{ if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; } }, true); // 드래그였으면 칩 클릭 억제
+  rail.addEventListener('wheel', e=>{ if(e.deltaY){ rail.scrollLeft+=e.deltaY; e.preventDefault(); } }, {passive:false});
+})();
+document.getElementById('filters').addEventListener('click',e=>{
+  const b=e.target.closest('.fbtn'); if(!b) return;
+  filter=b.dataset.f; document.querySelectorAll('.fbtn').forEach(x=>x.classList.toggle('on',x===b));
+  if(selected && filter!=='all' && VMAP[selected].zone!==filter) deselect(); else refresh();
+});
+const btnRed=document.getElementById('btnRed'), btnRot=document.getElementById('btnRotate');
+btnRed.addEventListener('click',()=>{ showRed=!showRed; btnRed.classList.toggle('on',showRed); btnRed.setAttribute('aria-pressed',showRed);
+  if(!showRed) deselect(); else refresh(); });
+btnRot.addEventListener('click',()=>{ controls.autoRotate=!controls.autoRotate; btnRot.classList.toggle('on',controls.autoRotate); btnRot.setAttribute('aria-pressed',controls.autoRotate); });
+document.getElementById('btnReset').addEventListener('click',()=>{
+  fly={from:controls.target.clone(), to:HOME.tgt.clone(), t:0};
+  flyCam={from:camera.position.clone(), to:HOME.pos.clone(), t:0};
+  filter='all'; document.querySelectorAll('.fbtn').forEach((x,i)=>x.classList.toggle('on',i===0));
+  deselect();
+});
+
+/* ===================== 인트로 & 루프 ===================== */
+let flyCam = {from:new THREE.Vector3(30,26,38), to:HOME.pos.clone(), t:0};
+camera.position.copy(flyCam.from);
+const ease=t=>1-Math.pow(1-t,3);
+function resize(){
+  const w=stage.clientWidth, h=stage.clientHeight;
+  renderer.setSize(w,h,false); labelRenderer.setSize(w,h);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage); resize();
+
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(50,now-last); last=now;
+  if(flyCam){ flyCam.t=Math.min(1,flyCam.t+dt/1300); camera.position.lerpVectors(flyCam.from,flyCam.to,ease(flyCam.t)); if(flyCam.t>=1)flyCam=null; }
+  if(fly){ fly.t=Math.min(1,fly.t+dt/700); controls.target.lerpVectors(fly.from,fly.to,ease(fly.t)); if(fly.t>=1)fly=null; }
+  // 선택한 위반 메쉬만 맥동(살아있는 강조) — 핀 펄스 링과 한 쌍. 나머지는 정적.
+  if(showRed){
+    const p = 0.5 + 0.5*Math.sin(now*0.0042); // 0..1, ~1.5s 주기
+    for(const id in vGroups){
+      const g=vGroups[id];
+      if(filter!=='all' && g.data.zone!==filter) continue; // 필터 밖(골조색)은 제외
+      g.mat.emissiveIntensity = id===selected ? (0.45+0.85*p)  // 선택만 펄스
+                              : id===hovered  ? 0.85
+                              : 0.46;                          // 비선택은 정적
+    }
+  }
+  controls.update();
+  renderer.render(scene,camera); labelRenderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+refresh();
+requestAnimationFrame(loop);
+setTimeout(()=>document.getElementById('loading').classList.add('gone'), 350);
+</script>
+</body>
+</html>

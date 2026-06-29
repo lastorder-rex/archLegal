@@ -126,7 +126,7 @@ function LookupResult({ result }: { result: Lookup }) {
           {violation === true ? '양성화 가능성 진단' : '1분 자가진단'}
         </Link>
         <Link
-          href="/qna"
+          href="/qna3d"
           className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-card px-4 text-sm font-bold text-foreground transition hover:border-primary hover:text-primary"
         >
           3D 위반사례 보기

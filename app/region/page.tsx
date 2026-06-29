@@ -33,7 +33,7 @@ async function getCounts(): Promise<Record<string, number>> {
 export default async function RegionIndexPage() {
   const counts = await getCounts();
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  const ordered = [...SEOUL_DISTRICTS].sort((a, b) => (counts[b.code] || 0) - (counts[a.code] || 0));
+  const ordered = [...SEOUL_DISTRICTS].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
   return (
     <>

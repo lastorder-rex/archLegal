@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   description:
     '3층 다가구주택 3D 모델 위에서 옥상·발코니·주차장·대지 위반건축물 사례를 직접 눌러 확인하고, 양성화(추인·신고·허가) 가능성과 관련 Q&A를 한 화면에서 검토하세요. 무료 자가진단·상담 제공.',
   alternates: { canonical: 'https://www.archlegal.co.kr/qna' },
+  // 구버전 3D 페이지 — 메뉴에서 내리고 직접 URL로만 접근. 검색 노출 차단(정식 메뉴는 /qna3d).
+  robots: { index: false, follow: false },
   openGraph: {
     title: '내 집 위반건축물, 3D로 직접 짚어보는 진단·Q&A | 양성화.com',
     description:

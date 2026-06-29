@@ -1769,6 +1769,26 @@ export function EnforcementFineCalculatorClient({
                       예상범위 {formatCurrency(result.result.estimatedFineMinKrw)} ~ {formatCurrency(result.result.estimatedFineMaxKrw)}
                     </div>
                   ) : null}
+
+                  {/* 방치 시 누적 — 이행강제금은 시정할 때까지 매년 반복 부과 */}
+                  <div className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-3">
+                    <div className="text-sm font-semibold text-rose-700">방치하면 — 매년 반복 부과</div>
+                    <dl className="mt-2 space-y-1.5 text-sm">
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-rose-700/80">3년 누적</dt>
+                        <dd className="font-bold text-rose-700">{formatCurrency(result.result.estimatedFineKrw * 3)}</dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-rose-700/80">5년 누적</dt>
+                        <dd className="font-bold text-rose-700">{formatCurrency(result.result.estimatedFineKrw * 5)}</dd>
+                      </div>
+                    </dl>
+                    <p className="mt-2 text-xs leading-4 text-rose-700/70">
+                      이행강제금은 위반을 시정할 때까지 매년 반복 부과됩니다. 누적액은 연 1회 부과를 가정한 단순 합계이며,
+                      실제는 부과 횟수·시가표준액 변동에 따라 달라집니다.
+                    </p>
+                  </div>
+
                   <dl className="mt-4 space-y-3 text-sm">
                     <div className="flex justify-between gap-3">
                       <dt className="text-slate-500">위반유형</dt>

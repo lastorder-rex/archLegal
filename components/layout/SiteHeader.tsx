@@ -11,7 +11,7 @@ import { BookUp, Building2, MapPinned, Megaphone, Menu, Newspaper, X } from 'luc
 // 헤더를 바꾸려면 이 파일 한 곳만 고치면 모든 페이지에 반영.
 
 const NAV_LINKS = [
-  { label: '3D 위반사례', href: '/qna', icon: <Building2 className="h-4 w-4" aria-hidden /> },
+  { label: '3D 위반사례', href: '/qna3d', icon: <Building2 className="h-4 w-4" aria-hidden /> },
   { label: '지역별 현황', href: '/region', icon: <MapPinned className="h-4 w-4" aria-hidden /> },
   { label: '핵심정리', href: '/card-news', icon: <BookUp className="h-4 w-4" aria-hidden /> },
   { label: '캠페인', href: '/campaign', icon: <Megaphone className="h-4 w-4" aria-hidden /> },
@@ -36,12 +36,12 @@ export function SiteHeader() {
         </Link>
 
         {/* 데스크톱 메뉴 */}
-        <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground sm:flex">
+        <nav className="hidden items-center gap-5 text-xs font-medium text-muted-foreground sm:flex">
           {NAV_LINKS.map(link => (
             <Link
               key={link.href}
               href={link.href}
-              className="inline-flex items-center gap-2 transition hover:text-primary"
+              className="inline-flex items-center gap-1.5 whitespace-nowrap transition hover:text-primary"
             >
               {link.icon}
               {link.label}
@@ -49,7 +49,7 @@ export function SiteHeader() {
           ))}
           <Link
             href={authHref}
-            className="inline-flex items-center rounded-lg border border-border px-3 py-1.5 font-semibold transition hover:border-primary hover:text-primary"
+            className="inline-flex items-center whitespace-nowrap rounded-lg border border-border px-3 py-1.5 font-semibold transition hover:border-primary hover:text-primary"
           >
             {authLabel}
           </Link>
