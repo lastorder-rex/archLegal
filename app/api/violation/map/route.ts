@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { corsJson, corsPreflight } from '@/lib/api/cors';
+import { corsJson, withApiHandler } from '@/lib/api/cors';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 
 // 위반건축물 지도용 마커 조회 (Supabase).
@@ -8,25 +8,20 @@ import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 //
 // Query:
 //   bbox=minLat,minLon,maxLat,maxLon  화면 영역(권장, 넓으면 limit에 걸림)
-//   sigungu=11530                     시군구 코드 필터
 //   residential=1                     주거계열(단독·공동·근린)만
 //   limit=2000                        최대 건수(기본 3000)
 
-export function OPTIONS() {
-  return corsPreflight();
-}
+export { corsPreflight as OPTIONS } from '@/lib/api/cors';
 
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiHandler(
+  async (request: NextRequest) => {
     const { searchParams } = new URL(request.url);
     const supabase = getSupabaseAdminClient();
 
+    // 클라이언트가 실제로 쓰는 컬럼만 조회·전송한다(payload 축소).
     let query = supabase
       .from('violation_buildings')
-      .select('pnu,bld_nm,jibun,sigungu_nm,bjdong_nm,use_code,use_name,residential,floors,useapr_day,lat,lon');
-
-    const sigungu = searchParams.get('sigungu');
-    if (sigungu) query = query.eq('sigungu_cd', sigungu);
+      .select('bld_nm,jibun,use_name,floors,useapr_day,lat,lon');
 
     if (searchParams.get('residential') === '1') query = query.eq('residential', true);
 
@@ -49,14 +44,9 @@ export async function GET(request: NextRequest) {
     }
 
     const items = (data || []).map((r) => ({
-      pnu: r.pnu,
       name: r.bld_nm,
       jibun: r.jibun,
-      sigunguNm: r.sigungu_nm,
-      bjdongNm: r.bjdong_nm,
-      useCode: r.use_code,
       useName: r.use_name,
-      residential: r.residential,
       floors: r.floors,
       useaprDay: r.useapr_day,
       lat: r.lat,
@@ -64,8 +54,6 @@ export async function GET(request: NextRequest) {
     }));
 
     return corsJson({ ok: true, total: items.length, items });
-  } catch (error) {
-    console.error('Violation map lookup failed', error);
-    return corsJson({ ok: false, error: '위반건축물 지도 조회 중 오류가 발생했습니다.' }, { status: 500 });
-  }
-}
+  },
+  { logLabel: 'Violation map lookup failed', errorMessage: '위반건축물 지도 조회 중 오류가 발생했습니다.' },
+);

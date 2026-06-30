@@ -1,5 +1,4 @@
-import { NextRequest } from 'next/server';
-import { corsJson, corsPreflight } from '@/lib/api/cors';
+import { corsJson, withApiHandler } from '@/lib/api/cors';
 
 // 주소 검색(지오코딩). 지도 검색창에서 입력한 주소를 좌표 후보로 변환한다.
 // VWorld 검색 API(도로명 → 지번 폴백)를 서버에서 호출(키 보호).
@@ -7,20 +6,18 @@ import { corsJson, corsPreflight } from '@/lib/api/cors';
 // Query: q=검색어
 // 응답: { ok, items: [{ address, lat, lon }] }
 
-export function OPTIONS() {
-  return corsPreflight();
-}
+export { corsPreflight as OPTIONS } from '@/lib/api/cors';
 
 type Item = { address: string; lat: number; lon: number };
 
 async function vworldSearch(query: string, category: 'road' | 'parcel'): Promise<Item[]> {
   const key = process.env.VWORLD_API_KEY;
   if (!key) return [];
-  const u = new URL('https://api.vworld.kr/req/search');
-  Object.entries({
+  const params = new URLSearchParams({
     service: 'search', request: 'search', version: '2.0', crs: 'epsg:4326',
     query, type: 'address', category, format: 'json', size: '8', key,
-  }).forEach(([k, v]) => u.searchParams.set(k, v));
+  });
+  const u = new URL(`https://api.vworld.kr/req/search?${params}`);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 7000);
@@ -45,8 +42,8 @@ async function vworldSearch(query: string, category: 'road' | 'parcel'): Promise
   }
 }
 
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiHandler(
+  async (request) => {
     const q = (new URL(request.url).searchParams.get('q') || '').trim();
     if (q.length < 2) return corsJson({ ok: true, items: [] });
 
@@ -61,8 +58,6 @@ export async function GET(request: NextRequest) {
     const unique = ordered.filter((i) => (seen.has(i.address) ? false : (seen.add(i.address), true)));
 
     return corsJson({ ok: true, items: unique.slice(0, 8) });
-  } catch (error) {
-    console.error('Geocode failed', error);
-    return corsJson({ ok: false, error: '주소 검색 중 오류가 발생했습니다.' }, { status: 500 });
-  }
-}
+  },
+  { logLabel: 'Geocode failed', errorMessage: '주소 검색 중 오류가 발생했습니다.' },
+);
