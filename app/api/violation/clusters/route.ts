@@ -1,5 +1,4 @@
-import { NextRequest } from 'next/server';
-import { corsJson, corsPreflight } from '@/lib/api/cors';
+import { corsJson, withApiHandler } from '@/lib/api/cors';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 
 // 위반건축물 줌아웃용 집계(클러스터) 조회.
@@ -11,11 +10,9 @@ import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 //
 // Query: level=sigungu | bjdong (기본 sigungu)
 
-export function OPTIONS() {
-  return corsPreflight();
-}
+export { corsPreflight as OPTIONS } from '@/lib/api/cors';
 
-type Cluster = { code: string; name: string; count: number; lat: number; lon: number };
+type Cluster = { name: string; count: number; lat: number; lon: number };
 
 let cache: { builtAt: number; sigungu: Cluster[]; bjdong: Cluster[] } | null = null;
 const TTL_MS = 1000 * 60 * 30;
@@ -49,8 +46,7 @@ async function buildAggregates() {
       o.sumLat += r.lat;
       o.sumLon += r.lon;
     }
-    return [...m.entries()].map(([code, o]) => ({
-      code,
+    return [...m.entries()].map(([, o]) => ({
       name: o.name,
       count: o.count,
       lat: +(o.sumLat / o.count).toFixed(6),
@@ -65,16 +61,14 @@ async function buildAggregates() {
   };
 }
 
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiHandler(
+  async (request) => {
     const level = new URL(request.url).searchParams.get('level') === 'bjdong' ? 'bjdong' : 'sigungu';
     if (!cache || Date.now() - cache.builtAt > TTL_MS) {
       cache = await buildAggregates();
     }
     const clusters = cache[level];
-    return corsJson({ ok: true, level, total: clusters.length, clusters });
-  } catch (error) {
-    console.error('Violation clusters failed', error);
-    return corsJson({ ok: false, error: '집계 조회 중 오류가 발생했습니다.' }, { status: 500 });
-  }
-}
+    return corsJson({ ok: true, clusters });
+  },
+  { logLabel: 'Violation clusters failed', errorMessage: '집계 조회 중 오류가 발생했습니다.' },
+);
