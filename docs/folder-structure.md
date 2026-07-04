@@ -8,6 +8,33 @@ Next.js 14 기반의 법률 상담 관리 시스템 (App Router 사용)
 - TossPay 결제 시스템 연동
 - Telegram Bot API 통합
 - `양성화.com` 유입/SEO 브랜딩, 1분 양성화 자가진단, 이행강제금 계산기, 카드뉴스 정적/동적 페이지 운영
+- 3D 위반사례 진단맵(`/qna3d`, `/qna3d-photo`), 지역별 위반건축물 현황 SEO 페이지(`/region/[구]`) 운영
+- 특별조치법 해설(`/special-act`), 양성화 가이드 허브(`/guide` 20편), 서울 이행강제금 통계(`/enforcement-stats`) 운영
+
+---
+
+## 최근 반영 사항 (2026-07-04 기준)
+- **특별조치법 해설 필러 페이지**: `app/special-act/page.tsx`(+`special-act.css`), `components/special-act/`(DdayBadges·TocSidebar·SpecialActTimeline·SpecialActFaq·EligibilityChecklist·LawFullText), `lib/constants/special-act.ts`(FAQ 15문·법령 원문 상수)
+  - "관보 × 모던 에디토리얼" 디자인: 잉크 히어로+인장 스탬프, D-day 스탯, 고지서 계산 카드, 스티키 스크롤스파이 목차, Noto Serif KR 디스플레이. 색은 사이트 토큰 연동(`--sa-accent = hsl(var(--primary))` → 라이트 파랑/다크 주홍 자동)
+  - JSON-LD: Article + Legislation + FAQPage + BreadcrumbList. `/특별조치법` → `/special-act` 리다이렉트(next.config.mjs)
+- **양성화 가이드 허브**: `app/guide/page.tsx`(카테고리별 인덱스), `app/guide/[slug]/page.tsx`(20편 SSG), 원고는 `content/guide/*.md`(frontmatter+본문), 로더는 `lib/guide/articles.ts`(marked+gray-matter, 날짜는 YYYY-MM-DD 정규화)
+  - 네이버 발행용 원본(`marketing-content/naver-blog/`)과 별개로 웹 각색본을 사이트에 게시. Article+Breadcrumb JSON-LD, 관련 글·CTA·면책 공통 블록
+- **서울 이행강제금 통계 허브**: `app/enforcement-stats/page.tsx`, `lib/stats/enforcement-penalty.ts` — DB `enforcement_penalty_annual_stats`(2021~2025, 서울 전체+25개 구, 위반유형별 부과·징수) 활용
+  - 연도별 추이(최신 연도부터)·유형별 건당 평균·자치구 순위표(각 구 → `/region/구` 링크). Dataset+FAQPage JSON-LD. `/region/[구]`에도 해당 구 연도별 부과 표 섹션+FAQ 문항 추가
+- **기술 SEO**: `app/sitemap.ts` 코드 생성 전환(`public/sitemap.xml` 삭제, 정적+지역 25+가이드 20 자동 등록), `app/layout.tsx`에 Organization/WebSite JSON-LD(#organization·#website 정본), 홈 H1 "위반건축물" 키워드 보강·canonical 명시, `public/llms.txt` 운영
+- **메뉴 개편**: 헤더/랜딩 메뉴 = 특별조치법·가이드·3D 위반사례·지역별 현황·핵심정리·언론보도(6개). 캠페인은 푸터로 강등(페이지·sitemap 유지). CopyProtection 제외 경로에 `/special-act`·`/guide` 추가
+- **신규 의존성**: `marked`, `gray-matter`
+- **3D 위반건축물 진단맵**: `/qna3d`(3D), `/qna3d-photo`(실사 미니어처) — `app/qna3d/route.ts`, `app/qna3d-photo/route.ts`가 `kick/*.html` **단독 HTML**(three.js/바닐라 JS, React 아님)을 서빙
+  - 운영은 `kick/qna3d.min.html`(압축본) 서빙, `scripts/build-kick.mjs`(terser)로 소스에서 생성(`prebuild` 훅). `?min=1`로 테스트, `.min.html`은 gitignore(빌드 산출물)
+  - 12개 대표 위반유형 핀 → 사례 패널 + 연결 Q&A. 옥상 간판은 canvas 텍스처(폭 초과 시 measureText로 자동 축소)
+- **상담 작성 팝업(iframe)**: 단독 HTML의 "전문가 무료 상담" 버튼 → `/qna` 이동이 아니라 **그 자리에서 상담 모달 팝업**
+  - `app/consult-embed/page.tsx`: 기존 `ConsultationModal`(폼·로그인·저장 `/api/consultations`)을 iframe으로 재사용, `?message=`로 위반내용 프리필
+  - `ConsultationModal`에 `breakoutLogin` 추가 — iframe 내 카카오 OAuth는 상위창으로 빠져 프레임 차단 회피, 로그인 후 `?consult=open`로 팝업 재오픈
+  - `next.config.mjs`: `/consult-embed`만 `X-Frame-Options: SAMEORIGIN`(그 외 DENY 유지)
+- **단독 HTML 메뉴 로그인 상태 주입**: `lib/auth/menu-auth.ts` — route.ts가 서버에서 세션을 읽어 우측 메뉴 링크를 주입(로그인 시 `마이페이지`, 아니면 `로그인/회원가입`, SiteHeader와 동일 규칙)
+- **랜딩 home-v2 → 메인 승격**: `app/page.tsx`가 `LandingPage`의 `addressHero`(우측 「내 집 양성화 리포트」 주소 진단) + `kickSlot`(3D 후크) 변형을 렌더, `/home-v2` → `/` 영구 리다이렉트
+  - `components/landing/MyBuildingReport.tsx`, `Landing3DPreview.tsx`, `LandingViolationLookup.tsx` 추가. 진단 결과의 "무료 상담받기" → 상담 모달 프리필 오픈(sessionStorage `calc_consultation_prefill`)
+- **지역별 위반건축물 현황 SEO**: `app/region/[region]/page.tsx`(서울 25개 자치구 빌드타임 정적 생성), `violation_buildings` 실데이터 통계 + `components/region/DistrictMap.tsx`, `RegionConsultationCta.tsx`
 
 ---
 
@@ -53,10 +80,13 @@ Next.js 14 기반의 법률 상담 관리 시스템 (App Router 사용)
 rex/
 ├── app/                    # Next.js App Router 디렉토리 (페이지 및 API 라우팅)
 ├── components/             # 재사용 가능한 React 컴포넌트
+├── content/                # 사이트 게시 콘텐츠 (guide/ 가이드 아티클 md 20편)
 ├── lib/                    # 유틸리티, 서비스, 상수 등 핵심 라이브러리
 ├── hooks/                  # 커스텀 React Hooks
 ├── types/                  # TypeScript 타입 정의
 ├── public/                 # 정적 파일 (이미지, 폰트 등)
+├── kick/                   # 3D 진단맵 단독 HTML 소스 (qna3d/qna3d-photo, route.ts로 서빙)
+├── marketing-content/      # 마케팅 콘텐츠 초안 (네이버 블로그/카페, 이미지 기획)
 ├── scripts/                # 데이터 마이그레이션 및 관리 스크립트
 ├── supabase/               # Supabase 설정 및 마이그레이션
 ├── e2e/                    # E2E 테스트 (Playwright)
@@ -85,20 +115,33 @@ app/
 │   ├── diagnosis/             # 1분 자가진단 계산 API
 │   ├── enforcement-fine/      # 이행강제금 계산기 API
 │   ├── juso/                  # 주소 검색 API (국가 주소 API 연동)
+│   ├── land-price/            # 개별공시지가 조회 API (VWorld)
+│   ├── violation/             # 위반건축물 조회 API
+│   ├── eais/                  # 세움터(EAIS) 연동 API
+│   ├── mcp/                   # MCP 커넥터 API
 │   ├── payments/              # 결제 처리 API (TossPay)
 │   ├── upload/                # 파일 업로드 API (Google Drive)
 │   └── users/                 # 사용자 관리 API
 ├── auth/                      # 인증 페이지 (로그인, 회원가입 등)
 ├── calc/                      # 이행강제금 계산기 페이지
 ├── check/                     # 1분 양성화 자가진단 페이지
+├── special-act/               # 특별조치법 해설 필러 페이지 (관보×에디토리얼, JSON-LD 4종)
+├── guide/                     # 양성화 가이드 허브 (인덱스 + [slug] 20편 SSG)
+├── enforcement-stats/         # 서울 이행강제금 통계 허브 (enforcement_penalty_annual_stats)
 ├── mypage/                    # 마이페이지
 ├── request/                   # 상담 요청 페이지
 ├── signup/                    # 회원가입 페이지
 ├── card-news/                 # 양성화 카드뉴스 페이지
+├── campaign/                  # 캠페인 페이지
+├── region/                    # 지역별 위반건축물 현황 SEO ([region] 동적, 서울 25개 구)
+├── qna3d/                     # 3D 위반사례 진단맵 (kick/qna3d.html 단독 HTML 서빙)
+├── qna3d-photo/               # 실사 미니어처 진단맵 (kick/qna3d-photo.html, noindex)
+├── consult-embed/             # 상담 작성 팝업(iframe)용 경량 라우트 (ConsultationModal 재사용)
 ├── enforcement-fine/          # /calc 리다이렉트 라우트
 ├── supercore/                 # 관리자/슈퍼유저 페이지
 ├── upload/                    # 파일 업로드 페이지
-├── layout.tsx                 # 루트 레이아웃 (전역 레이아웃)
+├── layout.tsx                 # 루트 레이아웃 (전역 레이아웃, Organization/WebSite JSON-LD)
+├── sitemap.ts                 # 코드 생성 사이트맵(/sitemap.xml — 정적+지역+가이드 자동)
 ├── globals.css                # 전역 스타일
 ├── page.tsx                   # 홈페이지 (/)
 └── not-found.tsx              # 404 페이지
@@ -119,6 +162,11 @@ app/
 - **`calc/page.tsx`**: 이행강제금 계산기 페이지
 - **`card-news/page.tsx`**: 양성화 카드뉴스 페이지. `CardNewsCarousel`과 `SiteFooter`를 조합해 구성
 - **`globals.css`**: Tailwind CSS 임포트 및 전역 스타일
+
+#### 3D 위반사례 진단맵(단독 HTML) 메모:
+- `/qna3d`, `/qna3d-photo`는 React 페이지가 아니라 `app/qna3d/route.ts`, `app/qna3d-photo/route.ts`가 `kick/*.html`(three.js/바닐라 JS 단독 문서)을 읽어 서빙한다.
+- 운영은 `kick/qna3d.min.html`(압축본), 개발은 원본. `scripts/build-kick.mjs`(terser)로 소스→압축본 생성(`prebuild`), `?min=1`로 테스트. `.min.html`은 gitignore.
+- 상담 버튼은 `/qna` 이동 대신 `app/consult-embed`를 iframe 팝업으로 열어 상담 모달을 띄운다(로그인은 상위창 OAuth로 breakout). 우측 메뉴 로그인 상태는 `lib/auth/menu-auth.ts`로 서버 주입.
 
 ---
 
@@ -143,13 +191,29 @@ components/
 ├── enforcement-fine/          # 이행강제금 계산기 컴포넌트
 │   └── EnforcementFineCalculatorClient.tsx # 주소 조회, 계산 입력, 결과/상담 전환 UI
 ├── landing/                   # 랜딩 페이지 컴포넌트
-│   ├── LandingPage.tsx        # 메인 랜딩 페이지
+│   ├── LandingPage.tsx        # 메인 랜딩 (addressHero + kickSlot 변형 = 구 home-v2)
+│   ├── MyBuildingReport.tsx   # 「내 집 양성화 리포트」 주소 진단 → 상담 모달 연결
+│   ├── Landing3DPreview.tsx   # 히어로 아래 3D 위반사례 후크 (/qna3d 연결)
+│   ├── LandingViolationLookup.tsx # 주소 위반조회
+│   ├── ConsultationModal.tsx  # 상담 CTA 모달 (breakoutLogin=iframe 임베드 지원)
+│   ├── AuthButton.tsx         # 로그인/유저 버튼
+│   ├── AboutModal.tsx         # '우리의 역할' 모달
 │   ├── FAQAccordion.tsx       # FAQ 아코디언
-│   ├── ConsultationModal.tsx  # 상담 CTA 모달
 │   ├── LoginModal.tsx         # 카카오 로그인 모달
 │   └── Timeline.tsx           # 절차 타임라인
 ├── layout/                    # 레이아웃 컴포넌트
+│   ├── SiteHeader.tsx         # 공통 헤더 (로그인 상태 반영)
 │   └── SiteFooter.tsx         # 공통 푸터
+├── region/                    # 지역별 현황 페이지 컴포넌트
+│   ├── DistrictMap.tsx        # 자치구 지도
+│   └── RegionConsultationCta.tsx # 지역 상담 CTA(모달)
+├── special-act/               # 특별조치법 해설 페이지 컴포넌트
+│   ├── DdayBadges.tsx         # 시행/마감 D-day 스탯 + 18개월 진행 게이지
+│   ├── TocSidebar.tsx         # 스크롤스파이 목차(데스크톱 스티키/모바일 칩)
+│   ├── SpecialActTimeline.tsx # 제정→시행→만료 타임라인('오늘' 마커)
+│   ├── SpecialActFaq.tsx      # 헤어라인 FAQ 아코디언
+│   ├── EligibilityChecklist.tsx # 대상 여부 30초 체크
+│   └── LawFullText.tsx        # 법령 원문 전문(접이식, 출처 링크)
 ├── mypage/                    # 마이페이지 컴포넌트
 │   ├── MyPageShell.tsx        # 마이페이지 레이아웃
 │   ├── MyPageInfoSection.tsx  # 회원 정보
@@ -186,16 +250,24 @@ components/
 ```
 lib/
 ├── auth/                      # 인증 관련 유틸리티
-│   ├── supabase.ts            # Supabase 클라이언트 초기화
-│   ├── session.ts             # 세션 관리
-│   └── permissions.ts         # 권한 검증 로직
+│   ├── server-auth.ts         # 서버 세션/권한 검증
+│   ├── user-session.ts        # 사용자 세션 쿠키 관리
+│   ├── oauth.ts               # 카카오 OAuth 옵션
+│   ├── kakao-profile.ts       # 카카오 프로필 파싱
+│   ├── logout.ts              # 로그아웃 처리
+│   └── menu-auth.ts           # 단독 HTML(qna3d) 메뉴 로그인 링크 서버 주입
 ├── constants/                 # 상수 정의
 │   ├── routes.ts              # 라우트 경로 상수
 │   ├── status.ts              # 상담 상태 상수
+│   ├── special-act.ts         # 특별조치법 날짜·FAQ·법령 원문 상수
 │   └── config.ts              # 설정 상수
 ├── diagnosis/                 # 1분 자가진단 질문/분기/결과 로직
 │   ├── legalization.ts
 │   └── __tests__/legalization.test.ts
+├── guide/                     # 가이드 아티클 로더
+│   └── articles.ts            # content/guide/*.md 파싱(marked+gray-matter, 날짜 정규화)
+├── stats/                     # 통계 데이터 접근
+│   └── enforcement-penalty.ts # enforcement_penalty_annual_stats 조회·억원/만원 표기 헬퍼
 ├── enforcement-fine/          # 이행강제금 계산기 준비/계산 로직
 │   ├── prepare.ts             # 주소/건축물대장/VWorld 조회 및 기준자료 매핑
 │   └── calculate.ts           # 이행강제금 산식, 감경/가중, 결과 저장
@@ -305,9 +377,10 @@ public/
 ├── hero.png                   # 랜딩 히어로 이미지
 ├── legalization-card-news.html # 카드뉴스 정적 HTML 페이지
 ├── naver487c0dcb77e92d04a2a494edf158344a.html # 네이버 소유확인 파일
-├── robots.txt                 # 검색엔진 크롤링 정책
-└── sitemap.xml                # 대표 URL 기준 sitemap
+├── robots.txt                 # 검색엔진 크롤링 정책 (AI 봇 명시 허용 포함)
+└── llms.txt                   # AI 검색엔진용 사이트 안내(핵심 페이지·인용 가능 사실)
 ```
+※ sitemap은 `public/sitemap.xml`(수동)에서 `app/sitemap.ts`(코드 생성)로 전환 — 정적 파일은 삭제됨.
 
 #### 사용법:
 ```tsx
@@ -317,7 +390,7 @@ public/
 
 #### SEO/정적 페이지 운영 메모:
 - 자가진단 대표 공개 URL은 Next 페이지 `/check`를 사용하고, 기존 정적 HTML 주소는 `/check`로 리다이렉트한다.
-- `public/sitemap.xml`은 `https://www.archlegal.co.kr` 대표 URL 기준으로 관리한다.
+- sitemap은 `app/sitemap.ts`에서 코드로 생성(`/sitemap.xml` 서빙). 정적 라우트 + 지역 25 + 가이드 20이 자동 등록되며, 로그인 필요 URL(/mypage 등)은 제외한다.
 - `양성화.com`은 유입/리다이렉트 도메인으로 사용하고, 대표 canonical/sitemap은 `www.archlegal.co.kr` 기준이다.
 - 네이버 서치어드바이저 소유확인 파일은 삭제하지 않는다.
 
@@ -474,7 +547,6 @@ API 문서, 기능 명세, 설정 가이드 등
   - `app/api/payments/stages/route.ts` : 사용자 결제 단계 조회
   - `app/api/payments/webhook/route.ts` : Toss 웹훅(취소/부분취소) 수신
 - **컴포넌트**
-  - `components/landing/Pricing.tsx`
   - `components/mypage/MyPagePaymentsSection.tsx` : 마이페이지 결제 위젯/단계 관리
   - `components/mypage/MyPagePaymentSuccess.tsx` : 결제 성공 후 승인 확인 UI
 - **통합**: TossPay SDK (package.json)
@@ -504,8 +576,24 @@ API 문서, 기능 명세, 설정 가이드 등
 - **이행강제금 계산기 API**: `app/api/enforcement-fine/prepare/route.ts`, `app/api/enforcement-fine/calculate/route.ts`, `app/api/enforcement-fine/violation-types/route.ts`, `app/api/enforcement-fine/structure-options/route.ts`, `app/api/enforcement-fine/use-options/route.ts`
 - **이행강제금 기준자료 DB**: `supabase/migrations/033_create_enforcement_fine_tables.sql` ~ `supabase/migrations/044_seed_additional_reduction_special_conditions.sql`
 - **계산기 문서**: `docs/enforcement-fine/README.md`, `docs/enforcement-fine/spec.md`, `docs/enforcement-fine/verification-cases.md`
+- **특별조치법 해설**: `app/special-act/page.tsx`(+`special-act.css`), `components/special-act/`, `lib/constants/special-act.ts`, `/특별조치법` 리다이렉트
+- **양성화 가이드**: `app/guide/`(인덱스+[slug]), `content/guide/*.md`(20편), `lib/guide/articles.ts` — 네이버 발행 원본은 `marketing-content/naver-blog/`
+- **이행강제금 통계**: `app/enforcement-stats/page.tsx`, `lib/stats/enforcement-penalty.ts`, DB `enforcement_penalty_annual_stats` (+ `/region/[구]` 부과 현황 섹션)
 - **카드뉴스 페이지**: `app/card-news/page.tsx`, `components/card-news/CardNewsCarousel.tsx`
-- **검색엔진 파일**: `public/sitemap.xml`, `public/robots.txt`, `public/naver487c0dcb77e92d04a2a494edf158344a.html`
+- **검색엔진/AI 파일**: `app/sitemap.ts`, `public/robots.txt`, `public/llms.txt`, `public/naver487c0dcb77e92d04a2a494edf158344a.html`, `app/layout.tsx`(Organization/WebSite JSON-LD)
+
+### 8. 3D 위반사례 진단맵
+- **페이지(라우트)**: `app/qna3d/route.ts`(3D), `app/qna3d-photo/route.ts`(실사)
+- **소스(단독 HTML)**: `kick/qna3d.html`, `kick/qna3d-photo.html`, 압축본 `kick/qna3d.min.html`
+- **빌드**: `scripts/build-kick.mjs`(terser 압축, `prebuild` 훅)
+- **상담 팝업**: `app/consult-embed/page.tsx`(iframe), `components/landing/ConsultationModal.tsx`(`breakoutLogin`)
+- **메뉴 로그인 주입**: `lib/auth/menu-auth.ts`
+- **문서**: `docs/qna3d-photoreal-miniature-prompt.md`
+
+### 9. 지역별 위반건축물 현황 (프로그래matic SEO)
+- **페이지**: `app/region/[region]/page.tsx` (서울 25개 구 빌드타임 정적 생성)
+- **컴포넌트**: `components/region/DistrictMap.tsx`, `components/region/RegionConsultationCta.tsx`
+- **데이터**: `violation_buildings` 테이블 (`supabase/migrations/20260618000000_create_violation_buildings.sql`, `046~048_*`)
 
 ---
 
@@ -618,5 +706,5 @@ lib/validations/consultation.ts에 검증 스키마도 추가하고"
 
 ---
 
-**마지막 업데이트**: 2026-05-28
+**마지막 업데이트**: 2026-07-04
 **프로젝트 버전**: 0.1.1
