@@ -5,8 +5,10 @@ import { Building2, MapPin, Search, ShieldCheck } from 'lucide-react';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
+import { getDistrictYearlyTotals, formatEokKrw, perCaseManKrw } from '@/lib/stats/enforcement-penalty';
 import { SEOUL_DISTRICTS, findSeoulDistrict } from '@/lib/constants/seoul-districts';
 import { DistrictMap } from '@/components/region/DistrictMap';
+import { RegionConsultationCta } from '@/components/region/RegionConsultationCta';
 
 export const revalidate = 86400; // 하루 1회 재생성(데이터 갱신 반영)
 
@@ -85,6 +87,8 @@ export default async function RegionPage({ params }: { params: { region: string 
   const region = decodeURIComponent(params.region);
   const stats = await getRegionStats(region);
   if (!stats) notFound();
+  const penaltyYearly = await getDistrictYearlyTotals(region);
+  const latestPenalty = penaltyYearly[penaltyYearly.length - 1];
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -106,6 +110,18 @@ export default async function RegionPage({ params }: { params: { region: string 
           text: '특정건축물 정리에 관한 특별조치법(2026.12.17 시행, 18개월 한시) 대상이라면 양성화(추인·신고·허가)가 가능할 수 있습니다. 완공시점·면적·구역 기준에 따라 달라지므로 주소 기반 진단을 권합니다.',
         },
       },
+      ...(latestPenalty
+        ? [
+            {
+              '@type': 'Question',
+              name: `${region}에서 이행강제금은 얼마나 부과되나요?`,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: `${region}에서는 ${latestPenalty.report_year}년 기준 이행강제금이 약 ${latestPenalty.assessment_count.toLocaleString()}건, ${formatEokKrw(latestPenalty.assessment_amount_thousand_krw)} 부과되었습니다. 건당 평균은 약 ${perCaseManKrw(latestPenalty.assessment_amount_thousand_krw, latestPenalty.assessment_count).toLocaleString()}만 원이며, 위반이 시정될 때까지 매년 반복 부과될 수 있습니다.`,
+              },
+            },
+          ]
+        : []),
     ],
   };
 
@@ -129,11 +145,14 @@ export default async function RegionPage({ params }: { params: { region: string 
               </h1>
               <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
                 {region}의 건축물대장상 위반건축물은 약 <b className="text-foreground">{stats.total.toLocaleString()}건</b>
-                으로 집계되며, 그중 <b className="text-foreground">주거용이 {stats.residentialPct}%</b>입니다. 특별조치법
+                으로 집계되며, 그중 <b className="text-foreground">주거용이 {stats.residentialPct}%</b>입니다.{' '}
+                <Link href="/special-act" className="font-semibold text-primary underline underline-offset-4 hover:opacity-80">
+                  특별조치법
+                </Link>{' '}
                 한시 기간(~2028.6.16) 안에 양성화를 검토할 수 있습니다.
               </p>
               <Link
-                href="/home-v2"
+                href="/?address=open"
                 className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-extrabold text-primary-foreground shadow-lg shadow-primary/20 transition hover:opacity-90"
               >
                 <Search className="h-5 w-5" aria-hidden />
@@ -217,6 +236,57 @@ export default async function RegionPage({ params }: { params: { region: string 
             </article>
           </section>
 
+          {/* 이행강제금 부과 현황 (실데이터) */}
+          {penaltyYearly.length > 0 && latestPenalty && (
+            <section aria-label={`${region} 이행강제금 부과 현황`}>
+              <h2 className="text-xl font-bold text-foreground">{region} 이행강제금 부과 현황</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                {region}에서는 {latestPenalty.report_year}년에 이행강제금 약{' '}
+                <b className="text-foreground">
+                  {latestPenalty.assessment_count.toLocaleString()}건, {formatEokKrw(latestPenalty.assessment_amount_thousand_krw)}
+                </b>
+                이 부과되었습니다(건당 평균 약{' '}
+                <b className="text-foreground">
+                  {perCaseManKrw(latestPenalty.assessment_amount_thousand_krw, latestPenalty.assessment_count).toLocaleString()}만 원
+                </b>
+                ).
+              </p>
+              <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+                <table className="w-full min-w-[480px] text-sm">
+                  <thead>
+                    <tr className="bg-muted/40 text-left text-xs font-semibold tracking-wide text-muted-foreground">
+                      <th className="px-4 py-3">연도</th>
+                      <th className="px-4 py-3 text-right">부과 건수</th>
+                      <th className="px-4 py-3 text-right">부과 금액</th>
+                      <th className="px-4 py-3 text-right">건당 평균</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...penaltyYearly].reverse().map(r => (
+                      <tr key={r.report_year} className="border-t border-border">
+                        <td className="px-4 py-3 font-semibold text-foreground">{r.report_year}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{r.assessment_count.toLocaleString()}건</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{formatEokKrw(r.assessment_amount_thousand_krw)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {perCaseManKrw(r.assessment_amount_thousand_krw, r.assessment_count).toLocaleString()}만 원
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-sm">
+                <Link href="/enforcement-stats" className="font-semibold text-primary underline-offset-4 hover:underline">
+                  서울 전체 이행강제금 통계 보기 →
+                </Link>
+                <span className="mx-2 text-muted-foreground">·</span>
+                <Link href="/calc" className="font-semibold text-primary underline-offset-4 hover:underline">
+                  내 이행강제금 계산하기
+                </Link>
+              </p>
+            </section>
+          )}
+
           {/* 상담 CTA */}
           <section className="rounded-2xl border border-border bg-primary/5 p-6 text-center">
             <ShieldCheck className="mx-auto h-8 w-8 text-primary" aria-hidden />
@@ -224,17 +294,12 @@ export default async function RegionPage({ params }: { params: { region: string 
             <p className="mt-2 text-sm text-muted-foreground">주소만 넣으면 위반 등재 여부·양성화 가능성을 30초 안에.</p>
             <div className="mt-5 flex flex-wrap justify-center gap-3">
               <Link
-                href="/home-v2"
+                href="/?address=open"
                 className="inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 text-base font-extrabold text-primary-foreground transition hover:opacity-90"
               >
                 내 집 주소로 진단
               </Link>
-              <Link
-                href="/qna"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-card px-6 text-base font-bold text-foreground transition hover:border-primary hover:text-primary"
-              >
-                무료 상담 신청
-              </Link>
+              <RegionConsultationCta region={region} />
             </div>
           </section>
 
