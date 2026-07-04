@@ -45,6 +45,12 @@ const DIAGNOSIS_SHARE_TITLE = '1분 양성화 자가진단';
 const DIAGNOSIS_SHARE_DESCRIPTION = '우리 건물도 특정건축물 특별조치법 대상인지 확인해보세요.';
 const DIAGNOSIS_SHARE_ORIGIN = 'https://www.archlegal.co.kr';
 const DIAGNOSIS_SHARE_IMAGE_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/kakao_b.png';
+const TYPE_OPTION_IMAGES: Record<string, string> = {
+  multi: '/qna3d/bld-1.png',
+  single: '/qna3d/bld-2.png',
+  dagagu: '/qna3d/bld-3.png',
+  near: '/qna3d/bld-4.png'
+};
 
 type DiagnosisAnswer = {
   questionId: string;
@@ -506,21 +512,31 @@ export function LegalizationCheckClient() {
                   <p className="question-desc">{question?.desc}</p>
                   <div className="hint-box">{question?.hint}</div>
                   <div className={`option-grid ${question?.options.length === 3 ? 'three' : ''}`}>
-                    {question?.options.map((option, index) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        className="option-card"
-                        data-tone={option.tone || 'yes'}
-                        onClick={() => answer(option.id)}
-                      >
-                        <span className="option-icon">{option.icon || index + 1}</span>
-                        <span className="option-content">
-                          <strong>{option.label}</strong>
-                          <span>{option.detail || ''}</span>
-                        </span>
-                      </button>
-                    ))}
+                    {question?.options.map((option, index) => {
+                      const optionImage = question.id === 'type' ? TYPE_OPTION_IMAGES[option.id] : null;
+
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          className="option-card"
+                          data-tone={option.tone || 'yes'}
+                          onClick={() => answer(option.id)}
+                        >
+                          {optionImage ? (
+                            <span className="option-icon option-icon-image">
+                              <img src={optionImage} alt="" aria-hidden="true" />
+                            </span>
+                          ) : (
+                            <span className="option-icon">{option.icon || index + 1}</span>
+                          )}
+                          <span className="option-content">
+                            <strong>{option.label}</strong>
+                            <span>{option.detail || ''}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

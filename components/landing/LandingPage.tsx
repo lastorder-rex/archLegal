@@ -17,17 +17,18 @@ import {
   ArrowBigDownDash,
   ArrowBigUpDash,
   Bell,
+  BookOpen,
   BookUp,
   Building2,
   CheckLine,
   Handshake,
   Landmark,
-  Megaphone,
   MessageCircleMore,
   Menu,
   PenLine,
   Phone,
   PhoneCall,
+  Scale,
   Search,
   ShieldCheck,
   UserRoundCog,
@@ -75,6 +76,18 @@ const navigationItems: NavigationItem[] = [
     icon: <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
+    label: '특별조치법',
+    type: 'link',
+    href: '/special-act',
+    icon: <Scale className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '가이드',
+    type: 'link',
+    href: '/guide',
+    icon: <BookOpen className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
     label: '3D 위반사례',
     type: 'link',
     href: '/qna3d',
@@ -91,12 +104,6 @@ const navigationItems: NavigationItem[] = [
     type: 'link',
     href: '/card-news',
     icon: <BookUp className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
-  },
-  {
-    label: '캠페인',
-    type: 'link',
-    href: '/campaign',
-    icon: <Megaphone className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
     label: '언론보도',
@@ -172,7 +179,7 @@ export function LandingPage({
   kickSlot,
   addressHero = false,
 }: { kickSlot?: ReactNode; addressHero?: boolean } = {}) {
-  // home-v2: 히어로 우측 카드를 「내 집 양성화 리포트」 주소박스로 교체하고, 좌측 1차 CTA를 주소조회로.
+  // 메인 히어로: 우측 카드를 「내 집 양성화 리포트」 주소박스로 교체. 좌측 1차 CTA는 기존 무료상담 팝업 유지.
   const [addressOpenSignal, setAddressOpenSignal] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
   const [consultationNextPath, setConsultationNextPath] = useState('/?consultation=open');
@@ -305,11 +312,30 @@ export function LandingPage({
   }, [router]);
 
   const openConsultationModal = useCallback(() => {
+    // 일반 "무료 상담 신청" 진입 — 히어로 상담에서 남았을 수 있는 프리필을 비운다(스테일 방지).
+    setConsultationInitialAddress(null);
+    setConsultationInitialMessage('');
+    setConsultationInitialAddressDetail('');
     if (typeof window !== 'undefined') {
       setConsultationNextPath(`${window.location.pathname}?consultation=open`);
     }
     setModalOpen(true);
   }, []);
+
+  // 히어로 "내 집 양성화 리포트"의 "이 위반, 무료 상담받기" — /qna 이동 대신 상담 팝업을 프리필로 연다.
+  // 주소·메시지 백업(sessionStorage)은 MyBuildingReport가 수행 → 로그인 왕복 후에도 복원됨.
+  const handleHeroConsult = useCallback(
+    ({ address, message }: { address: import('@/lib/validations/consultation').AddressSearchResult; message: string }) => {
+      setConsultationInitialAddress(address);
+      setConsultationInitialMessage(message);
+      setConsultationInitialAddressDetail('');
+      if (typeof window !== 'undefined') {
+        setConsultationNextPath(`${window.location.pathname}?consultation=open`);
+      }
+      setModalOpen(true);
+    },
+    []
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -341,6 +367,13 @@ export function LandingPage({
       } catch {}
       setModalOpen(true);
       url.searchParams.delete('consultation');
+      shouldCleanUrl = true;
+    }
+
+    if (url.searchParams.get('address') === 'open') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      setAddressOpenSignal(n => n + 1);
+      url.searchParams.delete('address');
       shouldCleanUrl = true;
     }
 
@@ -690,11 +723,15 @@ export function LandingPage({
         </header>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-24 sm:py-32 lg:flex-row lg:items-center lg:gap-16">
           <div className="flex-1 space-y-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground opacity-70">
+            <Link
+              href="/special-act"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground opacity-70 underline-offset-4 transition hover:opacity-100 hover:underline"
+            >
               법률 제21820호 · 2026.12.17 시행
-            </p>
+              <span className="normal-case tracking-normal opacity-80">자세히 보기 →</span>
+            </Link>
             <h1 id="attention-section" className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-              양성화, 이제 ‘법’으로 길이 열렸습니다
+              위반건축물 양성화, 이제 ‘법’으로 길이 열렸습니다
             </h1>
             <p className="text-lg text-primary-foreground opacity-80 sm:text-xl">
               「특정건축물 정리에 관한 특별조치법」이 2026년 6월 16일 제정·공포되어 12월 17일 시행됩니다.
@@ -702,15 +739,10 @@ export function LandingPage({
               시행일부터 18개월 한시 — 지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
-              {addressHero ? (
-                <CTAButton className="sm:w-auto" onClick={() => setAddressOpenSignal(n => n + 1)}>
-                  주소로 30초 확인
-                </CTAButton>
-              ) : (
-                <CTAButton className="sm:w-auto" onClick={openConsultationModal}>
-                  무료 상담 신청
-                </CTAButton>
-              )}
+              {/* 1차 CTA는 addressHero 여부와 무관하게 기존 랜딩의 무료상담 팝업으로 유지 */}
+              <CTAButton className="sm:w-auto" onClick={openConsultationModal}>
+                무료 상담 신청
+              </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
                 <Link href="/check">1분 자가진단</Link>
               </CTAButton>
@@ -726,7 +758,7 @@ export function LandingPage({
           </div>
           <div className="flex-1">
             {addressHero ? (
-              <MyBuildingReport variant="hero" openSignal={addressOpenSignal} />
+              <MyBuildingReport variant="hero" openSignal={addressOpenSignal} onConsult={handleHeroConsult} />
             ) : (
               <div className="rounded-3xl border border-white bg-white/10 p-8 shadow-2xl backdrop-blur">
                 <h2 className="text-xl font-semibold text-white">필수 일정 요약</h2>
@@ -760,7 +792,7 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* home-v2 실험용 슬롯: 라이브 /는 미전달이라 렌더 안 됨 */}
+      {/* 히어로 아래 슬롯(3D 위반사례 등): 메인 /에서 전달됨. 미전달 호출부에선 렌더 안 됨 */}
       {kickSlot}
 
       {/* Interest */}

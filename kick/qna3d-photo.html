@@ -120,6 +120,9 @@
     font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;backdrop-filter:blur(6px)}
   .tbtn:hover{background:#ffffff24}
   .tbtn .ic{width:15px;height:15px;display:block}
+  /* 보기 전환(다른 버전으로 이동) — 강조 */
+  .tbtn-switch{background:#fff;color:#16261f;border-color:#fff;text-decoration:none}
+  .tbtn-switch:hover{background:#eef2f5}
 
   /* ── hint ─────────────────────────────────────────────── */
   .hint{position:absolute; top:74px; left:18px; z-index:7; max-width:300px; background:var(--card); backdrop-filter:blur(8px);
@@ -188,8 +191,8 @@
     header.bar{padding:11px 13px}
     .brand h1{font-size:13px} .brand p{display:none}
     .tbtn span{display:none} .tbtn{padding:9px}
-    .hint{top:64px;left:12px;max-width:62vw;padding:11px 13px}
-    .hint b{font-size:13px} .hint p{font-size:11px}
+    .hint{top:64px;left:12px;right:12px;max-width:none;padding:10px 13px;border-radius:13px}
+    .hint b{font-size:12.5px;margin-bottom:0} .hint p{display:none}
     #panel{top:auto;bottom:0;height:auto;max-height:84vh;width:auto;max-width:none;left:0;right:0;border-radius:20px 20px 0 0;
       transform:translateY(102%)}
     #panel.show{transform:none}
@@ -304,6 +307,7 @@
       </div>
     </a>
     <div class="tools">
+      <a class="tbtn tbtn-switch" href="/qna3d" aria-label="기본 3D로 보기"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg><span>기본 3D</span></a>
       <button class="tbtn" id="btnShare" aria-label="공유"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span>공유</span></button>
       <button class="tbtn" id="btnReset" aria-label="시점 초기화"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>초기화</span></button>
       <button class="tbtn" id="btnMenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg><span>메뉴</span></button>
@@ -321,7 +325,7 @@
         <a href="/card-news"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>핵심정리</a>
         <a href="/campaign"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>캠페인</a>
         <a href="/press"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>언론보도</a>
-        <a href="/login" class="login">로그인 / 회원가입</a>
+        <a href="__AUTH_HREF__" class="login">__AUTH_LABEL__</a>
       </nav>
     </aside>
   </div>
@@ -446,7 +450,14 @@ function apply(){
   });
 }
 function setView(s, tx, ty){ st.s=Math.min(MAX,Math.max(MIN,s)); st.tx=tx; st.ty=ty; clampPan(); apply(); }
-function resetView(){ computeFit(); cancelAnim(); st.s=1; clampPan(); apply(); }
+function resetView(){
+  computeFit(); cancelAnim();
+  // 모바일: 기본 250%(2.5배) 확대로 시작 — 세로 화면을 채우게. 데스크톱은 contain-fit(1배).
+  st.s = (window.innerWidth<=560 ? 2.5 : 1);
+  const vw=vpEl.clientWidth, vh=vpEl.clientHeight;
+  st.tx=(vw - fitW*st.s)/2; st.ty=(vh - fitH*st.s)/2;
+  clampPan(); apply();
+}
 
 function zoomAt(cx, cy, factor){
   const ns=Math.min(MAX, Math.max(MIN, st.s*factor));
@@ -562,12 +573,13 @@ function renderPanel(v){
       <div class="sec"><h4>흔한 적발 사례</h4><p class="lead">${v.short}</p><p class="ex">${v.example}</p></div>
       <div class="sec"><h4>연결 Q&amp;A</h4>${qaHtml}</div>
       <div class="cta">
-        <a class="prim" href="/qna">이 위반, 전문가 무료 상담</a>
+        <a class="prim" id="pconsult" role="button" tabindex="0" style="cursor:pointer">이 위반, 전문가 무료 상담</a>
         <a class="ghost" href="/calc">이행강제금 계산하기</a>
       </div>
       <p class="foot">공공데이터·건축법 기준 1차 정보입니다. 최종 양성화 가능 여부는 건축사 현장검토와 관할 지자체 기준에 따라 달라질 수 있습니다.</p>
     </div>`;
   document.getElementById('pclose').addEventListener('click', closePanel);
+  document.getElementById('pconsult').addEventListener('click', function(){ closePanel(); openConsult(consultMsg(v)); });
   panel.classList.add('show');
 }
 function closePanel(){
@@ -577,6 +589,32 @@ function closePanel(){
   applyFilter();
 }
 const panel=document.getElementById('panel');
+
+/* 무료상담 — /qna 이동 대신 그 자리에서 상담 작성 창(iframe 팝업)을 띄운다. */
+function consultMsg(v){
+  return `[3D 위반사례] ${v.title}\n· 흔한 적발 사례: ${v.short}\n\n위 위반 관련 양성화 상담을 요청합니다.`;
+}
+function openConsult(message){
+  try{ sessionStorage.setItem('qna3d_consult_msg', message); }catch(_){}
+  let ov=document.getElementById('consultOv');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='consultOv';
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;display:none';
+    const fr=document.createElement('iframe'); fr.id='consultFrame'; fr.title='무료상담';
+    fr.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0';
+    ov.appendChild(fr); document.body.appendChild(ov);
+  }
+  ov.querySelector('iframe').src='/consult-embed?message='+encodeURIComponent(message);
+  ov.style.display='block';
+}
+function closeConsult(){
+  const ov=document.getElementById('consultOv');
+  if(ov){ ov.style.display='none'; const fr=ov.querySelector('iframe'); if(fr) fr.src='about:blank'; }
+  try{ sessionStorage.removeItem('qna3d_consult_msg'); }catch(_){}
+}
+window.addEventListener('message', function(e){ if(e.data && e.data.type==='consult-close') closeConsult(); });
+// 로그인(상위창 OAuth) 왕복 후 복귀 시 팝업 재오픈
+(function(){ try{ const u=new URL(location.href); if(u.searchParams.get('consult')==='open'){ const m=sessionStorage.getItem('qna3d_consult_msg')||''; u.searchParams.delete('consult'); history.replaceState(null,'',u.pathname+u.search+u.hash); if(m) openConsult(m); } }catch(_){} })();
 
 /* 레일 드래그 스크롤(클릭과 구분) */
 let railDown=false, railDragged=false, railX=0, railL=0;
@@ -713,7 +751,7 @@ function renderResultApi(data){
     <div class="rcopy">${res.copy||''}</div>
     ${actions.length?`<div class="rbox"><h5>다음 단계</h5>${actions.map((s,k)=>`<div class="rstep"><span class="n">${k+1}</span><p>${s}</p></div>`).join('')}</div>`:''}`;
   sbody.appendChild(primaryBtn(`${ICONS.store} 주소로 정밀 확인`, renderAddr));
-  sbody.appendChild(ghostBtn(`${ICONS.msg} 전문가 무료 상담`, ()=>location.href='/qna'));
+  sbody.appendChild(ghostBtn(`${ICONS.msg} 전문가 무료 상담`, ()=>openConsult('위반건축물 양성화 관련 전문가 무료상담을 신청합니다.')));
   const links=document.createElement('div'); links.className='slinks';
   const again=document.createElement('span'); again.className='slink'; again.textContent='다시 진단'; again.onclick=startQuiz;
   links.appendChild(again); sbody.appendChild(links);
@@ -765,7 +803,7 @@ async function renderReport(a){
     <div class="rttl">${vd.title}</div>
     <div class="rcopy">${vd.copy}</div>
     <div class="rbox"><h5>내 건물 리포트</h5><div class="rmeta2">${ICONS.pin} ${a.roadAddr}${a.buildingName?` (${a.buildingName})`:''}<br>${ICONS.store} 주용도 ${b&&b.mainPurpsCdNm?b.mainPurpsCdNm:'정보없음'} · 연면적 ${fa} · ${floors}<br>${ICONS.clock} 특별조치법 신청 마감 D-${dday.toLocaleString()}</div></div>`;
-  sbody.appendChild(primaryBtn(`${ICONS.msg} 이 건물, 전문가 무료 상담`, ()=>location.href='/qna'));
+  sbody.appendChild(primaryBtn(`${ICONS.msg} 이 건물, 전문가 무료 상담`, ()=>openConsult(`[내 건물 진단] ${a.roadAddr}\n위 건물 위반건축물 양성화 상담을 요청합니다.`)));
   sbody.appendChild(ghostBtn(`${ICONS.calc} 이행강제금 계산하기`, ()=>location.href='/calc'));
   const links=document.createElement('div'); links.className='slinks';
   const other=document.createElement('span'); other.className='slink'; other.textContent='다른 주소'; other.onclick=renderAddr;

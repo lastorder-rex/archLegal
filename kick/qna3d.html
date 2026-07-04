@@ -74,6 +74,9 @@
     padding:8px 13px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;
     transition:.16s ease; white-space:nowrap; box-shadow:0 1px 2px rgba(20,30,40,.04);
   }
+  /* 보기 전환(다른 버전으로 이동) — 코랄레드 강조 (.tbtn:hover의 초록 덮어쓰기 방지 위해 우선순위 ↑) */
+  .tbtn.tbtn-switch{background:#E5484D; border-color:#E5484D; color:#fff; text-decoration:none; box-shadow:0 4px 12px -4px rgba(229,72,77,.55)}
+  .tbtn.tbtn-switch:hover{background:#cf3a3f; border-color:#cf3a3f; color:#fff}
   .tbtn:hover{border-color:var(--green2); color:var(--green)}
   .tbtn .ic{width:15px;height:15px;display:block}
   .tbtn.on{background:var(--green); border-color:var(--green); color:#fff; box-shadow:0 6px 16px -8px rgba(21,88,74,.8)}
@@ -370,6 +373,7 @@
     </a>
     <div class="spacer"></div>
     <div class="tools">
+      <a class="tbtn tbtn-switch" href="/qna3d-photo" aria-label="실사로 보기"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg><span class="tlabel">실사로 보기</span></a>
       <button class="tbtn on" id="btnRed" aria-pressed="true" aria-label="위반부위 표시"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><span class="tlabel">위반부위</span></button>
       <button class="tbtn" id="btnRotate" aria-pressed="false" aria-label="자동회전"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg><span class="tlabel">자동회전</span></button>
       <button class="tbtn" id="btnReset" aria-label="시점초기화"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 1 9 9"/><path d="M3 12V7M3 12h5"/></svg><span class="tlabel">시점초기화</span></button>
@@ -388,7 +392,7 @@
         <a href="/card-news"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>핵심정리</a>
         <a href="/campaign"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>캠페인</a>
         <a href="/press"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>언론보도</a>
-        <a href="/login" class="login">로그인 / 회원가입</a>
+        <a href="__AUTH_HREF__" class="login">__AUTH_LABEL__</a>
       </nav>
     </aside>
   </div>
@@ -776,9 +780,13 @@ function windowRowZ(x, y, count, spanZ, w=1.5, h=1.9){
   const cv=document.createElement('canvas'); cv.width=1024; cv.height=180;
   const c=cv.getContext('2d');
   c.fillStyle='rgba(74,68,58,0.9)';
-  c.font='800 104px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   c.textAlign='center'; c.textBaseline='middle';
-  c.fillText('인터월드건축사사무소', cv.width/2, cv.height/2+6);
+  // 간판 텍스트 — 캔버스 폭(1024)을 넘치면 자동 축소(폰트·OS별 글자폭 차이로 잘림 방지).
+  const roofLabel='인터월드엔지니어링건축사사무소';
+  const roofFont=s=>'800 '+s+'px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  let roofFs=104; c.font=roofFont(roofFs);
+  while(c.measureText(roofLabel).width>cv.width-40 && roofFs>10){ roofFs-=2; c.font=roofFont(roofFs); }
+  c.fillText(roofLabel, cv.width/2, cv.height/2+6);
   const tex=new THREE.CanvasTexture(cv); tex.anisotropy=8;
   const m=new THREE.Mesh(
     new THREE.PlaneGeometry(6.2, 1.09),
@@ -786,6 +794,30 @@ function windowRowZ(x, y, count, spanZ, w=1.5, h=1.9){
   );
   m.rotation.x=-Math.PI/2;          // 옥상 바닥에 눕힘
   m.position.set(1.1, roofY+0.56, -4.0); // 12시(뒤쪽), 오른쪽으로 이동(3번 구조물 가림 회피)
+  m.renderOrder=2;
+  building.add(m);
+})();
+
+// 후면(−Z) 1층 오른쪽 하단(관측자 기준=−X·낮은 Y) — '양성화.com' 흰색 사인. 뒤에서 볼 때 읽히게 −Z를 향해 세운다.
+(function backLowerBrand(){
+  const label='양성화.com';
+  const cv=document.createElement('canvas'); cv.height=180; cv.width=640;
+  const c=cv.getContext('2d');
+  const font=s=>'800 '+s+'px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  const fs=104;
+  c.font=font(fs);
+  cv.width=Math.ceil(c.measureText(label).width)+48; // 텍스트 폭에 맞춰 재설정(잘림 방지·컨텍스트 초기화됨)
+  c.font=font(fs); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#ffffff';
+  c.fillText(label, cv.width/2, cv.height/2+6);
+  const tex=new THREE.CanvasTexture(cv); tex.anisotropy=8;
+  const planeH=0.95;                          // 지붕 글자 크기감과 비슷하게
+  const planeW=planeH*(cv.width/cv.height);   // 비율 유지(왜곡 없음)
+  const m=new THREE.Mesh(
+    new THREE.PlaneGeometry(planeW, planeH),
+    new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false})
+  );
+  m.rotation.y=Math.PI;                        // 후면(−Z)을 향하게
+  m.position.set(-4.5, 1.05, -D1/2-0.02);      // 1층 뒷벽 바로 바깥, 관측자 우측(−X)·하단
   m.renderOrder=2;
   building.add(m);
 })();
@@ -886,6 +918,29 @@ function refresh(){
 }
 
 const panel=document.getElementById('panel'), hint=document.getElementById('hint');
+
+/* 무료상담 — /qna 이동 대신 그 자리에서 상담 작성 창(iframe 팝업)을 띄운다. */
+function openConsult(message){
+  try{ sessionStorage.setItem('qna3d_consult_msg', message); }catch(_){}
+  let ov=document.getElementById('consultOv');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='consultOv';
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;display:none';
+    const fr=document.createElement('iframe'); fr.id='consultFrame'; fr.title='무료상담';
+    fr.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0';
+    ov.appendChild(fr); document.body.appendChild(ov);
+  }
+  ov.querySelector('iframe').src='/consult-embed?message='+encodeURIComponent(message);
+  ov.style.display='block';
+}
+function closeConsult(){
+  const ov=document.getElementById('consultOv');
+  if(ov){ ov.style.display='none'; const fr=ov.querySelector('iframe'); if(fr) fr.src='about:blank'; }
+  try{ sessionStorage.removeItem('qna3d_consult_msg'); }catch(_){}
+}
+window.addEventListener('message', function(e){ if(e.data && e.data.type==='consult-close') closeConsult(); });
+// 로그인(상위창 OAuth) 왕복 후 복귀 시 팝업 재오픈
+(function(){ try{ const u=new URL(location.href); if(u.searchParams.get('consult')==='open'){ const m=sessionStorage.getItem('qna3d_consult_msg')||''; u.searchParams.delete('consult'); history.replaceState(null,'',u.pathname+u.search+u.hash); if(m) openConsult(m); } }catch(_){} })();
 function select(id, focus){
   selected=id; const d=VMAP[id];
   document.getElementById('pBadge').className = 'p-badge '+(d.cat==='amber'?'amber':'');
@@ -1135,7 +1190,7 @@ function renderResultApi(data){
     <div class="rcopy">${res.copy||''}</div>
     ${actions.length?`<div class="rbox"><h5>다음 단계</h5>${actions.map((s,k)=>`<div class="rstep"><span class="n">${k+1}</span><p>${s}</p></div>`).join('')}</div>`:''}`;
   sbody.appendChild(primaryBtn(`${ICONS.store} 주소로 정밀 확인`, renderAddr));
-  sbody.appendChild(ghostBtn(`${ICONS.msg} 전문가 무료 상담`, ()=>location.href='/qna'));
+  sbody.appendChild(ghostBtn(`${ICONS.msg} 전문가 무료 상담`, ()=>openConsult('위반건축물 양성화 관련 전문가 무료상담을 신청합니다.')));
   const links=document.createElement('div'); links.className='slinks';
   const again=document.createElement('span'); again.className='slink'; again.textContent='다시 진단'; again.onclick=startQuiz;
   links.appendChild(again); sbody.appendChild(links);
@@ -1190,7 +1245,7 @@ async function renderReport(a){
     <div class="rttl">${vd.title}</div>
     <div class="rcopy">${vd.copy}</div>
     <div class="rbox"><h5>내 건물 리포트</h5><div class="rmeta2">${ICONS.pin} ${a.roadAddr}${a.buildingName?` (${a.buildingName})`:''}<br>${ICONS.store} 주용도 ${b&&b.mainPurpsCdNm?b.mainPurpsCdNm:'정보없음'} · 연면적 ${fa} · ${floors}<br>${ICONS.clock} 특별조치법 신청 마감 D-${dday.toLocaleString()}</div></div>`;
-  sbody.appendChild(primaryBtn(`${ICONS.msg} 이 건물, 전문가 무료 상담`, ()=>location.href='/qna'));
+  sbody.appendChild(primaryBtn(`${ICONS.msg} 이 건물, 전문가 무료 상담`, ()=>openConsult(`[내 건물 진단] ${a.roadAddr}\n위 건물 위반건축물 양성화 상담을 요청합니다.`)));
   sbody.appendChild(ghostBtn(`${ICONS.calc} 이행강제금 계산하기`, ()=>location.href='/calc'));
   const links=document.createElement('div'); links.className='slinks';
   const other=document.createElement('span'); other.className='slink'; other.textContent='다른 주소'; other.onclick=renderAddr;

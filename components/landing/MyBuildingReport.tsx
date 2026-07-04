@@ -60,23 +60,47 @@ type Phase = 'idle' | 'loading' | 'report';
 export function MyBuildingReport({
   variant = 'section',
   openSignal = 0,
+  onConsult,
 }: {
   variant?: 'section' | 'hero';
   openSignal?: number;
+  onConsult?: (payload: { address: AddressSearchResult; message: string }) => void;
 } = {}) {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [report, setReport] = useState<Report | null>(null);
+  // 조회에 사용한 원본 주소 객체 — 상담 팝업 프리필/저장에 그대로 넘긴다.
+  const [selectedAddress, setSelectedAddress] = useState<AddressSearchResult | null>(null);
 
   // 히어로 좌측 CTA("주소로 30초 확인")가 우측 카드의 주소 모달을 열도록 신호로 연결.
   useEffect(() => {
     if (openSignal > 0) setOpen(true);
   }, [openSignal]);
 
+  // "이 위반, 무료 상담받기" — /qna 이동이 아니라 무료상담 팝업을 프리필로 연다.
+  // 주소·메시지를 sessionStorage에도 백업 → 카카오 로그인 왕복(전체 리다이렉트) 후에도 복원되게 한다.
+  function handleConsult() {
+    if (!report || !selectedAddress) return;
+    const message = buildConsultMessage(report);
+    try {
+      window.sessionStorage.setItem(
+        'calc_consultation_prefill',
+        JSON.stringify({ address: selectedAddress, addressDetail: '', message })
+      );
+    } catch {}
+    if (onConsult) {
+      onConsult({ address: selectedAddress, message });
+    } else if (typeof window !== 'undefined') {
+      // 부모가 팝업을 소유하지 않는 경우(섹션 변형 등)의 폴백 — 랜딩으로 이동해 열기.
+      window.location.href = '/?consultation=open';
+    }
+  }
+
   async function handleSelect(address: AddressSearchResult) {
     setOpen(false);
     setPhase('loading');
     setReport(null);
+    setSelectedAddress(address);
     const label = address.roadAddr || address.jibunAddr || '선택한 주소';
     const ac = address.addressCode;
     const code4 = { ...ac, bun: ac.bun.padStart(4, '0'), ji: ac.ji.padStart(4, '0') };
@@ -124,9 +148,9 @@ export function MyBuildingReport({
       {phase === 'report' &&
         report &&
         (isHero ? (
-          <ReportCompact report={report} onReset={() => setPhase('idle')} onRetry={() => setOpen(true)} />
+          <ReportCompact report={report} onReset={() => setPhase('idle')} onRetry={() => setOpen(true)} onConsult={handleConsult} />
         ) : (
-          <ReportView report={report} onReset={() => setPhase('idle')} onRetry={() => setOpen(true)} />
+          <ReportView report={report} onReset={() => setPhase('idle')} onRetry={() => setOpen(true)} onConsult={handleConsult} />
         ))}
 
       <AddressSearchModal isOpen={open} onClose={() => setOpen(false)} onSelect={handleSelect} />
@@ -201,10 +225,12 @@ function ReportView({
   report,
   onReset,
   onRetry,
+  onConsult,
 }: {
   report: Report;
   onReset: () => void;
   onRetry: () => void;
+  onConsult: () => void;
 }) {
   const d = daysLeft();
   const v = report.violation;
@@ -324,12 +350,13 @@ function ReportView({
       {/* CTA */}
       <div className="flex flex-col gap-3 border-t border-border bg-muted/30 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2.5">
-          <Link
-            href="/qna"
+          <button
+            type="button"
+            onClick={onConsult}
             className="inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 text-base font-extrabold text-primary-foreground transition hover:opacity-90"
           >
             이 위반, 무료 상담받기
-          </Link>
+          </button>
           <Link
             href="/qna3d"
             className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-card px-5 text-base font-bold text-foreground transition hover:border-primary hover:text-primary"
@@ -409,6 +436,16 @@ function buildVerdict(v: boolean | null) {
   };
 }
 
+// 상담 팝업에 자동으로 채울 짧은 메시지 — 리포트의 주소·판정을 요약.
+function buildConsultMessage(report: Report): string {
+  return [
+    '내 집 양성화 리포트에서 상담 요청드립니다.',
+    `- 주소: ${report.address}`,
+    `- 진단: ${buildVerdict(report.violation).tag}`,
+    '위 건물 양성화 절차 상담 부탁드립니다.',
+  ].join('\n');
+}
+
 // ── 히어로 컴팩트 변형 (home-v2 히어로 우측 컬럼용) ──────────────────────────────
 // 풀폭 섹션 대신 컬럼 한 칸에 들어가는 입력 카드 + 응축 리포트.
 function IdleCompact({ onStart }: { onStart: () => void }) {
@@ -457,10 +494,12 @@ function ReportCompact({
   report,
   onReset,
   onRetry,
+  onConsult,
 }: {
   report: Report;
   onReset: () => void;
   onRetry: () => void;
+  onConsult: () => void;
 }) {
   const d = daysLeft();
   const v = report.violation;
@@ -516,12 +555,13 @@ function ReportCompact({
 
       {/* CTA */}
       <div className="border-t border-border bg-muted/30 px-5 py-4">
-        <Link
-          href="/qna"
+        <button
+          type="button"
+          onClick={onConsult}
           className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-6 text-base font-extrabold text-primary-foreground transition hover:opacity-90"
         >
           이 위반, 무료 상담받기
-        </Link>
+        </button>
         <div className="mt-3 flex justify-center gap-4 text-xs">
           <button
             type="button"
