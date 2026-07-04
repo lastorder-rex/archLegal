@@ -20,6 +20,8 @@ export function CopyProtection() {
       pathname?.startsWith('/admin') ||
       pathname?.startsWith('/supercore') ||
       pathname?.startsWith('/auth') ||
+      pathname?.startsWith('/special-act') ||
+      pathname?.startsWith('/guide') ||
       pathname === '/login' ||
       pathname === '/signup';
     if (isExcludedPage) return;

@@ -1,0 +1,199 @@
+/* /special-act 전용 "관보 × 모던 에디토리얼" 디자인 토큰·유틸.
+   모든 클래스는 sa- 접두사로 스코프하고, 색 변수는 .sa-root에만 정의해
+   다른 페이지에 영향이 없도록 한다. 다크모드는 사이트 기존 방식(html.dark)을 따른다. */
+
+.sa-root {
+  /* 잉크(쿨 네이비, hue 222) — 히어로·쇼피스·최종 CTA 밴드 */
+  --sa-ink: hsl(222 47% 10%);
+  --sa-ink-2: hsl(222 44% 14%);
+  /* 종이(쿨 뉴트럴) — 사이트 bg-muted 밴드와 같은 인상 */
+  --sa-paper: #f8fafc;
+  /* 브랜드 액센트 — 사이트 primary에 연동(라이트 파랑 / 다크 주홍 자동 전환) */
+  --sa-accent: hsl(var(--primary));
+  /* 경고 전용(돈·위험) 빨강 */
+  --sa-alert: #dc2626;
+  /* 잉크 배경 위 텍스트(쿨 화이트, 콘트라스트 AA) */
+  --sa-on-ink: hsl(210 40% 96%);
+  --sa-on-ink-muted: hsl(210 40% 96% / 0.66);
+  --sa-on-ink-faint: hsl(210 40% 96% / 0.14);
+  /* 고스트 챕터 넘버 (잉크색 저알파) */
+  --sa-ghost: hsl(222 47% 10% / 0.08);
+  /* 한글 단어 중간 줄바꿈 방지("특별조/치법" 방지) */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.sa-root h1,
+.sa-root h2,
+.sa-root h3 {
+  text-wrap: balance;
+}
+
+.dark .sa-root {
+  /* --sa-accent = hsl(var(--primary)) 이므로 다크에서 주홍으로 자동 전환(재정의 불필요) */
+  --sa-ink: hsl(222 50% 7%);
+  --sa-ink-2: hsl(222 45% 11%);
+  --sa-paper: hsl(222 24% 17%);
+  --sa-alert: #f87171;
+  --sa-on-ink: hsl(210 40% 96%);
+  --sa-on-ink-muted: hsl(210 40% 96% / 0.62);
+  --sa-on-ink-faint: hsl(210 40% 96% / 0.12);
+  --sa-ghost: hsl(210 40% 96% / 0.07);
+}
+
+/* 디스플레이 서체(명조) */
+.sa-serif {
+  font-family: var(--font-serif-kr), var(--font-serif), Georgia, serif;
+}
+
+.sa-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* 표면 색 유틸 */
+.sa-ink-panel {
+  background-color: var(--sa-ink);
+  color: var(--sa-on-ink);
+}
+.sa-paper-panel {
+  background-color: var(--sa-paper);
+}
+.sa-accent-text {
+  color: var(--sa-accent);
+}
+.sa-accent-border {
+  border-color: var(--sa-accent);
+}
+.sa-on-ink {
+  color: var(--sa-on-ink);
+}
+.sa-on-ink-muted {
+  color: var(--sa-on-ink-muted);
+}
+
+/* ① 히어로 — 잉크 풀블리드 + 미묘한 그라데이션/노이즈 */
+.sa-hero {
+  position: relative;
+  background-color: var(--sa-ink);
+  background-image:
+    radial-gradient(120% 90% at 12% 6%, rgba(255, 255, 255, 0.06), transparent 46%),
+    radial-gradient(90% 80% at 92% 4%, var(--sa-accent), transparent 42%),
+    radial-gradient(140% 120% at 88% 96%, rgba(255, 255, 255, 0.04), transparent 50%);
+  background-blend-mode: soft-light, overlay, normal;
+  color: var(--sa-on-ink);
+  isolation: isolate;
+}
+.sa-hero::after {
+  /* 종이 노이즈 결 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.05;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+}
+
+/* 인장 스탬프 (CSS만) */
+.sa-stamp {
+  border: 2px solid var(--sa-accent);
+  color: var(--sa-accent);
+  transform: rotate(-3deg);
+  opacity: 0.85;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.35);
+}
+
+/* 고스트 챕터 넘버 */
+.sa-chapter {
+  position: relative;
+}
+.sa-ghost-num {
+  position: absolute;
+  top: -2.6rem;
+  left: -0.35rem;
+  z-index: 0;
+  font-size: clamp(3.75rem, 8vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--sa-ghost);
+  font-family: var(--font-serif-kr), var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 조문 칩 */
+.sa-article-chip {
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  letter-spacing: 0.04em;
+}
+
+/* 인용 요약 박스 — <b> 강조를 브랜드 액센트로 */
+.sa-quote b {
+  color: var(--sa-accent);
+  font-weight: 700;
+}
+
+/* 헤어라인 세로 디바이더 (요약 스트립) */
+.sa-vdiv {
+  border-left: 1px solid hsl(var(--border));
+}
+
+/* 절취선(고지서) */
+.sa-perf {
+  border-top: 1.5px dashed hsl(var(--border));
+}
+
+/* 스크롤스파이 활성 인디케이터 */
+.sa-toc-link {
+  position: relative;
+  transition: color 0.18s ease;
+}
+.sa-toc-link[data-active='true'] {
+  color: var(--sa-accent);
+}
+.sa-toc-bar {
+  position: absolute;
+  left: -1rem;
+  top: 50%;
+  height: 0;
+  width: 2px;
+  background: var(--sa-accent);
+  transform: translateY(-50%);
+  transition: height 0.2s ease;
+}
+.sa-toc-link[data-active='true'] .sa-toc-bar {
+  height: 1.05rem;
+}
+
+/* 커스텀 사각 체크박스 */
+.sa-check {
+  border: 1.5px solid hsl(var(--border));
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.sa-check[data-checked='true'] {
+  background-color: var(--sa-accent);
+  border-color: var(--sa-accent);
+  color: hsl(var(--primary-foreground));
+}
+
+/* 게이지 */
+.sa-gauge-track {
+  background: var(--sa-on-ink-faint);
+}
+.sa-gauge-fill {
+  background: linear-gradient(90deg, var(--sa-on-ink-muted), var(--sa-accent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sa-toc-link,
+  .sa-toc-bar,
+  .sa-check {
+    transition: none;
+  }
+}
