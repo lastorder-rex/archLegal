@@ -8,6 +8,12 @@ export function SiteFooter() {
       <div className="mx-auto w-full max-w-6xl px-6 py-10 text-sm text-muted-foreground">
         <div className="space-y-10">
           <nav aria-label="주요 메뉴" className="flex flex-wrap gap-x-5 gap-y-2">
+            <Link href="/special-act" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              특별조치법 안내
+            </Link>
+            <Link href="/guide" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              양성화 가이드
+            </Link>
             <Link href="/region" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
               지역별 위반현황
             </Link>
@@ -20,8 +26,14 @@ export function SiteFooter() {
             <Link href="/calc" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
               이행강제금 계산기
             </Link>
+            <Link href="/enforcement-stats" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              이행강제금 통계
+            </Link>
             <Link href="/card-news" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
               핵심정리
+            </Link>
+            <Link href="/campaign" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              캠페인
             </Link>
           </nav>
 
