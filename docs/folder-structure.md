@@ -27,6 +27,7 @@ Next.js 14 기반의 법률 상담 관리 시스템 (App Router 사용)
 - **3D 위반건축물 진단맵**: `/qna3d`(3D), `/qna3d-photo`(실사 미니어처) — `app/qna3d/route.ts`, `app/qna3d-photo/route.ts`가 `kick/*.html` **단독 HTML**(three.js/바닐라 JS, React 아님)을 서빙
   - 운영은 `kick/qna3d.min.html`(압축본) 서빙, `scripts/build-kick.mjs`(terser)로 소스에서 생성(`prebuild` 훅). `?min=1`로 테스트, `.min.html`은 gitignore(빌드 산출물)
   - 12개 대표 위반유형 핀 → 사례 패널 + 연결 Q&A. 옥상 간판은 canvas 텍스처(폭 초과 시 measureText로 자동 축소)
+  - three.js는 `public/vendor/three-0.160.0/` **셀프호스팅**(unpkg 의존 제거). 실사판 이미지 에셋은 `public/3d*.webp`·`public/interior-*.webp`(업스케일·WebP 파이프라인은 `docs/qna3d-photoreal-miniature-prompt.md` 참고). 기능 요약은 `docs/모듈별 상세 개발정의서.md` Qna3D 절
 - **상담 작성 팝업(iframe)**: 단독 HTML의 "전문가 무료 상담" 버튼 → `/qna` 이동이 아니라 **그 자리에서 상담 모달 팝업**
   - `app/consult-embed/page.tsx`: 기존 `ConsultationModal`(폼·로그인·저장 `/api/consultations`)을 iframe으로 재사용, `?message=`로 위반내용 프리필
   - `ConsultationModal`에 `breakoutLogin` 추가 — iframe 내 카카오 OAuth는 상위창으로 빠져 프레임 차단 회피, 로그인 후 `?consult=open`로 팝업 재오픈
