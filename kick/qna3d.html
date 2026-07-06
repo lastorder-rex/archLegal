@@ -716,6 +716,10 @@ sun.shadow.camera.left=-26; sun.shadow.camera.right=26; sun.shadow.camera.top=26
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
 scene.add(sun);
 const rim = new THREE.DirectionalLight(0xbfe0ff, 0.4); rim.position.set(-16,10,-14); scene.add(rim);
+// 돌하우스 내부 보조 조명 — 벽이 닫혀 있으면 밖에서 안 보이므로 상시 켜둠(10번 점포·11번 2층)
+[[3.0,1.9,1.6],[-4.0,6.1,1.8]].forEach(([x,y,z])=>{
+  const pl=new THREE.PointLight(0xfff0dd, 9, 9, 1.8); pl.position.set(x,y,z); scene.add(pl);
+});
 
 // ── 디오라마 받침대(플린스) + 대지면 ──
 // 콘크리트/석재 받침대(측면 보임)
