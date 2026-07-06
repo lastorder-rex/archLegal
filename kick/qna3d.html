@@ -6,6 +6,8 @@
 <title>위반건축물 3D 진단맵 | 양성화.com - 인건(仁建)</title>
 <meta name="description" content="3D 건물 위에서 옥상·발코니·주차장·대지 등 흔한 위반건축물 유형을 직접 눌러 확인하고, 양성화(추인·신고·허가) 가능성과 남은 시한을 한 화면에서 진단하세요." />
 <link rel="canonical" href="https://www.archlegal.co.kr/qna3d" />
+<link rel="icon" href="/docu/archlegal-fa.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="512x512" href="/docu/archlegal-fa-p.png" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="위반건축물 3D 진단맵 | 양성화.com - 인건(仁建)" />
 <meta property="og:description" content="3D 건물 위에서 위반 부위를 직접 눌러보고 내 집 양성화 가능성을 1분 만에 확인하세요." />
@@ -256,6 +258,14 @@
   .p-body{padding:16px 18px 20px; overflow:auto; flex:1}
   .p-body::-webkit-scrollbar{width:8px} .p-body::-webkit-scrollbar-thumb{background:var(--line2); border-radius:8px}
   .p-lead{font-size:14px; line-height:1.55; color:var(--ink); font-weight:600; margin:0 0 12px}
+  .p-room{width:100%; margin:0 0 4px; appearance:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:13.5px;
+    border:1px solid color-mix(in srgb,var(--green) 34%,transparent); color:var(--green);
+    background:color-mix(in srgb,var(--green) 8%,#fff); border-radius:12px; padding:11px 12px;
+    display:flex; align-items:center; justify-content:center; gap:7px; transition:.16s}
+  .p-room:hover{background:var(--green); border-color:var(--green); color:#fff}
+  .p-room.open{background:var(--green); border-color:var(--green); color:#fff}
+  .p-room[hidden]{display:none}
+  .p-room svg{width:16px;height:16px}
   .p-sec{margin-top:16px}
   .p-sec h4{font-size:11px; font-weight:800; letter-spacing:.6px; color:var(--faint); text-transform:uppercase; margin:0 0 7px}
   .p-ex{font-size:13.5px; line-height:1.62; color:var(--muted); margin:0; padding:13px 14px; border-radius:13px;
@@ -271,6 +281,14 @@
   .qa .refs{display:flex; gap:5px; flex-wrap:wrap; margin-top:9px}
   .qa .refs i{font-style:normal; font-size:10.5px; font-family:var(--mono); color:var(--green); background:color-mix(in srgb,var(--green) 9%,#fff);
     border:1px solid color-mix(in srgb,var(--green) 20%,transparent); border-radius:6px; padding:2px 6px}
+  /* 전환 CTA(연결 Q&A 아래) — 실사판(qna3d-photo)의 .cta 버튼을 패널 톤에 맞춰 이식 */
+  .p-cta{display:flex; flex-direction:column; gap:9px; margin-top:20px}
+  .p-cta a{display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; border-radius:12px;
+    font-family:inherit; font-size:14.5px; font-weight:800; text-decoration:none; cursor:pointer; transition:.16s}
+  .p-cta .prim{background:#1B64DA; color:#fff; border:1px solid #1B64DA}
+  .p-cta .prim:hover{background:#1554B8; border-color:#1554B8}
+  .p-cta .ghost{background:#fff; border:1px solid var(--line2); color:var(--ink)}
+  .p-cta .ghost:hover{border-color:var(--ink)}
   .p-foot{padding:12px 16px; border-top:1px solid var(--line); font-size:11px; color:var(--faint); line-height:1.5}
 
   /* hint when nothing selected */
@@ -374,7 +392,8 @@
     <div class="spacer"></div>
     <div class="tools">
       <a class="tbtn tbtn-switch" href="/qna3d-photo" aria-label="실사로 보기"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg><span class="tlabel">실사로 보기</span></a>
-      <button class="tbtn on" id="btnRed" aria-pressed="true" aria-label="위반부위 표시"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><span class="tlabel">위반부위</span></button>
+      <button class="tbtn" id="btnLegal" aria-pressed="false" aria-label="적법 모습"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg><span class="tlabel">적법 모습</span></button>
+      <button class="tbtn" id="btnRed" aria-pressed="false" aria-label="위반부위 강조"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><span class="tlabel">위반부위</span></button>
       <button class="tbtn" id="btnRotate" aria-pressed="false" aria-label="자동회전"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg><span class="tlabel">자동회전</span></button>
       <button class="tbtn" id="btnReset" aria-label="시점초기화"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 1 9 9"/><path d="M3 12V7M3 12h5"/></svg><span class="tlabel">시점초기화</span></button>
       <button class="tbtn" id="btnMenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg><span class="tlabel">메뉴</span></button>
@@ -418,6 +437,10 @@
       </div>
       <div class="p-body">
         <p class="p-lead" id="pShort"></p>
+        <button type="button" class="p-room" id="pRoom" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 8v12h14V8"/><path d="M9 20v-6h6v6"/></svg>
+          <span id="pRoomLabel">내부 보기</span>
+        </button>
         <div class="p-sec">
           <h4>흔한 적발 사례</h4>
           <p class="p-ex" id="pEx"></p>
@@ -425,6 +448,10 @@
         <div class="p-sec">
           <h4>연결 Q&amp;A</h4>
           <div id="pQa"></div>
+        </div>
+        <div class="p-cta">
+          <a class="prim" id="pConsult" role="button" tabindex="0">이 위반, 전문가 무료 상담</a>
+          <a class="ghost" href="/calc">이행강제금 계산하기</a>
         </div>
       </div>
       <div class="p-foot">공공데이터·건축법 기준 1차 정보입니다. 최종 양성화 가능 여부는 건축사 현장검토와 관할 지자체 기준에 따라 달라질 수 있습니다.</div>
@@ -552,6 +579,132 @@ controls.autoRotateSpeed = 0.9;
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
+/* ===================== 프로시저럴 텍스처 (CanvasTexture, 외부에셋 없음·≤1024) ===================== */
+function _cv(w,h){ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; return cv; }
+function _tex(cv, rx=1, ry=1){
+  const t=new THREE.CanvasTexture(cv);
+  t.colorSpace=THREE.SRGBColorSpace;
+  t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rx,ry); t.anisotropy=8;
+  return t;
+}
+function shade(hex, d){
+  const r=Math.max(0,Math.min(255,((hex>>16)&255)+d));
+  const g=Math.max(0,Math.min(255,((hex>>8)&255)+d));
+  const b=Math.max(0,Math.min(255,(hex&255)+d));
+  return 'rgb('+(r|0)+','+(g|0)+','+(b|0)+')';
+}
+function _grime(c,w,h,n,a){ for(let i=0;i<n;i++){ c.fillStyle='rgba(0,0,0,'+(Math.random()*a).toFixed(3)+')'; c.beginPath(); c.arc(Math.random()*w,Math.random()*h,Math.random()*2.4+0.4,0,7); c.fill(); } }
+// 벽돌/타일(줄눈 + 색변조 + 생활감)
+function brickTex(base, mortar, rx=4, ry=1.6){
+  const w=512,h=512, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle=mortar; c.fillRect(0,0,w,h);
+  const rows=8, bh=h/rows, bw=w/4;
+  for(let r=0;r<rows;r++){ const off=(r%2)?bw/2:0;
+    for(let x=-bw;x<w;x+=bw){ const t=(Math.random()-0.5)*24 + (Math.random()<0.1?-28:0);
+      c.fillStyle=shade(base,t); c.fillRect(x+off+1.5, r*bh+1.5, bw-3, bh-3); } }
+  _grime(c,w,h,900,0.05);
+  return _tex(cv, rx, ry);
+}
+// 화강석/석재 베이스
+function stoneTex(base, rx=4, ry=1.5){
+  const w=512,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle=shade(base,0); c.fillRect(0,0,w,h);
+  for(let i=0;i<2600;i++){ c.fillStyle=shade(base,(Math.random()-0.5)*44); c.globalAlpha=0.5; c.fillRect(Math.random()*w,Math.random()*h,2,2); }
+  c.globalAlpha=1; c.strokeStyle='rgba(0,0,0,0.16)'; c.lineWidth=2;
+  for(let y=0;y<=h;y+=h/2){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
+  for(let x=0;x<=w;x+=w/4){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,h); c.stroke(); }
+  return _tex(cv, rx, ry);
+}
+// 골판(세로 리브) 컨테이너
+function corrTex(base, rx=8, ry=1){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  const ribs=12, bw=w/ribs;
+  for(let i=0;i<ribs;i++){ const g=c.createLinearGradient(i*bw,0,(i+1)*bw,0);
+    g.addColorStop(0,shade(base,-26)); g.addColorStop(0.5,shade(base,18)); g.addColorStop(1,shade(base,-26));
+    c.fillStyle=g; c.fillRect(i*bw,0,bw+1,h); }
+  _grime(c,w,h,420,0.09);
+  c.strokeStyle='rgba(0,0,0,0.22)'; c.lineWidth=2; c.beginPath(); c.moveTo(0,h*0.5); c.lineTo(w,h*0.5); c.stroke();
+  return _tex(cv, rx, ry);
+}
+// 샌드위치 판넬(가로 이음선)
+function panelTex(base, seam, rx=1, ry=4){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  const g=c.createLinearGradient(0,0,0,h); g.addColorStop(0,shade(base,10)); g.addColorStop(1,shade(base,-8));
+  c.fillStyle=g; c.fillRect(0,0,w,h);
+  c.strokeStyle=seam; c.lineWidth=3; c.beginPath(); c.moveTo(0,h-2); c.lineTo(w,h-2); c.stroke();
+  c.strokeStyle='rgba(255,255,255,0.22)'; c.lineWidth=1; c.beginPath(); c.moveTo(0,2); c.lineTo(w,2); c.stroke();
+  return _tex(cv, rx, ry);
+}
+// 어닝 줄무늬
+function awningTex(a,b, rx=1, ry=1){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  const n=6, sw=w/n; for(let i=0;i<n;i++){ c.fillStyle=(i%2)?a:b; c.fillRect(i*sw,0,sw+1,h); }
+  return _tex(cv, rx, ry);
+}
+// 유리 뒤 커튼 느낌
+function curtainTex(rx=1, ry=1){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle='#20303a'; c.fillRect(0,0,w,h);
+  for(let x=0;x<w;x+=18){ const g=c.createLinearGradient(x,0,x+18,0);
+    g.addColorStop(0,'rgba(212,204,186,0)'); g.addColorStop(0.5,'rgba(214,206,188,0.55)'); g.addColorStop(1,'rgba(212,204,186,0)');
+    c.fillStyle=g; c.fillRect(x,16,18,h-16); }
+  return _tex(cv, rx, ry);
+}
+// 스타코(미세 질감)
+function stuccoTex(base, rx=2, ry=2){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle=shade(base,0); c.fillRect(0,0,w,h); _grime(c,w,h,2400,0.06); return _tex(cv, rx, ry);
+}
+// 목재 결
+function woodTex(base, rx=1, ry=4){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle=shade(base,0); c.fillRect(0,0,w,h);
+  for(let i=0;i<40;i++){ c.strokeStyle=shade(base,(Math.random()-0.5)*30); c.globalAlpha=0.4; c.lineWidth=Math.random()*2+0.5;
+    const y=Math.random()*h; c.beginPath(); c.moveTo(0,y); c.bezierCurveTo(w/3,y+(Math.random()-0.5)*7,2*w/3,y+(Math.random()-0.5)*7,w,y); c.stroke(); }
+  c.globalAlpha=1; return _tex(cv, rx, ry);
+}
+// 실외기 루버 슬릿
+function louverTex(base, rx=1, ry=1){
+  const w=128,h=128, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle=shade(base,0); c.fillRect(0,0,w,h);
+  c.strokeStyle='rgba(0,0,0,0.34)'; c.lineWidth=3;
+  for(let y=10;y<h;y+=12){ c.beginPath(); c.moveTo(6,y); c.lineTo(w-6,y); c.stroke(); }
+  return _tex(cv, rx, ry);
+}
+// 아스팔트
+function asphaltTex(rx=8, ry=7){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle='#3c3f43'; c.fillRect(0,0,w,h);
+  for(let i=0;i<5000;i++){ c.fillStyle=shade(0x3c3f43,(Math.random()-0.5)*34); c.fillRect(Math.random()*w,Math.random()*h,1.6,1.6); }
+  return _tex(cv, rx, ry);
+}
+// 주차구획(3면)
+function parkingTex(){
+  const w=1024,h=384, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle='#3a3d41'; c.fillRect(0,0,w,h);
+  for(let i=0;i<7000;i++){ c.fillStyle=shade(0x3a3d41,(Math.random()-0.5)*30); c.fillRect(Math.random()*w,Math.random()*h,2,2); }
+  c.strokeStyle='rgba(236,232,224,0.9)'; c.lineWidth=8;
+  const st=3; for(let i=0;i<=st;i++){ const x=22+i*((w-44)/st); c.beginPath(); c.moveTo(x,26); c.lineTo(x,h-26); c.stroke(); }
+  c.beginPath(); c.moveTo(22,h-26); c.lineTo(w-22,h-26); c.stroke();
+  return _tex(cv, 1, 1);
+}
+// 보도블록
+function sidewalkTex(rx=10, ry=1){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle='#b8b2a4'; c.fillRect(0,0,w,h);
+  c.strokeStyle='rgba(0,0,0,0.16)'; c.lineWidth=3; const n=4, s=w/n;
+  for(let i=0;i<=n;i++){ c.beginPath(); c.moveTo(i*s,0); c.lineTo(i*s,h); c.stroke(); c.beginPath(); c.moveTo(0,i*s); c.lineTo(w,i*s); c.stroke(); }
+  _grime(c,w,h,600,0.04); return _tex(cv, rx, ry);
+}
+// 옥상 녹색 우레탄 방수
+function roofDeckTex(rx=3, ry=3){
+  const w=256,h=256, cv=_cv(w,h), c=cv.getContext('2d');
+  c.fillStyle='#3f7d4e'; c.fillRect(0,0,w,h); _grime(c,w,h,1400,0.07);
+  c.strokeStyle='rgba(255,255,255,0.05)'; c.lineWidth=2;
+  for(let y=0;y<h;y+=24){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
+  return _tex(cv, rx, ry);
+}
+
 // 조명
 scene.add(new THREE.HemisphereLight(0xf3f1ea, 0x9a9486, 0.85));
 const sun = new THREE.DirectionalLight(0xfff4e2, 2.5);
@@ -564,18 +717,42 @@ sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
 scene.add(sun);
 const rim = new THREE.DirectionalLight(0xbfe0ff, 0.4); rim.position.set(-16,10,-14); scene.add(rim);
 
-// 지면
+// ── 디오라마 받침대(플린스) + 대지면 ──
+// 콘크리트/석재 받침대(측면 보임)
+const plinth = new THREE.Mesh(
+  new THREE.BoxGeometry(40, 2.6, 34),
+  new THREE.MeshStandardMaterial({color:0xbdb6a8, roughness:.96, metalness:.02})
+);
+plinth.position.y = -1.3; plinth.receiveShadow = true; scene.add(plinth);
+// 받침대 상단 테(살짝 넓게 튀어나온 몰딩)
+const plinthTop = new THREE.Mesh(
+  new THREE.BoxGeometry(41, 0.3, 35),
+  new THREE.MeshStandardMaterial({color:0xa39c8e, roughness:.92})
+);
+plinthTop.position.y = -0.16; plinthTop.receiveShadow = true; scene.add(plinthTop);
+// 대지면(아스팔트) — 그림자 받는 면
 const ground = new THREE.Mesh(
-  new THREE.CircleGeometry(60, 64),
-  new THREE.MeshStandardMaterial({color:0xa7acb3, roughness:1, metalness:0})
+  new THREE.PlaneGeometry(40, 34),
+  new THREE.MeshStandardMaterial({map:asphaltTex(8,7), roughness:1, metalness:0})
 );
-ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
-// 대지 경계(석재 데크)
-const deck = new THREE.Mesh(
-  new THREE.BoxGeometry(20, 0.4, 18),
-  new THREE.MeshStandardMaterial({color:0xd2ccbe, roughness:.95})
+ground.rotation.x = -Math.PI/2; ground.position.y = 0.01; ground.receiveShadow = true; scene.add(ground);
+// 주차 구획(3면) — 전면 좌측, 자동차·09 컨테이너 위치와 맞춤
+const parking = new THREE.Mesh(
+  new THREE.PlaneGeometry(11, 4.4),
+  new THREE.MeshStandardMaterial({map:parkingTex(), roughness:1, metalness:0})
 );
-deck.position.y = 0.2; deck.receiveShadow = true; scene.add(deck);
+parking.rotation.x = -Math.PI/2; parking.position.set(-9, 0.02, 6.0); parking.receiveShadow = true; scene.add(parking);
+// 보도블록 띠(전면 가장자리) + 경계석
+const sidewalk = new THREE.Mesh(
+  new THREE.PlaneGeometry(40, 3.0),
+  new THREE.MeshStandardMaterial({map:sidewalkTex(11,1), roughness:.95, metalness:0})
+);
+sidewalk.rotation.x = -Math.PI/2; sidewalk.position.set(0, 0.02, 14.6); sidewalk.receiveShadow = true; scene.add(sidewalk);
+const curb = new THREE.Mesh(
+  new THREE.BoxGeometry(40, 0.26, 0.4),
+  new THREE.MeshStandardMaterial({color:0xbcb6a9, roughness:.9})
+);
+curb.position.set(0, 0.13, 12.9); curb.receiveShadow = true; curb.castShadow = true; scene.add(curb);
 
 // 대지 식재(조경) — 생활감 + '조경 훼손' 위반의 맥락
 function tree(x,z,s=1){
@@ -583,7 +760,7 @@ function tree(x,z,s=1){
   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.18*s,0.26*s,1.7*s,6),
     new THREE.MeshStandardMaterial({color:0x7c6a4f,roughness:.92}));
   trunk.position.y=0.85*s; trunk.castShadow=true; g.add(trunk);
-  const folMat=new THREE.MeshStandardMaterial({color:0x6f9e5b,roughness:.96});
+  const folMat=new THREE.MeshStandardMaterial({color:0x5f8a4e,roughness:.96});
   [[0,2.1,0,1.5],[0.55,2.8,0.3,1.0],[-0.45,2.7,-0.25,0.95]].forEach(([fx,fy,fz,r])=>{
     const f=new THREE.Mesh(new THREE.IcosahedronGeometry(r*s,0), folMat);
     f.position.set(fx*s,fy*s,fz*s); f.castShadow=true; f.receiveShadow=true; g.add(f);
@@ -595,8 +772,8 @@ tree(-10.6,1.2,1.0); tree(10.4,-1.8,1.12); tree(-8.4,-7.6,0.92); tree(8.2,-7.4,0
 // 정면 왼쪽 나무 옆 — 나무보다 작은 자동차(저폴리)
 function car(x,z,rot=0,s=1){
   const g=new THREE.Group();
-  const bodyMat=new THREE.MeshStandardMaterial({color:0xaeccec, roughness:.62, metalness:.12});
-  const cabinMat=new THREE.MeshStandardMaterial({color:0x93b4dc, roughness:.6, metalness:.14});
+  const bodyMat=new THREE.MeshStandardMaterial({color:0xb9bdc0, roughness:.5, metalness:.2});
+  const cabinMat=new THREE.MeshStandardMaterial({color:0xa6aaae, roughness:.5, metalness:.2});
   const tireMat=new THREE.MeshStandardMaterial({color:0x232629, roughness:.85});
   const b=new THREE.Mesh(new THREE.BoxGeometry(2.7*s,0.72*s,1.35*s), bodyMat); b.position.y=0.72*s; b.castShadow=true; b.receiveShadow=true; g.add(b);
   const c=new THREE.Mesh(new THREE.BoxGeometry(1.5*s,0.62*s,1.2*s), cabinMat); c.position.set(-0.1*s,1.22*s,0); c.castShadow=true; g.add(c);
@@ -679,33 +856,32 @@ function shareMap(){
 let _toastT;
 function toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); } t.textContent=msg; t.classList.add('on'); clearTimeout(_toastT); _toastT=setTimeout(function(){ t.classList.remove('on'); },2600); }
 
-// 상단 햇님 — 코어 + 헤일로 + 광선(unlit)
-function sunDecor(x,y,z){
-  const g=new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.0,28,28), new THREE.MeshBasicMaterial({color:0xffd24a})));
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.7,28,28), new THREE.MeshBasicMaterial({color:0xffe28c, transparent:true, opacity:0.25})));
-  const rayMat=new THREE.MeshBasicMaterial({color:0xffcb3e});
-  for(let i=0;i<12;i++){
-    const a=i/12*Math.PI*2;
-    const r=new THREE.Mesh(new THREE.BoxGeometry(0.26,1.5,0.26), rayMat);
-    r.position.set(Math.cos(a)*3.4, Math.sin(a)*3.4, 0); r.rotation.z=a-Math.PI/2; g.add(r);
-  }
-  g.scale.setScalar(0.6); // 크기 60%
-  g.position.set(x,y,z); scene.add(g);
-}
-sunDecor(7, 15, 8);
-
 /* ===================== 머티리얼 ===================== */
 const M = {
-  wall:  new THREE.MeshStandardMaterial({color:0xd2ccbe, roughness:.82, metalness:.02}),
-  wall2: new THREE.MeshStandardMaterial({color:0xdcd6c9, roughness:.8,  metalness:.02}),
-  slab:  new THREE.MeshStandardMaterial({color:0xb3ab9c, roughness:.78, metalness:.03}),
-  col:   new THREE.MeshStandardMaterial({color:0xc6bfb1, roughness:.7,  metalness:.05}),
-  glass: new THREE.MeshStandardMaterial({color:0x33424c, roughness:.12, metalness:.55, envMapIntensity:1.1}),
-  frame: new THREE.MeshStandardMaterial({color:0x6a6357, roughness:.5,  metalness:.3}),
-  door:  new THREE.MeshStandardMaterial({color:0x3a4047, roughness:.4,  metalness:.4}),
+  wall:  new THREE.MeshStandardMaterial({map:brickTex(0x9a5b47,'#5f4436'), roughness:.9, metalness:.02}), // 3F 적갈 벽돌
+  wall2: new THREE.MeshStandardMaterial({map:brickTex(0xa9755a,'#6b4d3c'), roughness:.9, metalness:.02}), // 2F 갈색 타일
+  base1: new THREE.MeshStandardMaterial({map:stoneTex(0x8f8b83), roughness:.82, metalness:.04}),          // 1F 화강석
+  slab:  new THREE.MeshStandardMaterial({color:0x9a958b, roughness:.85, metalness:.03}),
+  col:   new THREE.MeshStandardMaterial({color:0x8d8880, roughness:.75, metalness:.05}),
+  glass: new THREE.MeshStandardMaterial({color:0x2b3a45, roughness:.1,  metalness:.6, envMapIntensity:1.25}),
+  frame: new THREE.MeshStandardMaterial({color:0x55504a, roughness:.5,  metalness:.3}),
+  sash:  new THREE.MeshStandardMaterial({color:0x26272a, roughness:.5,  metalness:.35}),
+  door:  new THREE.MeshStandardMaterial({color:0x30353b, roughness:.45, metalness:.4}),
   steel: new THREE.MeshStandardMaterial({color:0x8a8f93, roughness:.45, metalness:.65}),
-  parapet:new THREE.MeshStandardMaterial({color:0xc9c2b4, roughness:.8}),
+  steelDark:new THREE.MeshStandardMaterial({color:0x34373c, roughness:.5, metalness:.6}),
+  parapet:new THREE.MeshStandardMaterial({color:0xb0a99c, roughness:.85}),
+  cap:   new THREE.MeshStandardMaterial({color:0xcfcabd, roughness:.7}),
+  concrete:new THREE.MeshStandardMaterial({color:0x9c968b, roughness:.9}),
+  roofDeck:new THREE.MeshStandardMaterial({map:roofDeckTex(), roughness:.85, metalness:.04}),
+  gas:   new THREE.MeshStandardMaterial({color:0xe0a81e, roughness:.55, metalness:.25}),
+  stainless:new THREE.MeshStandardMaterial({color:0xc7ccd0, roughness:.28, metalness:.85, envMapIntensity:1.2}),
+  alu:   new THREE.MeshStandardMaterial({color:0xe9eae6, roughness:.4,  metalness:.3}),
+  acbody:new THREE.MeshStandardMaterial({map:louverTex(0xd7d9d6), roughness:.6, metalness:.2}),
+  louver:new THREE.MeshStandardMaterial({map:louverTex(0xbfc2c4), roughness:.6, metalness:.25}),
+  cable: new THREE.MeshStandardMaterial({color:0x1c1d1f, roughness:.7}),
+  meter: new THREE.MeshStandardMaterial({color:0xb7b3ab, roughness:.7, metalness:.15}),
+  corrRoof:new THREE.MeshStandardMaterial({map:corrTex(0x8f9296), roughness:.7, metalness:.35}),
+  woodPost:new THREE.MeshStandardMaterial({color:0x6b4a2c, roughness:.85}),
 };
 // 4그룹(zone) 색 계열 — 같은 그룹은 같은 색의 명도만 다르게, 그룹끼리 다른 색. (형광 느낌 위해 밝은 emissive)
 const ZONE_PAL = {
@@ -728,6 +904,34 @@ function box(w,h,d, mat, x,y,z, parent=building, shadow=true){
   m.position.set(x,y,z); m.castShadow=shadow; m.receiveShadow=true; parent.add(m); return m;
 }
 
+/* ── 돌하우스: 벽 조각별 텍스처 스케일 헬퍼 + 내부 재질 팔레트 ──
+   통짜 벽을 조각으로 나누면 BoxGeometry UV가 조각마다 0..1로 리셋돼 벽돌이 커진다.
+   → 원본 map을 clone하고 조각 폭/높이에 비례해 repeat를 조정, 밖에서 스케일 동일. */
+function tiledMat(baseMat, rx, ry){
+  const t = baseMat.map.clone(); t.needsUpdate = true;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
+  return new THREE.MeshStandardMaterial({map:t, roughness:baseMat.roughness, metalness:baseMat.metalness});
+}
+const IM = {
+  concrete: new THREE.MeshStandardMaterial({color:0xd8d3c7, roughness:.92, metalness:.02}), // 밝은 콘크리트(바닥/천장)
+  vinyl:    new THREE.MeshStandardMaterial({color:0xcdbb98, roughness:.85}),                 // 장판
+  tileFl:   new THREE.MeshStandardMaterial({color:0xe7e3da, roughness:.7}),                  // 점포 바닥
+  gyp:      new THREE.MeshStandardMaterial({color:0xe9e5db, roughness:.95}),                 // 석고 칸막이
+  bedFrame: new THREE.MeshStandardMaterial({color:0x7c5a3c, roughness:.8}),                  // 침대 프레임
+  mattress: new THREE.MeshStandardMaterial({color:0xf1ede3, roughness:.95}),                 // 매트리스
+  duvet:    new THREE.MeshStandardMaterial({color:0x9fb2c4, roughness:.95}),                 // 이불
+  closet:   new THREE.MeshStandardMaterial({color:0xcabfa8, roughness:.7}),                  // 옷장
+  counter:  new THREE.MeshStandardMaterial({color:0x9aa0a4, roughness:.4, metalness:.5}),    // 카운터/싱크
+  wood:     new THREE.MeshStandardMaterial({color:0x9a6b3f, roughness:.85}),                 // 선반/목재
+  fridge:   new THREE.MeshStandardMaterial({color:0xeceae4, roughness:.5, metalness:.2}),    // 냉장고
+  curtain2: new THREE.MeshStandardMaterial({color:0xb7c3cc, roughness:.95}),                 // 실내 커튼
+  fixture:  new THREE.MeshStandardMaterial({color:0xf3f1ec, roughness:.6}),                  // 위생기구
+};
+// 돌하우스 개폐 상태 — wallStruct:벽/유리(개폐 시 숨김), wallProxy:그 벽면의 위반 외부 프록시
+const wallStruct = { 'use-change':[], 'unit-split':[] };
+const wallProxy  = { 'use-change':[], 'unit-split':[] };
+let openedRoom = null;
+
 /* ── 건물 본체: 3층 다가구주택 ───────────────────────────
    footprint 상부 W=16,D=11 / 층고 FH=3.6 / 1층은 인셋(필로티/오버행) */
 const W=16, D=11, FH=3.6;
@@ -735,13 +939,41 @@ const y1=FH/2, y2=FH*1.5, y3=FH*2.5;        // 각 층 중심 y
 const roofY = FH*3;                           // 옥상 슬래브 윗면 근처
 // 1층(인셋) + 필로티 기둥
 const W1=W-2.2, D1=D-2.2;
-box(W1, FH, D1, M.wall, 0, y1, 0);
+const WT=0.3;                                            // 돌하우스 벽두께
+// 1층 — 돌하우스 셸: 후·좌·우 벽 + 점포 전면은 프레임형 개구부(유리·커튼이 채움).
+const stone1=tiledMat(M.base1,4,1.5);                    // 넓은 면(후/좌/우) — 원본과 동일 스케일
+box(W1, FH, WT, stone1, 0, y1, -D1/2+WT/2);              // 후면
+box(WT, FH, D1, stone1, -W1/2+WT/2, y1, 0);              // 좌측
+box(WT, FH, D1, stone1, W1/2-WT/2, y1, 0);               // 우측
+// 개구부 x[0.75,6.6], y[0.2,2.45] — 점포유리(x0.7~5.3)+커튼유리(use-change,x4.1~7.1)가 덮음
+const flw=0.75+W1/2, flc=(-W1/2+0.75)/2;                 // 전면 좌(현관측) 벽
+box(flw, FH, WT, tiledMat(M.base1,4*flw/W1,1.5), flc, y1, D1/2-WT/2);
+const olw=6.6-0.75, olc=(0.75+6.6)/2;                    // 개구부 좌우 폭·중심
+box(olw, FH-2.45, WT, tiledMat(M.base1,4*olw/W1,1.5*(FH-2.45)/FH), olc, (2.45+FH)/2, D1/2-WT/2); // 상인방 y[2.45,3.6]
+box(olw, 0.2, WT, tiledMat(M.base1,4*olw/W1,0.14), olc, 0.1, D1/2-WT/2);                          // 문지방 y[0,0.2]
+box(W1-2*WT, 0.1, D1-2*WT, IM.tileFl, 0, 0.06, 0);       // 점포 바닥
+const FLOOR1=0.11;                                       // 1층 가구 안착 높이
 // 슬래브(층 사이 띠) — 살짝 오버행
 function slab(y){ box(W+0.5, 0.45, D+0.5, M.slab, 0, y, 0); }
 slab(FH); slab(FH*2);
-// 2·3층 본체
-box(W, FH, D, M.wall2, 0, y2, 0);
-box(W, FH, D, M.wall, 0, y3, 0);
+// 2·3층 본체 — 돌하우스 셸(외관 동일, 안쪽은 개폐용으로 분해)
+const mat2=tiledMat(M.wall2,4,1.6), mat2h=tiledMat(M.wall2,2,1.6), mat3=tiledMat(M.wall,4,1.6);
+// 2층: 후·좌·우 + 전면 2장(좌=개폐 대상 / 우)
+box(W, FH, WT, mat2, 0, y2, -D/2+WT/2);                  // 후면
+box(WT, FH, D, mat2, -W/2+WT/2, y2, 0);                  // 좌측
+box(WT, FH, D, mat2, W/2-WT/2, y2, 0);                   // 우측
+const wall11 = box(W/2, FH, WT, mat2h, -W/4, y2, D/2-WT/2); // 전면 좌(x:-W/2~0, 개폐 대상)
+box(W/2, FH, WT, mat2h, W/4, y2, D/2-WT/2);              // 전면 우
+wallStruct['unit-split'].push(wall11);
+// 3층: 후·좌·우 + 전면 통짜
+box(W, FH, WT, mat3, 0, y3, -D/2+WT/2);
+box(WT, FH, D, mat3, -W/2+WT/2, y3, 0);
+box(WT, FH, D, mat3, W/2-WT/2, y3, 0);
+box(W, FH, WT, mat3, 0, y3, D/2-WT/2);
+// 내부 층 바닥판(밝은 콘크리트) — 2층 바닥 / 3층 바닥(=2층 천장). 외부 띠 슬래브 위에 안착.
+box(W-2*WT, 0.12, D-2*WT, IM.concrete, 0, FH+0.33, 0);
+box(W-2*WT, 0.12, D-2*WT, IM.concrete, 0, FH*2+0.33, 0);
+const FLOOR2=FH+0.39;                                    // 2층 바닥 윗면(가구 안착) ≈ 3.99
 // 옥상 슬래브 + 파라펫
 box(W+0.5, 0.5, D+0.5, M.slab, 0, roofY+0.25, 0);
 [[0,(D)/2],[0,-(D)/2]].forEach(([x,z])=> box(W+0.5,0.7,0.3,M.parapet,x,roofY+0.6,z));
@@ -750,42 +982,88 @@ box(W+0.5, 0.5, D+0.5, M.slab, 0, roofY+0.25, 0);
 [-5.4,-1.8,1.8,5.4].forEach(x=> box(0.5, FH, 0.5, M.col, x, y1, D1/2+0.55));
 // 1층 출입문 + 점포 유리
 box(1.5, 2.5, 0.2, M.door, -3.2, 1.25, D1/2+0.05);
-box(4.6, 2.4, 0.2, M.glass, 3.0, 1.3, D1/2+0.05);
-box(4.8, 0.2, 0.25, M.frame, 3.0, 2.55, D1/2+0.06);
+const store10g = box(4.6, 2.4, 0.2, M.glass, 3.0, 1.3, D1/2+0.05);   // 점포 유리(개폐 대상)
+const store10f = box(4.8, 0.2, 0.25, M.frame, 3.0, 2.55, D1/2+0.06); // 점포 상틀(개폐 대상)
+wallStruct['use-change'].push(store10g, store10f);
 
 // 창문 그리드(전/측/후)
-function windowRow(y, count, spanX, z, w=1.5, h=1.9){
+// 어두운 새시 프레임(4변 바) + 유리가 벽 안쪽으로 살짝 들어간(인셋) 느낌
+function windowRow(y, count, spanX, z, w=1.5, h=1.9, collect=null){
+  const s=Math.sign(z), gz=z - s*0.03, fz=z + s*0.03;   // gz:유리(약간 인셋) fz:새시(살짝 돌출)
   for(let i=0;i<count;i++){
     const x = -spanX/2 + spanX*(i/(count-1));
-    box(w, h, 0.16, M.glass, x, y, z);
-    box(w+0.18, h+0.18, 0.1, M.frame, x, y, z-0.04, building, false);
+    const g0=box(w, h, 0.06, M.glass, x, y, gz);
+    const s1=box(w+0.14, 0.1, 0.12, M.sash, x, y+h/2+0.04, fz, building, false);
+    const s2=box(w+0.14, 0.1, 0.12, M.sash, x, y-h/2-0.04, fz, building, false);
+    const s3=box(0.1, h+0.06, 0.12, M.sash, x-w/2-0.02, y, fz, building, false);
+    const s4=box(0.1, h+0.06, 0.12, M.sash, x+w/2+0.02, y, fz, building, false);
+    if(collect) collect.push({x, meshes:[g0,s1,s2,s3,s4]});
   }
 }
 function windowRowZ(x, y, count, spanZ, w=1.5, h=1.9){
+  const s=Math.sign(x), gx=x - s*0.03, fx=x + s*0.03;
   for(let i=0;i<count;i++){
     const z = -spanZ/2 + spanZ*(i/(count-1));
-    box(0.16, h, w, M.glass, x, y, z);
-    box(0.1, h+0.18, w+0.18, M.frame, x-0.04, y, z, building, false);
+    box(0.06, h, w, M.glass, gx, y, z);
+    box(0.12, 0.1, w+0.14, M.sash, fx, y+h/2+0.04, z, building, false);
+    box(0.12, 0.1, w+0.14, M.sash, fx, y-h/2-0.04, z, building, false);
+    box(0.12, h+0.06, 0.1, M.sash, fx, y, z-w/2-0.02, building, false);
+    box(0.12, h+0.06, 0.1, M.sash, fx, y, z+w/2+0.02, building, false);
   }
 }
 [y2,y3].forEach(y=>{
-  windowRow(y, 4, 12, D/2+0.05);     // 전면 +z
+  const col = (y===y2) ? [] : null;  // 2층 전면 창만 수집(좌측 개폐 대상 x<0)
+  windowRow(y, 4, 12, D/2+0.05, 1.5, 1.9, col);  // 전면 +z
   windowRow(y, 4, 12, -D/2-0.05);    // 후면 -z
   windowRowZ(W/2+0.05, y, 3, 7.5);   // 우 +x
   windowRowZ(-W/2-0.05, y, 3, 7.5);  // 좌 -x
+  if(col) col.forEach(o=>{ if(o.x<0) wallStruct['unit-split'].push(...o.meshes); });
 });
+
+/* ── 옥상 마감: 녹색 우레탄 방수 + 파라펫 두겁(캡) + 스테인리스 물탱크 ── */
+box(W, 0.06, D, M.roofDeck, 0, roofY+0.53, 0);                                  // 녹색 방수면
+box(W+0.7,0.1,0.42,M.cap, 0, roofY+1.0,  D/2); box(W+0.7,0.1,0.42,M.cap, 0, roofY+1.0, -D/2);  // 두겁(전/후)
+box(0.42,0.1,D+0.7,M.cap,  W/2, roofY+1.0, 0); box(0.42,0.1,D+0.7,M.cap, -W/2, roofY+1.0, 0);   // 두겁(좌/우)
+box(1.9,0.25,1.9,M.concrete, 5.6, roofY+0.68, -3.2);                            // 물탱크 받침
+(function(){
+  const t=new THREE.Mesh(new THREE.CylinderGeometry(0.85,0.85,1.6,20), M.stainless);
+  t.position.set(5.6, roofY+1.6, -3.2); t.castShadow=true; t.receiveShadow=true; building.add(t);
+  const lid=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.18,14), M.stainless);
+  lid.position.set(5.6, roofY+2.5, -3.2); lid.castShadow=true; building.add(lid);
+})();
+
+/* ── 생활 소품: 벽걸이 실외기 · 노란 가스배관 입상 · 현관 계단 · 케이블 ── */
+box(1.0,0.66,0.36, M.acbody, 4.0,  y2+0.2, -D/2-0.2);   // 후면 2F 실외기 — 창문(x=2,6) 사이 벽기둥
+box(1.0,0.66,0.36, M.acbody, -4.0, y3+0.2, -D/2-0.2);   // 후면 3F 실외기 — 창문(x=-6,-2) 사이 벽기둥
+box(0.36,0.66,1.0, M.acbody, -W/2-0.2, y2+0.2, 1.8);    // 좌측 2F 실외기
+(function(){                                             // 노란 가스배관 입상(세로 + 층별 가로 분기)
+  const x=-W/2-0.14;
+  const riser=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09, roofY-0.2, 12), M.gas);
+  riser.position.set(x, (roofY-0.2)/2+0.2, -3.6); riser.castShadow=true; building.add(riser);
+  [y1,y2,y3].forEach(y=>{ const b=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,3.0,10), M.gas);
+    b.rotation.x=Math.PI/2; b.position.set(x, y, -3.6+1.5); b.castShadow=true; building.add(b); });
+})();
+box(2.2,0.18,0.6, M.concrete, -3.2, 0.09, D1/2+0.85);   // 현관 계단 1단
+box(1.7,0.36,0.4, M.concrete, -3.2, 0.18, D1/2+0.52);   // 현관 계단 2단
+(function(){                                             // 측면 케이블 몇 가닥
+  [-2.7,-2.35].forEach(zz=>{ const cbl=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,6.6,6), M.cable);
+    cbl.position.set(-W/2-0.16, roofY-3.3, zz); cbl.rotation.z=0.06; building.add(cbl); });
+})();
 
 // 옥상 12시(뒤쪽) — 회사명 깨알 홍보. 상공에서 내려다볼 때 읽히게 바닥에 눕혀 새김.
 (function rooftopBrand(){
   const cv=document.createElement('canvas'); cv.width=1024; cv.height=180;
   const c=cv.getContext('2d');
-  c.fillStyle='rgba(74,68,58,0.9)';
   c.textAlign='center'; c.textBaseline='middle';
   // 간판 텍스트 — 캔버스 폭(1024)을 넘치면 자동 축소(폰트·OS별 글자폭 차이로 잘림 방지).
   const roofLabel='인터월드엔지니어링건축사사무소';
   const roofFont=s=>'800 '+s+'px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   let roofFs=104; c.font=roofFont(roofFs);
   while(c.measureText(roofLabel).width>cv.width-40 && roofFs>10){ roofFs-=2; c.font=roofFont(roofFs); }
+  // 녹색 방수면 위 가독성: 흰 글자 + 옅은 외곽선
+  c.strokeStyle='rgba(0,0,0,0.3)'; c.lineWidth=8; c.lineJoin='round';
+  c.strokeText(roofLabel, cv.width/2, cv.height/2+6);
+  c.fillStyle='#ffffff';
   c.fillText(roofLabel, cv.width/2, cv.height/2+6);
   const tex=new THREE.CanvasTexture(cv); tex.anisotropy=8;
   const m=new THREE.Mesh(
@@ -793,7 +1071,8 @@ function windowRowZ(x, y, count, spanZ, w=1.5, h=1.9){
     new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false})
   );
   m.rotation.x=-Math.PI/2;          // 옥상 바닥에 눕힘
-  m.position.set(1.1, roofY+0.56, -4.0); // 12시(뒤쪽), 오른쪽으로 이동(3번 구조물 가림 회피)
+  // 방수면 상단(roofY+0.56)과 같은 높이면 z-fighting으로 깜빡임 → 살짝 띄운다
+  m.position.set(1.1, roofY+0.585, -4.0); // 12시(뒤쪽), 오른쪽으로 이동(3번 구조물 가림 회피)
   m.renderOrder=2;
   building.add(m);
 })();
@@ -822,98 +1101,254 @@ function windowRowZ(x, y, count, spanZ, w=1.5, h=1.9){
   building.add(m);
 })();
 
-/* ===================== 위반 사례 메쉬 + 핀 ===================== */
+/* ===================== 위반 사례 메쉬 + 핀 =====================
+   각 위반 그룹은 두 벌의 재질을 가진다.
+   · realMats : 실물 재질(기본 표시). emissive는 zone 색으로 프리셋(기본 세기 0) → hover/select 시 발광.
+   · hlMat    : "위반부위 강조" ON일 때 스왑되는 zone 단색 강조 재질(기존 vmat 동작).
+   NEUTRAL은 강조 ON + 필터 밖일 때 쓰는 중립 골조색(공유).                         */
 const pickables = [];          // 레이캐스트 대상
-const vGroups = {};            // id -> {meshes:[], pin, data, anchor}
-function vmat(id){
-  const c = VC[id];
-  return new THREE.MeshStandardMaterial({color:c.color, emissive:c.em, emissiveIntensity:0.0, roughness:.55, metalness:.1});
-}
+const vGroups = {};            // id -> {meshes, pin, data, anchor, hlMat, realMats, el}
+const NEUTRAL = new THREE.MeshStandardMaterial({color:0xcabfb0, roughness:.75, metalness:.05});
 function addV(id, anchor, builder){
   const data = VMAP[id];
   const g = new THREE.Group(); building.add(g);
-  const mat = vmat(id);
-  const meshes = builder(g, mat);
-  meshes.forEach(m=>{ m.castShadow=true; m.receiveShadow=true; m.userData.vid=id; pickables.push(m); });
+  const c = VC[id];
+  const realMats = [];
+  const hlMat = new THREE.MeshStandardMaterial({color:c.color, emissive:c.em, emissiveIntensity:0.0, roughness:.55, metalness:.1});
+  // rm(opts): 실물 재질 생성 + zone emissive 프리셋 + realMats 등록(발광 대상)
+  const rm = (opts={})=>{
+    const m = new THREE.MeshStandardMaterial(Object.assign({roughness:.8, metalness:.05}, opts));
+    m.emissive = new THREE.Color(c.em); m.emissiveIntensity = 0.0; realMats.push(m); return m;
+  };
+  const meshes = builder(g, rm);
+  meshes.forEach(m=>{ m.castShadow=true; m.receiveShadow=true; m.userData.vid=id; m.userData.realMat=m.material; pickables.push(m); });
   // 핀 (그룹 색)
   const el = document.createElement('div');
   el.className = 'pin';
-  el.style.setProperty('--c', VC[id].hex);
+  el.style.setProperty('--c', c.hex);
   el.innerHTML = `<div class="dot">${data.no}</div><div class="tip">${data.title}</div>`;
   el.addEventListener('click', (e)=>{ e.stopPropagation(); select(id, true); });
   const pin = new CSS2DObject(el); pin.position.copy(anchor); scene.add(pin);
-  vGroups[id] = {meshes, pin, data, anchor, mat, el};
+  vGroups[id] = {meshes, pin, data, anchor, hlMat, realMats, el};
 }
 const V = (w,h,d,g,mat,x,y,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z); g.add(m); return m; };
 
-// 01 옥탑방
-addV('roof-room', new THREE.Vector3(3.4, roofY+3.4, 1.2), (g,mat)=>[ V(3.6,2.6,3.2,g,mat,3.4,roofY+1.8,1.0) ]);
-// 02 파고라(지붕 슬랫 + 기둥)
-addV('roof-pergola', new THREE.Vector3(-3.6, roofY+2.6, 2.0), (g,mat)=>{
-  const arr=[]; arr.push(V(4.2,0.18,3.2,g,mat,-3.6,roofY+1.9,1.8));
-  for(let i=0;i<6;i++) arr.push(V(4.2,0.1,0.18,g,mat,-3.6,roofY+2.0,0.4+i*0.5));
-  [[-5.4,0.4],[-1.8,0.4],[-5.4,3.0],[-1.8,3.0]].forEach(([x,z])=>arr.push(V(0.18,2.0,0.18,g,mat,x,roofY+1.0,z)));
+// 01 옥탑방 — 청회색 골판 컨테이너 + 문·창
+addV('roof-room', new THREE.Vector3(3.4, roofY+3.4, 1.2), (g,rm)=>{
+  const body=rm({map:corrTex(0x8996a0), roughness:.62, metalness:.35});
+  const arr=[ V(3.6,2.6,3.2,g,body,3.4,roofY+1.8,1.0) ];
+  arr.push(V(0.95,1.75,0.1,g,M.door, 2.7, roofY+1.35, 2.66));   // 문(전면 z=2.6)
+  arr.push(V(0.75,0.65,0.1,g,M.glass, 4.1, roofY+2.15, 2.66));  // 작은 창
   return arr;
 });
-// 03 계단탑·물탱크실 전용
-addV('roof-service', new THREE.Vector3(-4.0, roofY+3.6, -2.0), (g,mat)=>[ V(2.6,3.0,2.6,g,mat,-4.0,roofY+2.0,-2.0) ]);
-// 04 발코니 확장(전면 3F 돌출)
-addV('balcony', new THREE.Vector3(4.6, y3, D/2+1.7), (g,mat)=>{
-  const arr=[ V(3.4,2.3,1.5,g,mat,4.6,y3,D/2+0.8) ];
-  arr.push(V(3.6,0.15,1.7,g,M.frame,4.6,y3-1.2,D/2+0.9));
+// 02 파고라 — 목재 브라운 슬랫 + 짙은 철재 기둥
+addV('roof-pergola', new THREE.Vector3(-3.6, roofY+2.6, 2.0), (g,rm)=>{
+  const wood=rm({map:woodTex(0x8a5a34), roughness:.85});
+  const arr=[]; arr.push(V(4.2,0.14,0.16,g,wood,-3.6,roofY+2.0,0.35)); arr.push(V(4.2,0.14,0.16,g,wood,-3.6,roofY+2.0,3.05)); // 보
+  for(let i=0;i<7;i++) arr.push(V(4.2,0.1,0.14,g,wood,-3.6,roofY+2.05,0.4+i*0.44));  // 슬랫
+  [[-5.4,0.4],[-1.8,0.4],[-5.4,3.0],[-1.8,3.0]].forEach(([x,z])=>arr.push(V(0.16,2.1,0.16,g,M.steelDark,x,roofY+1.0,z)));
   return arr;
 });
-// 05 샷시·패널(우측 2F 확장)
-addV('panel', new THREE.Vector3(W/2+1.4, y2, -1.0), (g,mat)=>[ V(1.5,3.0,4.2,g,mat,W/2+0.7,y2,-1.0) ]);
-// 06 캐노피(전면 1층 입구 위 오버행)
-addV('canopy', new THREE.Vector3(-3.2, FH+0.2, D1/2+1.9), (g,mat)=>[ V(4.0,0.28,2.2,g,mat,-3.2,FH-0.1,D1/2+1.4) ]);
-// 07 외부 철골계단(우측면, 지그재그)
-addV('stair', new THREE.Vector3(W/2+2.2, FH*1.4, 2.2), (g,mat)=>{
+// 03 계단탑·물탱크실 전용 — 스타코 회색 + 문·환기구
+addV('roof-service', new THREE.Vector3(-4.0, roofY+3.6, -2.0), (g,rm)=>{
+  const wall=rm({map:stuccoTex(0xb9b3a6), roughness:.9});
+  const arr=[ V(2.6,3.0,2.6,g,wall,-4.0,roofY+2.0,-2.0) ];
+  arr.push(V(0.9,1.9,0.1,g,M.door,-4.0,roofY+1.45,-0.64));       // 문(+z 면 z=-0.7)
+  arr.push(V(0.7,0.5,0.1,g,M.louver,-3.2,roofY+2.9,-0.64));      // 환기구
+  return arr;
+});
+// 04 발코니 확장 — 흰 알루미늄 프레임 격자 + 투명 유리 패널
+addV('balcony', new THREE.Vector3(4.6, y3, D/2+1.7), (g,rm)=>{
+  const glass=rm({color:0x35505c, roughness:.15, metalness:.5, envMapIntensity:1.1, transparent:true, opacity:0.72});
+  const arr=[ V(3.3,2.2,1.4,g,glass,4.6,y3,D/2+0.85) ];
+  arr.push(V(3.6,0.16,1.7,g,M.concrete,4.6,y3-1.2,D/2+0.9));     // 바닥 슬래브
+  [4.6-1.65,4.6,4.6+1.65].forEach(x=>arr.push(V(0.09,2.3,1.5,g,M.alu,x,y3,D/2+0.85)));   // 세로 프레임
+  [y3-1.15,y3,y3+1.15].forEach(y=>arr.push(V(3.35,0.09,1.5,g,M.alu,4.6,y,D/2+0.85)));     // 가로 프레임
+  return arr;
+});
+// 05 샷시·패널 — 흰/파랑 샌드위치판넬(가로 이음선) + 하부 브래킷 2개
+addV('panel', new THREE.Vector3(W/2+1.4, y2, -1.0), (g,rm)=>{
+  const pan=rm({map:panelTex(0xdfe3e6,'#8aa6c4'), roughness:.7});
+  const arr=[ V(1.5,3.0,4.2,g,pan,W/2+0.7,y2,-1.0) ];
+  [-1.6,1.0].forEach(z=>arr.push(V(0.7,0.12,0.5,g,M.steelDark,W/2+0.4,y2-1.5,z)));        // 브래킷
+  return arr;
+});
+// 06 캐노피 — 녹/백 줄무늬 어닝 + 지지 브래킷
+addV('canopy', new THREE.Vector3(-3.2, FH+0.2, D1/2+1.9), (g,rm)=>{
+  const awn=rm({map:awningTex('#2f7d4e','#eef0ea'), roughness:.85, metalness:0});
+  const arr=[ V(4.0,0.22,2.2,g,awn,-3.2,FH-0.1,D1/2+1.4) ];
+  arr.push(V(4.0,0.28,0.08,g,awn,-3.2,FH-0.2,D1/2+2.46));                                  // 앞단 프릴
+  [-1.7,1.7].forEach(dx=>arr.push(V(0.08,0.5,1.4,g,M.steelDark,-3.2+dx,FH-0.25,D1/2+0.9)));
+  return arr;
+});
+// 07 외부 철골계단 — 짙은 차콜 도장 철재(지그재그)
+addV('stair', new THREE.Vector3(W/2+2.2, FH*1.4, 2.2), (g,rm)=>{
+  const steel=rm({color:0x33363b, roughness:.5, metalness:.6});
   const arr=[]; let x=W/2+1.4;
-  for(let i=0;i<10;i++) arr.push(V(1.6,0.16,0.7,g,mat,x,0.5+i*0.62,3.4-i*0.42));
-  arr.push(V(1.7,0.14,1.4,g,mat,x,3.1,-0.4)); arr.push(V(1.7,0.14,1.4,g,mat,x,6.3,2.2));
-  arr.push(V(0.12,7.5,0.12,g,M.steel,x+0.7,3.8,2.0)); arr.push(V(0.12,7.5,0.12,g,M.steel,x-0.7,3.8,2.0));
+  for(let i=0;i<10;i++) arr.push(V(1.6,0.14,0.7,g,steel,x,0.5+i*0.62,3.4-i*0.42));
+  arr.push(V(1.7,0.14,1.4,g,steel,x,3.1,-0.4)); arr.push(V(1.7,0.14,1.4,g,steel,x,6.3,2.2));
+  arr.push(V(0.1,7.5,0.1,g,steel,x+0.75,3.8,2.0)); arr.push(V(0.1,7.5,0.1,g,steel,x-0.75,3.8,2.0)); // 스트링거
+  arr.push(V(0.06,0.9,7.0,g,steel,x+0.8,4.4,1.2));                                         // 난간
   return arr;
 });
-// 08 필로티 실내화(전면 좌측 베이를 벽으로 막음)
-addV('piloti', new THREE.Vector3(-5.4, FH*0.5, D1/2+0.6), (g,mat)=>[ V(3.2,FH-0.3,0.3,g,mat,-5.4,y1,D1/2+0.4) ]);
-// 09 주차장 창고(전면 마당 컨테이너)
-addV('parking-use', new THREE.Vector3(-6.5, 1.6, D/2+3.0), (g,mat)=>[ V(2.6,2.0,3.0,g,mat,-6.5,1.0,D/2+2.6) ]);
-// 10 근생→주거 용도변경(1F 전면 우측 패널)
-addV('use-change', new THREE.Vector3(5.6, FH*0.62, D1/2+0.5), (g,mat)=>[ V(3.0,2.4,0.22,g,mat,5.6,1.4,D1/2+0.12) ]);
-// 11 세대 쪼개기(2F 전면 좌측 — 계량기/칸막이 표식)
-addV('unit-split', new THREE.Vector3(-5.2, y2, D/2+0.6), (g,mat)=>{
-  const arr=[ V(3.0,2.0,0.22,g,mat,-5.2,y2,D/2+0.12) ];
-  for(let i=0;i<3;i++) arr.push(V(0.4,0.6,0.3,g,M.frame,-6.2+i*0.9,y2-0.2,D/2+0.28));
+// 08 필로티 실내화 — 판넬 인필 벽 + 작은 창
+addV('piloti', new THREE.Vector3(-5.4, FH*0.5, D1/2+0.6), (g,rm)=>{
+  const pan=rm({map:panelTex(0xd8d2c4,'#a89a82'), roughness:.8});
+  const arr=[ V(3.2,FH-0.3,0.3,g,pan,-5.4,y1,D1/2+0.4) ];
+  arr.push(V(0.9,0.8,0.08,g,M.glass,-5.4,y1+0.4,D1/2+0.57));
   return arr;
 });
-// 12 마당·조경 잠식(전면 우측, 지붕 있는 평상/창고 — 대지 위 구조물로 또렷이)
-addV('site-cover', new THREE.Vector3(6.3, 1.9, D/2+1.7), (g,mat)=>{
-  const arr=[ V(2.8,1.3,2.2,g,mat,6.3,0.85,D/2+1.5) ];
-  arr.push(V(3.1,0.22,2.5,g,M.frame,6.3,1.6,D/2+1.5));   // 지붕
+// 09 주차장 창고 — 녹슨 주황/갈색 골판 컨테이너 + 문
+addV('parking-use', new THREE.Vector3(-6.5, 1.6, D/2+3.0), (g,rm)=>{
+  const body=rm({map:corrTex(0xb5673a), roughness:.7, metalness:.3});
+  const arr=[ V(2.6,2.0,3.0,g,body,-6.5,1.0,D/2+2.6) ];
+  arr.push(V(1.2,1.6,0.08,g,M.door,-6.5,0.85,D/2+2.6+1.54));    // 문(전면)
   return arr;
 });
+// 10 근생→주거 용도변경 — (외부)유리 뒤 커튼+창문형AC / (내부)점포를 원룸으로
+addV('use-change', new THREE.Vector3(5.6, FH*0.62, D1/2+0.5), (g,rm)=>{
+  const glass=rm({map:curtainTex(), roughness:.25, metalness:.3, envMapIntensity:.8});
+  const arr=[];
+  const ex1=V(3.0,2.4,0.16,g,glass,5.6,1.4,D1/2+0.12);         // 유리 뒤 커튼
+  const ex2=V(3.15,2.55,0.1,g,M.sash,5.6,1.4,D1/2+0.06);       // 새시 프레임
+  const ex3=V(0.7,0.5,0.35,g,M.acbody,6.6,1.9,D1/2+0.2);       // 창문형 에어컨
+  arr.push(ex1,ex2,ex3); wallProxy['use-change'].push(ex1,ex2,ex3);
+  // ── 내부 위반 세트: 근생 점포 안을 원룸 주거로(돌하우스 개방 시 노출) ──
+  const iv=(w,h,d,mat,x,y,z)=>{ const m=V(w,h,d,g,mat,x,y,z); m.userData.interior=true; return m; };
+  const rBed=rm({color:0x7c5a3c,roughness:.8}), rMat=rm({color:0xf1ede3,roughness:.95}),
+        rDuv=rm({color:0x9fb2c4,roughness:.95}), rClo=rm({color:0xcabfa8,roughness:.7}),
+        rCur=rm({color:0xb7c3cc,roughness:.95}), rGyp=rm({color:0xe9e5db,roughness:.95}),
+        rFix=rm({color:0xf3f1ec,roughness:.6}), rCtr=rm({color:0x9aa0a4,roughness:.4,metalness:.5}),
+        rFrg=rm({color:0xeceae4,roughness:.5,metalness:.2});
+  const F1=FLOOR1;
+  arr.push(iv(1.7,0.4,2.4,rBed,2.4,F1+0.2,1.4));               // 침대 프레임
+  arr.push(iv(1.5,0.28,2.2,rMat,2.4,F1+0.45,1.4));             // 매트리스
+  arr.push(iv(1.3,0.16,1.6,rDuv,2.4,F1+0.62,1.7));             // 이불
+  arr.push(iv(1.3,0.16,0.4,rMat,2.4,F1+0.6,0.5));              // 베개
+  arr.push(iv(1.6,2.0,0.6,rClo,1.7,F1+1.0,-3.3));              // 옷장
+  arr.push(iv(5.0,0.35,0.08,rCur,3.6,F1+2.1,3.7));            // 점포유리 안쪽 커튼(위 밸런스)
+  arr.push(iv(1.4,2.0,0.08,rCur,1.5,F1+1.0,3.7));            // 커튼 좌(가운데는 열림 → 내부 노출)
+  arr.push(iv(1.4,2.0,0.08,rCur,5.7,F1+1.0,3.7));            // 커튼 우
+  arr.push(iv(0.12,2.2,1.9,rGyp,4.5,F1+1.1,-2.9));             // 간이 화장실 칸막이(측)
+  arr.push(iv(1.7,2.2,0.12,rGyp,5.35,F1+1.1,-1.95));           // 간이 화장실 칸막이(정)
+  arr.push(iv(0.45,0.5,0.6,rFix,5.7,F1+0.25,-2.9));            // 변기
+  arr.push(iv(0.55,0.85,1.6,rCtr,1.15,F1+0.42,-0.6));          // 소형 주방 싱크
+  arr.push(iv(0.55,1.2,0.55,rFrg,1.15,F1+0.6,0.7));            // 냉장고
+  arr.push(iv(0.4,0.5,1.4,rClo,1.15,F1+1.7,-0.6));             // 상부장
+  return arr;
+});
+// 11 세대 쪼개기 — (외부)칸막이흔적+계량기함 / (내부)한 세대를 경계벽으로 3칸 분할
+addV('unit-split', new THREE.Vector3(-5.2, y2, D/2+0.6), (g,rm)=>{
+  const wall=rm({map:stuccoTex(0xcdc7ba), roughness:.85});
+  const arr=[];
+  const p0=V(3.0,2.0,0.16,g,wall,-5.2,y2,D/2+0.08); arr.push(p0); wallProxy['unit-split'].push(p0);
+  for(let i=0;i<3;i++){ const x=-6.2+i*0.9;
+    const mb=V(0.42,0.62,0.28,g,M.meter,x,y2-0.2,D/2+0.24);     // 계량기함
+    const mg=V(0.3,0.32,0.06,g,M.glass,x,y2-0.1,D/2+0.39);      // 검은 창(계기)
+    arr.push(mb,mg); wallProxy['unit-split'].push(mb,mg); }
+  // ── 내부 위반 세트: 한 세대를 경계벽 2장으로 3칸 분할 + 칸마다 침대·주방·문 ──
+  const iv=(w,h,d,mat,x,y,z)=>{ const m=V(w,h,d,g,mat,x,y,z); m.userData.interior=true; return m; };
+  const rGyp=rm({color:0xe9e5db,roughness:.95}), rDoor=rm({color:0x30353b,roughness:.45,metalness:.4}),
+        rBed=rm({color:0x7c5a3c,roughness:.8}), rDuv=rm({color:0x9fb2c4,roughness:.95}),
+        rDuv2=rm({color:0xc4a6a0,roughness:.95}), rCtr=rm({color:0x9aa0a4,roughness:.4,metalness:.5}),
+        rFrg=rm({color:0xeceae4,roughness:.5,metalness:.2});
+  const F2=FLOOR2;
+  arr.push(iv(0.14,3.2,7.5,rGyp,-5.2,F2+1.6,0.2));             // 경계벽 1
+  arr.push(iv(0.14,3.2,7.5,rGyp,-2.7,F2+1.6,0.2));             // 경계벽 2
+  arr.push(iv(0.1,1.9,0.85,rDoor,-5.2,F2+0.95,3.55));          // 칸 문 1
+  arr.push(iv(0.1,1.9,0.85,rDoor,-2.7,F2+0.95,3.55));          // 칸 문 2
+  arr.push(iv(1.6,0.4,2.4,rBed,-3.9,F2+0.2,-2.6));             // 추가 침대 1
+  arr.push(iv(1.4,0.16,1.9,rDuv,-3.9,F2+0.42,-2.9));
+  arr.push(iv(1.6,0.4,2.4,rBed,-1.5,F2+0.2,-2.6));             // 추가 침대 2
+  arr.push(iv(1.4,0.16,1.9,rDuv2,-1.5,F2+0.42,-2.9));
+  arr.push(iv(0.9,0.85,0.5,rCtr,-3.4,F2+0.42,3.85));           // 추가 주방 1
+  arr.push(iv(0.5,1.1,0.5,rFrg,-3.05,F2+0.55,3.05));
+  arr.push(iv(0.9,0.85,0.5,rCtr,-1.0,F2+0.42,3.85));           // 추가 주방 2
+  arr.push(iv(0.5,1.1,0.5,rFrg,-0.65,F2+0.55,3.05));
+  return arr;
+});
+// 12 마당 평상/창고 — 목재 몸체 + 골판 지붕 + 목재 기둥
+addV('site-cover', new THREE.Vector3(6.3, 1.9, D/2+1.7), (g,rm)=>{
+  const body=rm({map:woodTex(0x9a6b3f), roughness:.85});
+  const arr=[ V(2.8,1.3,2.2,g,body,6.3,0.85,D/2+1.5) ];
+  arr.push(V(3.1,0.14,2.5,g,M.corrRoof,6.3,1.62,D/2+1.5));      // 골판 지붕
+  [[6.3-1.3,D/2+0.4],[6.3+1.3,D/2+0.4],[6.3-1.3,D/2+2.6],[6.3+1.3,D/2+2.6]].forEach(([x,z])=>arr.push(V(0.12,1.5,0.12,g,M.woodPost,x,0.75,z)));
+  return arr;
+});
+
+/* ── 돌하우스 내부 '적법' 베이스 가구(위반 아님·항상 존재, 벽에 가려 평소 안 보임) ──
+   위반 세트를 걷어내면(적법 모습) 이 원룸/점포가 드러난다. building에 직접 추가. */
+(function interiorBase(){
+  const F1=FLOOR1, F2=FLOOR2;
+  // 11번(2층 좌측) 베이스 = 원룸: 장판 + 침대1 + 주방블록1 + 옷장1
+  box(7.0,0.04,8.4, IM.vinyl, -4.0, F2+0.02, 0.2);            // 장판
+  box(2.0,0.35,3.0, IM.bedFrame, -6.4, F2+0.18, -3.0);        // 침대 프레임
+  box(1.8,0.28,2.8, IM.mattress, -6.4, F2+0.44, -3.0);        // 매트리스
+  box(1.6,0.16,1.9, IM.duvet,    -6.4, F2+0.6,  -3.4);        // 이불
+  box(1.6,0.18,0.5, IM.mattress, -6.4, F2+0.62, -1.6);        // 베개
+  box(0.55,0.9,2.4, IM.counter,  -7.35,F2+0.45,  1.9);        // 주방 싱크블록
+  box(0.5,0.06,2.4, IM.counter,  -7.35,F2+0.92,  1.9);        // 상판
+  box(0.4,0.6,2.0,  IM.closet,   -7.4, F2+2.0,   1.9);        // 상부장
+  box(1.6,2.0,0.6,  IM.closet,   -1.2, F2+1.0,  -4.55);       // 옷장
+  // 10번(1층 점포) 베이스 = 점포: 카운터 + 선반
+  box(1.4,0.95,0.6, IM.counter,  5.6, F1+0.48,  2.9);         // 계산 카운터
+  box(1.5,0.06,0.7, IM.wood,     5.6, F1+0.98,  2.9);         // 카운터 상판
+  box(4.6,2.4,0.35, IM.wood,     3.6, F1+1.2,  -3.7);         // 벽면 선반 몸체
+  for(let i=0;i<3;i++) box(4.5,0.05,0.34, IM.wood, 3.6, F1+0.55+i*0.8, -3.6);  // 선반 판
+  box(0.35,2.2,3.0, IM.wood,     6.35,F1+1.1,  -1.2);         // 측면 선반
+})();
 
 /* ===================== 상태 & 인터랙션 ===================== */
-let showRed=true, filter='all', selected=null, hovered=null;
+// 기본값 = 실물 재질(강조 OFF). ON일 때만 zone 단색으로 강조.
+let showRed=false, showLegal=false, filter='all', selected=null, hovered=null;
 const raycaster = new THREE.Raycaster(); const pointer = new THREE.Vector2();
 
-function setEmissive(id, v){ vGroups[id].mat.emissiveIntensity = v; }
+// 현재 발광을 적용할 활성 재질 세트(강조 ON→hlMat, 실물→realMats). 필터 밖이면 null.
+function activeMats(g){
+  const inFilter = (filter==='all' || g.data.zone===filter);
+  if(!inFilter) return null;
+  return showRed ? [g.hlMat] : g.realMats;
+}
+function setEmissive(id, v){ const a=activeMats(vGroups[id]); if(a) a.forEach(m=>m.emissiveIntensity=v); }
 function refresh(){
   Object.entries(vGroups).forEach(([id,g])=>{
+    if(showLegal){                      // 적법 모습(최우선) — 위반 구조물·핀 전부 숨김
+      g.meshes.forEach(m=> m.visible=false);
+      g.el.classList.add('hide');
+      g.el.classList.remove('sel');
+      return;
+    }
+    g.meshes.forEach(m=> m.visible=true); // 적법 모습 해제 시 메쉬 복원(이후 재질 스왑)
     const inFilter = (filter==='all' || g.data.zone===filter);
-    // 위반표시 off거나 필터 밖이면 → 골조색으로 빼고 핀 숨김(매칭만 또렷하게)
-    const neutral = !showRed || !inFilter;
-    g.mat.color.setHex(neutral ? 0xcabfb0 : VC[id].color);
-    setEmissive(id, neutral ? 0.0 : (id===selected ? 0.95 : 0.46));
-    g.mat.transparent = false; g.mat.opacity = 1;
-    g.el.classList.toggle('hide', neutral);
+    if(showRed && inFilter){            // 강조 ON + 필터 내 → zone 단색 강조
+      g.meshes.forEach(m=> m.material=g.hlMat);
+      g.hlMat.color.setHex(VC[id].color);
+      g.hlMat.emissiveIntensity = (id===selected ? 0.95 : 0.46);
+      g.el.classList.remove('hide');
+    } else if(showRed){                 // 강조 ON + 필터 밖 → 중립 골조색 + 핀 숨김
+      g.meshes.forEach(m=> m.material=NEUTRAL);
+      g.el.classList.add('hide');
+    } else {                            // 실물 모드 — 필터는 핀 표시만 제어
+      g.meshes.forEach(m=> m.material=m.userData.realMat);
+      g.realMats.forEach(m=> m.emissiveIntensity = (id===selected ? 0.9 : 0.0));
+      g.el.classList.toggle('hide', !inFilter);
+    }
     g.el.classList.toggle('sel', id===selected);
   });
   document.querySelectorAll('.chip').forEach(c=>{
     const z = VMAP[c.dataset.id].zone;
     c.classList.toggle('dim', filter!=='all' && z!==filter);
     c.classList.toggle('sel', c.dataset.id===selected);
+  });
+  applyRoom();                            // 열린 방 상태를 어떤 경로로도 유지(마지막에 적용)
+}
+// 돌하우스 개폐 적용 — 열린 방의 벽/유리(struct)와 그 벽면 위반 프록시(proxy)를 숨김.
+// struct는 항상 열림상태로만 제어(닫히면 표시), proxy는 열릴 때만 강제 숨김(닫힘 시 refresh가 관리).
+function applyRoom(){
+  ['use-change','unit-split'].forEach(id=>{
+    const open = (openedRoom===id);
+    wallStruct[id].forEach(m=>{ if(m) m.visible = !open; });
+    if(open) wallProxy[id].forEach(m=>{ if(m) m.visible = false; });
   });
 }
 
@@ -942,6 +1377,8 @@ window.addEventListener('message', function(e){ if(e.data && e.data.type==='cons
 // 로그인(상위창 OAuth) 왕복 후 복귀 시 팝업 재오픈
 (function(){ try{ const u=new URL(location.href); if(u.searchParams.get('consult')==='open'){ const m=sessionStorage.getItem('qna3d_consult_msg')||''; u.searchParams.delete('consult'); history.replaceState(null,'',u.pathname+u.search+u.hash); if(m) openConsult(m); } }catch(_){} })();
 function select(id, focus){
+  clearLegal();                          // 적법 모습 ON 상태에서 선택 시 자동 해제
+  if(openedRoom && openedRoom!==id) closeRoom();  // 다른 위반 선택 시 열린 방 닫기
   selected=id; const d=VMAP[id];
   document.getElementById('pBadge').className = 'p-badge '+(d.cat==='amber'?'amber':'');
   document.getElementById('pBadge').innerHTML = `<span class="no">${d.no}</span><span class="zone">${ZONE_LABEL[d.zone]}</span>`;
@@ -955,12 +1392,29 @@ function select(id, focus){
       <div class="ans"><div class="ans-in">${q.a}<div class="refs">${q.refs.map(r=>`<i>${r}</i>`).join('')}</div></div></div>`;
   }).join('');
   document.querySelectorAll('#pQa [data-qa]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));
+  // 내부 위반(10·11)은 선택 즉시 내부 보기로 진입 — 버튼은 '내부 닫기' 토글로 유지
+  const isRoom = (id in wallStruct);
+  pRoom.hidden = !isRoom;
   panel.classList.add('show'); hint.classList.add('gone');
   refresh();
-  if(focus){ const a=vGroups[id].anchor; flyTo(a); }
+  if(isRoom){
+    if(openedRoom!==id) openRoom(id);   // openRoom이 방 정면 시점으로 카메라 이동
+    syncRoomBtn();
+  } else if(focus){ const a=vGroups[id].anchor; flyTo(a); }
 }
-function deselect(){ selected=null; panel.classList.remove('show'); refresh(); fly={from:controls.target.clone(), to:HOME.tgt.clone(), t:0}; }
+function deselect(){ selected=null; panel.classList.remove('show'); closeRoom(); refresh(); fly={from:controls.target.clone(), to:HOME.tgt.clone(), t:0}; }
 document.getElementById('pClose').addEventListener('click', deselect);
+// '내부 보기' 버튼 — openRoom/closeRoom 토글 + 라벨 동기화
+const pRoom=document.getElementById('pRoom'), pRoomLabel=document.getElementById('pRoomLabel');
+function syncRoomBtn(){ const on=(openedRoom===selected); pRoom.classList.toggle('open',on); pRoomLabel.textContent=on?'내부 닫기':'내부 보기'; }
+pRoom.addEventListener('click', ()=>{
+  if(!(selected in wallStruct)) return;
+  if(openedRoom===selected) closeRoom(); else openRoom(selected);
+  syncRoomBtn();
+});
+// 전환 CTA — 현재 선택된 위반 제목을 상담 메시지에 반영(실사판과 동일 패턴). 계산 버튼은 <a href="/calc">.
+function consultMsg(d){ return `[3D 위반사례] ${d.title}\n· 흔한 적발 사례: ${d.short}\n\n위 위반 관련 양성화 상담을 요청합니다.`; }
+document.getElementById('pConsult').addEventListener('click', ()=>{ const d=VMAP[selected]; if(d) openConsult(consultMsg(d)); });
 
 // 카메라 포커스(타깃을 사례 쪽으로 살짝 이동)
 let fly=null;
@@ -972,24 +1426,37 @@ function flyTo(anchor){
 
 // 포인터
 function setPointer(e){ const r=canvas.getBoundingClientRect(); pointer.x=((e.clientX-r.left)/r.width)*2-1; pointer.y=-((e.clientY-r.top)/r.height)*2+1; }
+// 픽 헬퍼 — 숨긴 메쉬 제외 + 벽에 가린 내부 위반 메쉬(해당 방이 닫혀있으면) 제외
+function pick(){
+  const hits = raycaster.intersectObjects(pickables,false);
+  for(const h of hits){
+    const o=h.object;
+    if(o.visible===false) continue;
+    if(o.userData.interior && openedRoom!==o.userData.vid) continue;
+    return h;
+  }
+  return null;
+}
 canvas.addEventListener('pointermove', e=>{
+  if(showLegal){ canvas.style.cursor='grab'; hovered=null; return; } // 적법 모습 중엔 위반 메쉬 픽 금지
   setPointer(e);
   raycaster.setFromCamera(pointer,camera);
-  const hit = showRed ? raycaster.intersectObjects(pickables,false)[0] : null;
+  const hit = pick();
   const id = hit?.object.userData.vid || null;
   const valid = id && (filter==='all'||VMAP[id].zone===filter);
   canvas.style.cursor = valid ? 'pointer' : 'grab';
-  if(hovered && hovered!==selected) setEmissive(hovered, showRed && (filter==='all'||VMAP[hovered].zone===filter)?0.32:0);
+  if(hovered && hovered!==selected) setEmissive(hovered, showRed?0.46:0);
   hovered = valid ? id : null;
   if(hovered && hovered!==selected) setEmissive(hovered, 0.7);
 });
 let downXY=null;
 canvas.addEventListener('pointerdown', e=>{ downXY=[e.clientX,e.clientY]; });
 canvas.addEventListener('pointerup', e=>{
+  if(showLegal){ downXY=null; return; } // 적법 모습 중엔 클릭 선택/해제 차단
   if(!downXY) return; const moved=Math.abs(e.clientX-downXY[0])+Math.abs(e.clientY-downXY[1]);
-  downXY=null; if(moved>5||!showRed) return;
+  downXY=null; if(moved>5) return;
   setPointer(e); raycaster.setFromCamera(pointer,camera);
-  const hit = raycaster.intersectObjects(pickables,false)[0];
+  const hit = pick();
   const id = hit?.object.userData.vid;
   if(id && (filter==='all'||VMAP[id].zone===filter)) select(id,true); else if(!id) deselect();
 });
@@ -1018,8 +1485,17 @@ document.getElementById('filters').addEventListener('click',e=>{
   if(selected && filter!=='all' && VMAP[selected].zone!==filter) deselect(); else refresh();
 });
 const btnRed=document.getElementById('btnRed'), btnRot=document.getElementById('btnRotate');
-btnRed.addEventListener('click',()=>{ showRed=!showRed; btnRed.classList.toggle('on',showRed); btnRed.setAttribute('aria-pressed',showRed);
-  if(!showRed) deselect(); else refresh(); });
+const btnLegal=document.getElementById('btnLegal');
+// 적법 모습 OFF로 되돌리는 헬퍼(버튼 상태 동기화). select/btnRed에서 자동 해제에 재사용.
+function clearLegal(){ if(!showLegal) return; showLegal=false; btnLegal.classList.remove('on'); btnLegal.setAttribute('aria-pressed','false'); }
+btnLegal.addEventListener('click',()=>{
+  showLegal=!showLegal;
+  btnLegal.classList.toggle('on',showLegal);
+  btnLegal.setAttribute('aria-pressed',showLegal);
+  if(showLegal){ selected=null; panel.classList.remove('show'); hovered=null; toast('위반 구조물을 걷어낸 적법 상태입니다'); }
+  refresh();
+});
+btnRed.addEventListener('click',()=>{ clearLegal(); showRed=!showRed; btnRed.classList.toggle('on',showRed); btnRed.setAttribute('aria-pressed',showRed); refresh(); });
 btnRot.addEventListener('click',()=>{ controls.autoRotate=!controls.autoRotate; btnRot.classList.toggle('on',controls.autoRotate); btnRot.setAttribute('aria-pressed',controls.autoRotate); });
 document.getElementById('btnReset').addEventListener('click',()=>{
   fly={from:controls.target.clone(), to:HOME.tgt.clone(), t:0};
@@ -1038,6 +1514,26 @@ document.getElementById('btnReset').addEventListener('click',()=>{
 let flyCam = {from:new THREE.Vector3(30,26,38), to:HOME.pos.clone(), t:0};
 camera.position.copy(flyCam.from);
 const ease=t=>1-Math.pow(1-t,3);
+
+/* ── 돌하우스 개폐 컨트롤 ── */
+const ROOM_VIEW = {
+  'use-change': {pos:new THREE.Vector3(3.4, 3.6, 18.5), tgt:new THREE.Vector3(3.2, 1.3, 0.4)},
+  'unit-split': {pos:new THREE.Vector3(-3.6, 8.4, 21.0), tgt:new THREE.Vector3(-4.0, 5.4, 1.5)},
+};
+function flyView(pos, tgt){
+  flyCam = {from:camera.position.clone(), to:pos.clone(), t:0};
+  fly = {from:controls.target.clone(), to:tgt.clone(), t:0};
+}
+function openRoom(id){
+  if(!(id in wallStruct)) return;
+  openedRoom = id; applyRoom();
+  const v = ROOM_VIEW[id]; if(v) flyView(v.pos, v.tgt);
+}
+function closeRoom(){
+  if(!openedRoom) return;
+  openedRoom = null; applyRoom();
+  flyView(HOME.pos, HOME.tgt);
+}
 // 반응형 프레이밍 — 세로(portrait)일수록 카메라를 뒤로 빼서 건물 전체가 들어오게
 const BASE_DIST = HOME.pos.distanceTo(HOME.tgt);
 const BASE_DIR = HOME.pos.clone().sub(HOME.tgt).normalize();
@@ -1066,15 +1562,17 @@ function loop(now){
   const dt=Math.min(50,now-last); last=now;
   if(flyCam){ flyCam.t=Math.min(1,flyCam.t+dt/1300); camera.position.lerpVectors(flyCam.from,flyCam.to,ease(flyCam.t)); if(flyCam.t>=1)flyCam=null; }
   if(fly){ fly.t=Math.min(1,fly.t+dt/700); controls.target.lerpVectors(fly.from,fly.to,ease(fly.t)); if(fly.t>=1)fly=null; }
-  // 선택한 위반 메쉬만 맥동(살아있는 강조) — 핀 펄스 링과 한 쌍. 나머지는 정적.
-  if(showRed){
+  // hover/select 발광 맥동 — 실물·강조 두 모드 모두에서 활성 재질 세트에 적용.
+  if(!showLegal){                         // 적법 모습 중엔 위반 메쉬가 숨겨져 맥동 불필요
     const p = 0.5 + 0.5*Math.sin(now*0.0042); // 0..1, ~1.5s 주기
     for(const id in vGroups){
       const g=vGroups[id];
-      if(filter!=='all' && g.data.zone!==filter) continue; // 필터 밖(골조색)은 제외
-      g.mat.emissiveIntensity = id===selected ? (0.45+0.85*p)  // 선택만 펄스
-                              : id===hovered  ? 0.85
-                              : 0.46;                          // 비선택은 정적
+      if(filter!=='all' && g.data.zone!==filter) continue; // 필터 밖은 제외
+      const val = id===selected ? (0.45+0.85*p)             // 선택 → 펄스
+                : id===hovered  ? 0.85                       // hover → 발광
+                : (showRed ? 0.46 : 0.0);                    // 강조 ON 기본 발광 / 실물 무발광
+      const mats = showRed ? [g.hlMat] : g.realMats;
+      mats.forEach(m=> m.emissiveIntensity = val);
     }
   }
   controls.update();
