@@ -511,8 +511,8 @@ API 문서, 기능 명세, 설정 가이드 등
 | `playwright.config.ts` | Playwright E2E 테스트 설정 |
 | `.eslintrc.json` | ESLint 코드 린팅 규칙 |
 | `components.json` | shadcn/ui 컴포넌트 설정 |
-| `CLAUDE.md` | Claude Code 설정 및 Hooks |
-| `ATTACHMENT_SETUP.md` | 첨부파일 기능 설정 가이드 |
+| `AGENTS.md` | AI 에이전트 공통 가이드(단일 진실 공급원 — Codex·Claude 공용) |
+| `CLAUDE.md` | Claude Code 진입점 (`@AGENTS.md` import + Claude 전용 참고) |
 
 ---
 
@@ -678,9 +678,8 @@ npm run test:e2e
 ---
 
 ## 📚 추가 참고 문서
-- [ATTACHMENT_SETUP.md](./ATTACHMENT_SETUP.md): 첨부파일 기능 설정 가이드
-- [agent.md](./agent.md): AI 에이전트 설정
-- [todo.md](./todo.md): 개발 TODO 리스트
+- [AGENTS.md](../AGENTS.md): AI 에이전트 공통 가이드 (문서 맵·개발 명령·작업 규칙)
+- [모듈별 상세 개발정의서.md](./모듈별%20상세%20개발정의서.md): 모듈별 구현 요약
 
 ---
 
