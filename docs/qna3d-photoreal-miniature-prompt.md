@@ -259,3 +259,54 @@ Keep wide LANDSCAPE 3:2 aspect ratio (1536 x 1024). No people, no text, no numbe
 
 **처음부터 다시 만들 때**는 ⑧ 메인 프롬프트의 `CAMERA & COMPOSITION` 끝에 이 한 줄을 추가하면 예방됨:
 > `Frame the FULL building with comfortable margins on all sides — the entire structure from rooftop down to the ground floor and front yard must be fully visible, never cropped at the bottom or edges; leave empty padding below the plinth and above the roof.`
+
+---
+
+## ⑨ 적법 모습(위반 12개 제거) 편집 프롬프트 — /qna3d-photo 적법 토글용
+
+> **사용법**: 이미지 편집 모델(Nano Banana/Gemini 이미지 편집, gpt-image edit 등)에 **기존 원본 `public/3d.png`(1536×1024)를 첨부**하고 아래 프롬프트로 편집시킨다. 텍스트→이미지로 새로 생성하면 건물이 달라져 크로스페이드가 깨지므로 반드시 편집 모드.
+> 결과물은 `/Users/kbsc/rex/public/3d-legal.png`로 저장 → 에이전트가 업스케일·WebP 변환·토글 연결을 처리한다.
+
+```text
+Use the ATTACHED image as the exact base. It is a photoreal tilt-shift miniature diorama of a Korean 3-story multi-family house that currently shows 12 illegal building modifications. TASK: produce the LEGAL "original" version of this exact same model — remove every illegal addition and restore what was originally there. Everything else must stay IDENTICAL to the attached image: same camera angle and crop, same lens, same lighting and shadows, same materials and weathering, same plinth/base, same seamless studio background, same trees, same parked car, same parking-line markings. Preserve the photoreal miniature scale-model look. No people, no text, no labels, no numbers.
+
+REMOVE / RESTORE all 12:
+1. Rooftop right: remove the corrugated steel container/prefab room — restore clean flat roof surface with matching texture.
+2. Rooftop left: remove the slatted pergola completely.
+3. Rooftop rear-left: turn the converted stair/water-tank room into a plain windowless service bulkhead (keep the stainless water tank).
+4. 3rd floor front-right: remove the fully-glazed enclosed balcony — restore an open facade with normal windows matching the others.
+5. Side wall: remove the dark bolt-on sandwich-panel extension box — restore the flat wall behind it.
+6. Entrance: remove the oversized canopy/awning above the door.
+7. Side: remove the external black steel zig-zag staircase entirely — restore the wall it covers.
+8. Ground-floor piloti: remove the infill wall closing the piloti bay — restore the open dark parking/passage void between the columns.
+9. Front yard left: remove the storage container and stacked crates — restore an empty painted parking stall.
+10. Ground-floor shopfront: remove all signs of residential conversion (curtains/blinds behind the glass, window AC unit, added private door) — restore a clean transparent glass storefront.
+11. Facade: reduce the row of 3 utility meter boxes to a single meter box; remove any extra mailboxes/doors from unit-splitting.
+12. Front yard right: remove the roofed deck/shed — restore open landscaped green space (low shrubs/planting).
+
+Output: same landscape 3:2 aspect ratio and framing as the attached image, maximum resolution. The result must look like the same physical model photographed in the same session, just before the illegal additions were built.
+```
+
+**짧은 한국어 버전:**
+> "첨부한 미니어처 디오라마 사진에서, 카메라·조명·건물·배경은 전부 그대로 두고 위반 구조물 12개만 걷어낸 '원래 적법한 모습'으로 편집해줘: 옥탑 컨테이너 제거, 파고라 제거, 계단탑은 창문 없는 설비실로, 3층 유리 발코니는 일반 창으로, 측면 판넬 박스 제거, 현관 캐노피 제거, 외부 철제계단 제거, 필로티 막은 벽 제거(주차 공간 개방), 마당 컨테이너 제거(빈 주차구획), 1층 점포는 커튼·에어컨 없는 깨끗한 유리 상가로, 계량기 3개→1개, 마당 데크 제거(조경 복원). 3:2 비율·구도 유지, 사람·글자 없이."
+
+---
+
+## ⑩ 내부 실사 컷 2장 (10 근생→주거 · 11 세대쪼개기) — /qna3d-photo 내부 보기용
+
+> **사용법**: 메인 디오라마와 룩을 맞추기 위해 원본 `public/3d.png`를 **스타일 참고로 첨부**하고 아래 프롬프트로 생성(신규 장면 생성이라 편집 모드 불필요, 첨부는 룩 일치용).
+> 저장: 10번 → `/Users/kbsc/rex/public/interior-10.png`, 11번 → `/Users/kbsc/rex/public/interior-11.png` → 에이전트가 업스케일·WebP·연결 처리.
+
+**10번 — 근생(점포)→주거 전용 내부:**
+```text
+Photoreal 1:50 miniature architectural model diorama, DOLLHOUSE CUTAWAY interior view: a small Korean ground-floor SHOP unit (근린생활시설) secretly used as a home. Front glass wall removed, viewed straight-on and slightly from above. Inside the single shop space: a single bed with rumpled bedding against the wall, a small wardrobe, a curtain half-covering the shop window, a compact kitchenette (tiny sink, single burner, mini fridge), a cramped enclosed toilet cubicle in the back corner, a window-type AC unit; leftover SHOP remnants still present — an abandoned sales counter and an empty display shelf — clearly telling the story "a store being lived in". Same miniature model aesthetic as the attached reference: matte model materials, tilt-shift, warm studio lighting, soft shadows, hyper-detailed. NO people, NO text or labels, landscape 3:2, high resolution.
+```
+
+**11번 — 세대쪼개기 내부:**
+```text
+Photoreal 1:50 miniature architectural model diorama, DOLLHOUSE CUTAWAY interior view: one floor of a Korean multi-family house where a single spacious unit has been ILLEGALLY SUBDIVIDED into three tiny rooms for rent. Front wall removed, viewed straight-on and slightly from above. Two thin, cheap newly-built partition walls (visibly different material from the original structure) split the unit into three narrow slivers; EACH sliver crammed with: a single bed, a mini kitchenette block, and its own flimsy door; a row of three separate electricity meters on the corridor wall. Cramped, repetitive, clearly telling the story "one home split into three". Same miniature model aesthetic as the attached reference: matte model materials, tilt-shift, warm studio lighting, soft shadows, hyper-detailed. NO people, NO text or labels, landscape 3:2, high resolution.
+```
+
+**짧은 한국어 버전:**
+> (10번) "첨부 사진과 같은 미니어처 모형 스타일로: 한국 1층 상가(근생) 한 칸을 몰래 집으로 쓰는 내부를 돌하우스 단면으로 — 침대·옷장·유리창의 커튼·미니 주방·구석 간이 화장실·창문형 에어컨, 그리고 버려진 계산대와 빈 진열대가 남아 '가게에 사람이 산다'는 게 읽히게. 사람·글자 없이, 가로 3:2."
+> (11번) "첨부 사진과 같은 미니어처 모형 스타일로: 한 세대를 싸구려 경계벽 2장으로 세 칸으로 쪼갠 내부를 돌하우스 단면으로 — 칸마다 침대·미니주방·문 하나씩, 복도 벽에 계량기 3개, 비좁고 반복적인 느낌. 사람·글자 없이, 가로 3:2."

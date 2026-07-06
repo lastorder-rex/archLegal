@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>위반건축물 실사 진단맵 (사진형) | 양성화.com</title>
 <meta name="robots" content="noindex,nofollow" />
+<meta name="description" content="실사 미니어처 디오라마 위에서 옥탑방·발코니 확장·필로티 실내화 등 대표 위반건축물 12개 유형을 직접 눌러 확인하고 양성화 가능성을 진단하세요." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="위반건축물 실사 진단맵 | 양성화.com" />
+<meta property="og:description" content="실사 미니어처 위에서 위반 부위를 직접 눌러보고 내 집 양성화 가능성을 1분 만에 확인하세요." />
+<meta property="og:url" content="https://www.archlegal.co.kr/qna3d-photo" />
+<meta property="og:image" content="https://www.archlegal.co.kr/3d-og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="800" />
+<link rel="icon" href="/docu/archlegal-fa.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="512x512" href="/docu/archlegal-fa-p.png" />
+<link rel="preload" as="image" href="/3d.webp" fetchpriority="high" />
 <style>
   :root{
     --ink:#19212b; --muted:#5b6772; --faint:#8b96a0;
@@ -36,6 +47,8 @@
   #viewport.grabbing{cursor:grabbing}
   #stage{position:absolute; left:0; top:0; transform-origin:0 0; will-change:transform}
   #stage img{display:block; width:100%; height:100%; -webkit-user-drag:none; user-drag:none; pointer-events:none}
+  /* 적법 모습 크로스페이드 오버레이 — #stage 안이라 #bld와 동일한 팬/줌 transform이 그대로 적용됨 */
+  #bldLegal{position:absolute; inset:0; opacity:0; transition:opacity .35s ease; z-index:1}
 
   /* ── pins (overlay, constant size) ────────────────────── */
   #pinlayer{position:absolute; inset:0; pointer-events:none; z-index:6}
@@ -119,6 +132,9 @@
   .tbtn{appearance:none;border:1px solid #ffffff33;background:#ffffff14;color:#fff;border-radius:11px;padding:9px 12px;
     font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;backdrop-filter:blur(6px)}
   .tbtn:hover{background:#ffffff24}
+  .tbtn.on{background:var(--green); border-color:var(--green); color:#fff; box-shadow:0 6px 16px -8px rgba(21,88,74,.8)}
+  /* .tbtn 이 display:inline-flex 라 UA의 [hidden]{display:none}가 눌린다 → 명시적으로 숨김 보장 */
+  .tbtn[hidden]{display:none}
   .tbtn .ic{width:15px;height:15px;display:block}
   /* 보기 전환(다른 버전으로 이동) — 강조 */
   .tbtn-switch{background:#fff;color:#16261f;border-color:#fff;text-decoration:none}
@@ -258,6 +274,25 @@
   .intro-greet p{margin:0; font-size:14px; color:var(--tp); line-height:1.5; font-weight:600; word-break:keep-all}
   .sfoot{padding:11px 16px; border-top:1px solid var(--bd); background:var(--sbg); font-size:11px; color:var(--ts); line-height:1.5}
   .typing{color:var(--ts); font-size:14px}
+  /* 토스트 (qna3d와 동일) */
+  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(18px); background:#19212b; color:#fff; padding:11px 18px; border-radius:12px; font-size:13px; font-weight:700; box-shadow:var(--shadow); opacity:0; transition:opacity .25s,transform .25s; z-index:60; pointer-events:none; max-width:86vw; text-align:center}
+  .toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+  /* ── 내부 실사 보기 (패널 버튼 + 라이트박스) ── */
+  .p-interior{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;
+    border:1px solid var(--line2);border-radius:12px;background:#fff;color:var(--ink);
+    font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;transition:.14s}
+  .p-interior:hover{background:#f4f8ff;border-color:var(--b)}
+  .p-interior svg{width:17px;height:17px;color:var(--b);flex:none}
+  .ilb{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:24px;
+    background:rgba(12,16,22,.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .ilb.show{display:flex;animation:fadein .2s ease}
+  .ilb figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:13px}
+  .ilb img{max-width:92vw;max-height:84vh;width:auto;height:auto;border-radius:14px;object-fit:contain;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.85);display:block}
+  .ilb-cap{color:#e9eef3;font-size:13px;font-weight:700;line-height:1.55;text-align:center;max-width:min(680px,92vw);word-break:keep-all}
+  .ilb-x{position:absolute;top:16px;right:16px;appearance:none;border:1px solid #ffffff40;background:#ffffff1f;color:#fff;
+    width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:17px;backdrop-filter:blur(6px)}
+  .ilb-x:hover{background:#ffffff33}
 </style>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.5/kakao.min.js"></script>
 </head>
@@ -277,7 +312,7 @@
 
 <div id="app">
   <div id="viewport">
-    <div id="stage"><img id="bld" src="/3d.png" alt="위반건축물 실사 미니어처 진단맵" draggable="false"></div>
+    <div id="stage"><img id="bld" src="/3d.webp" width="1536" height="1024" alt="위반건축물 실사 미니어처 진단맵" draggable="false" fetchpriority="high"><img id="bldLegal" width="1536" height="1024" alt="위반 구조물을 걷어낸 적법 상태 예시" draggable="false"></div>
   </div>
   <div id="pinlayer"></div>
 
@@ -308,6 +343,7 @@
     </a>
     <div class="tools">
       <a class="tbtn tbtn-switch" href="/qna3d" aria-label="기본 3D로 보기"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg><span>기본 3D</span></a>
+      <button class="tbtn" id="btnLegal" aria-pressed="false" aria-label="적법 모습" hidden><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg><span>적법 모습</span></button>
       <button class="tbtn" id="btnShare" aria-label="공유"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span>공유</span></button>
       <button class="tbtn" id="btnReset" aria-label="시점 초기화"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>초기화</span></button>
       <button class="tbtn" id="btnMenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg><span>메뉴</span></button>
@@ -515,7 +551,7 @@ vpEl.addEventListener('wheel', e=>{ e.preventDefault(); zoomAt(e.clientX, e.clie
 
 /* ===================== 핀 + 레일 + 필터 ===================== */
 const pinEls=[];
-let selected=null, filter='all';
+let selected=null, filter='all', showLegal=false;
 VIOLATIONS.forEach(v=>{
   const b=document.createElement('button');
   b.className='pin '+v.zone; b.dataset.id=v.id; b.dataset.zone=v.zone;
@@ -535,7 +571,11 @@ VIOLATIONS.forEach(v=>{
 });
 
 function applyFilter(){
-  pinEls.forEach(p=>{ const on = filter==='all' || p.dataset.zone===filter; p.classList.toggle('dim', !on && p.dataset.id!==selected); });
+  pinEls.forEach(p=>{
+    p.classList.toggle('hide', showLegal);            // 적법 모습이면 핀 전부 숨김
+    const on = filter==='all' || p.dataset.zone===filter;
+    p.classList.toggle('dim', !showLegal && !on && p.dataset.id!==selected);
+  });
   [...railEl.children].forEach(c=>{ const on = filter==='all' || c.dataset.zone===filter; c.classList.toggle('hide', !on); });
 }
 document.getElementById('filters').addEventListener('click', e=>{
@@ -547,6 +587,7 @@ document.getElementById('filters').addEventListener('click', e=>{
 
 function select(id){
   const v=VMAP[id]; if(!v) return;
+  clearLegal();                          // 적법 모습 ON 상태에서 위반 선택 시 자동 해제
   selected=id;
   pinEls.forEach(p=>p.classList.toggle('sel', p.dataset.id===id));
   [...railEl.children].forEach(c=>c.classList.toggle('sel', c.dataset.id===id));
@@ -560,6 +601,10 @@ function renderPanel(v){
   const qas=v.qa.map(qid=>QMAP[qid]).filter(Boolean);
   const tags=(v.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
   const qaHtml=qas.map(q=>`<div class="qa"><p class="q"><span class="qm">Q.</span><span>${q.q}</span></p><p class="a">${q.a}</p><div class="refs">${q.refs.map(r=>`<span class="ref">${r}</span>`).join('')}</div></div>`).join('');
+  // 위반 10·11이고 내부 실사 에셋이 준비된 경우에만 '내부 실사 보기' 버튼(연결 Q&A 위) 노출
+  const interiorBtn = interiorReady[v.no]
+    ? `<div class="sec"><button class="p-interior" id="pinterior" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>내부 실사 보기</button></div>`
+    : '';
   panel.style.setProperty('--c', col);
   panel.innerHTML=`
     <div class="ph" style="--c:${col}">
@@ -571,6 +616,7 @@ function renderPanel(v){
     </div>
     <div class="pbody">
       <div class="sec"><h4>흔한 적발 사례</h4><p class="lead">${v.short}</p><p class="ex">${v.example}</p></div>
+      ${interiorBtn}
       <div class="sec"><h4>연결 Q&amp;A</h4>${qaHtml}</div>
       <div class="cta">
         <a class="prim" id="pconsult" role="button" tabindex="0" style="cursor:pointer">이 위반, 전문가 무료 상담</a>
@@ -580,6 +626,8 @@ function renderPanel(v){
     </div>`;
   document.getElementById('pclose').addEventListener('click', closePanel);
   document.getElementById('pconsult').addEventListener('click', function(){ closePanel(); openConsult(consultMsg(v)); });
+  const pint=document.getElementById('pinterior');
+  if(pint) pint.addEventListener('click', function(){ openInterior(v.no); });
   panel.classList.add('show');
 }
 function closePanel(){
@@ -625,6 +673,72 @@ railEl.addEventListener('pointerup', railUp); railEl.addEventListener('pointerle
 
 /* 버튼 */
 document.getElementById('btnReset').addEventListener('click', resetView);
+
+/* ── 토스트 (qna3d와 동일) ── */
+let _toastT;
+function toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); } t.textContent=msg; t.classList.add('on'); clearTimeout(_toastT); _toastT=setTimeout(function(){ t.classList.remove('on'); },2600); }
+
+/* ── 적법 모습 토글 (qna3d판 clearLegal 패턴) ──
+   #bldLegal 은 #stage 안이라 팬/줌 transform이 #bld와 동일하게 걸린다. ON→crossfade + 핀 숨김. */
+const btnLegal=document.getElementById('btnLegal');
+const bldLegal=document.getElementById('bldLegal');
+function setLegal(on){
+  showLegal=on;
+  btnLegal.classList.toggle('on', on);
+  btnLegal.setAttribute('aria-pressed', on?'true':'false');
+  bldLegal.style.opacity = on ? '1' : '0';
+  if(on){
+    selected=null;
+    panel.classList.remove('show');                  // 열린 패널 닫기 + 선택 해제(레고/말풍선은 유지)
+    pinEls.forEach(p=>p.classList.remove('sel'));
+    [...railEl.children].forEach(c=>c.classList.remove('sel'));
+    toast('위반 구조물을 걷어낸 적법 상태입니다');
+  }
+  applyFilter();                                       // 핀 숨김/복원(OFF면 현재 필터 상태 존중)
+}
+function clearLegal(){ if(showLegal) setLegal(false); }
+btnLegal.addEventListener('click', ()=> setLegal(!showLegal));
+
+/* 에셋 프로브: /3d-legal.webp 가 존재할 때만 버튼 노출 + src 지정.
+   img 태그에 src를 미리 박지 않아 파일이 없으면 404 소음 없음(프로브 요청 1회만 발생). */
+(function probeLegal(){
+  const probe=new Image();
+  probe.onload=function(){ bldLegal.src='/3d-legal.webp'; btnLegal.hidden=false; };
+  probe.onerror=function(){ /* 파일 없음 — btnLegal hidden 유지, 아무것도 안 함 */ };
+  probe.src='/3d-legal.webp';
+})();
+
+/* ── 내부 실사 보기 — 에셋 프로브(있을 때만 버튼 노출) + 라이트박스 ──
+   btnLegal/probeLegal과 동일 패턴: img에 src를 미리 박지 않고 new Image()로 1회 프로브.
+   /interior-10.webp·/interior-11.webp 가 있을 때만 interiorReady[no]=true → 패널 버튼 표시. */
+const INTERIOR_CAP={
+  '10':'근생 점포를 주거로 쓰는 내부 — 침대·주방·화장실이 들어와 있다',
+  '11':'한 세대를 세 칸으로 쪼갠 내부 — 칸마다 침대·주방·문',
+};
+const interiorReady={}, interiorSrc={};
+[['10','/interior-10.webp'],['11','/interior-11.webp']].forEach(function(pair){
+  const no=pair[0], src=pair[1], probe=new Image();
+  probe.onload=function(){ interiorReady[no]=true; interiorSrc[no]=src; };
+  probe.onerror=function(){ /* 파일 없음 — 버튼 미표시 유지, 아무것도 안 함 */ };
+  probe.src=src;
+});
+function openInterior(no){
+  const src=interiorSrc[no]; if(!src) return;
+  let lb=document.getElementById('interiorLb');
+  if(!lb){
+    lb=document.createElement('div'); lb.id='interiorLb'; lb.className='ilb';
+    lb.setAttribute('role','dialog'); lb.setAttribute('aria-modal','true'); lb.setAttribute('aria-label','내부 실사 사진');
+    lb.innerHTML='<button class="ilb-x" type="button" aria-label="닫기">✕</button><figure><img alt="내부 실사 컷" draggable="false"><figcaption class="ilb-cap"></figcaption></figure>';
+    document.body.appendChild(lb);
+    lb.querySelector('.ilb-x').addEventListener('click', closeInterior);
+    lb.addEventListener('click', function(e){ if(e.target.tagName!=='IMG') closeInterior(); }); // 배경·캡션 클릭 닫기(이미지 클릭은 유지)
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape' && lb.classList.contains('show')) closeInterior(); });
+  }
+  lb.querySelector('img').src=src;
+  lb.querySelector('.ilb-cap').textContent=INTERIOR_CAP[no]||'';
+  lb.classList.add('show');
+}
+function closeInterior(){ const lb=document.getElementById('interiorLb'); if(lb) lb.classList.remove('show'); }
 // 전체 메뉴 슬라이드 토글
 (function(){ var ov=document.getElementById('navOv'), mb=document.getElementById('btnMenu');
   if(ov&&mb){ mb.addEventListener('click', function(){ ov.classList.add('show'); });
