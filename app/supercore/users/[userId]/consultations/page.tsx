@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import Pagination from '@/components/supercore/Pagination';
+import ConsultationTable from '@/components/supercore/ConsultationTable';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Consultation } from '@/types/admin';
-import { formatDateTimeShort as formatDateTime } from '@/lib/admin/format';
 
 export default function UserConsultationsPage() {
   const router = useRouter();
@@ -86,77 +86,11 @@ export default function UserConsultationsPage() {
                 상담 요청이 없습니다.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        접수일시
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        이름
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        연락처
-                      </th>
-                      <th className="hidden md:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        주소
-                      </th>
-                      <th className="hidden lg:table-cell px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        첨부파일
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
-                        관리
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {consultations.map((consultation) => (
-                      <tr
-                        key={consultation.id}
-                        className="hover:bg-slate-50 cursor-pointer"
-                        onClick={() => router.push(`/supercore/consultations/${consultation.id}`)}
-                      >
-                        <td className="px-4 py-3 text-sm text-slate-600">
-                          {formatDateTime(consultation.created_at)}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                          {consultation.name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-slate-600">
-                          {consultation.phone}
-                        </td>
-                        <td className="hidden md:table-cell px-4 py-3 text-sm text-slate-600">
-                          <div className="max-w-xs truncate" title={consultation.address}>
-                            {consultation.address}
-                          </div>
-                          {consultation.address_detail && (
-                            <div className="text-xs text-slate-500">
-                              {consultation.address_detail}
-                            </div>
-                          )}
-                        </td>
-                        <td className="hidden lg:table-cell px-4 py-3 text-sm text-slate-600">
-                          {consultation.attachments?.length || 0}개
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/supercore/consultations/${consultation.id}`);
-                            }}
-                            size="sm"
-                            variant="primary"
-                            className="w-20"
-                          >
-                            상세보기
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ConsultationTable
+                consultations={consultations}
+                onSelect={(id) => router.push(`/supercore/consultations/${id}`)}
+                align="left"
+              />
             )}
 
             {/* Pagination */}
