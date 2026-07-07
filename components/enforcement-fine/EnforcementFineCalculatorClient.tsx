@@ -14,34 +14,8 @@ import { Step4ViolationCard } from '@/components/enforcement-fine/Step4Violation
 import { ResultAside } from '@/components/enforcement-fine/ResultAside';
 import { MobileStickyBar } from '@/components/enforcement-fine/MobileStickyBar';
 import { ViolationPickerModal } from '@/components/enforcement-fine/ViolationPickerModal';
+import { useKakaoShare } from '@/hooks/useKakaoShare';
 
-declare global {
-  interface Window {
-    Kakao?: {
-      init: (key: string) => void;
-      isInitialized: () => boolean;
-      Share?: {
-        sendDefault: (template: {
-          objectType: 'feed';
-          content: {
-            title: string;
-            description: string;
-            imageUrl: string;
-            imageWidth: number;
-            imageHeight: number;
-            link: { mobileWebUrl: string; webUrl: string };
-          };
-          buttons: Array<{
-            title: string;
-            link: { mobileWebUrl: string; webUrl: string };
-          }>;
-        }) => void;
-      };
-    };
-  }
-}
-
-const KAKAO_JAVASCRIPT_KEY = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY;
 const CALC_SHARE_ORIGIN = 'https://www.archlegal.co.kr';
 const CALC_SHARE_IMAGE_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/kakao_c.png';
 
@@ -179,64 +153,25 @@ export function EnforcementFineCalculatorClient({
     scrollResultCardIntoView
   } = useEnforcementFineCalculator();
 
-  const initializeKakaoSdk = () => {
-    if (!KAKAO_JAVASCRIPT_KEY || !window.Kakao || window.Kakao.isInitialized()) return;
-    window.Kakao.init(KAKAO_JAVASCRIPT_KEY);
-  };
+  const { kakaoShareEnabled, initializeKakaoSdk, share } = useKakaoShare();
 
-  const fallbackShareCalcLink = async (shareUrl: string) => {
-    if (navigator.share) {
-      await navigator.share({ title: '이행강제금 계산기', url: shareUrl });
-      return;
-    }
-    await navigator.clipboard.writeText(shareUrl);
-    setShareToast('링크가 복사되었습니다.');
-  };
-
-  const shareCalcLink = async () => {
-    const shareUrl = `${CALC_SHARE_ORIGIN}/calc`;
-
-    try {
-      initializeKakaoSdk();
-
-      if (window.Kakao?.Share && window.Kakao.isInitialized()) {
-        window.Kakao.Share.sendDefault({
-          objectType: 'feed',
-          content: {
-            title: '이행강제금 계산기',
-            description: '위반건축물 이행강제금을 공식 기준으로 직접 계산해보세요.',
-            imageUrl: CALC_SHARE_IMAGE_URL,
-            imageWidth: 800,
-            imageHeight: 800,
-            link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
-          },
-          buttons: [
-            {
-              title: '계산기 바로가기',
-              link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
-            }
-          ]
-        });
-        return;
-      }
-
-      await fallbackShareCalcLink(shareUrl);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      try {
-        await fallbackShareCalcLink(shareUrl);
-      } catch {
-        setShareToast('공유를 지원하지 않는 브라우저입니다. 주소창의 링크를 복사해주세요.');
-      }
-    }
-  };
+  const shareCalcLink = () =>
+    share({
+      shareUrl: `${CALC_SHARE_ORIGIN}/calc`,
+      title: '이행강제금 계산기',
+      description: '위반건축물 이행강제금을 공식 기준으로 직접 계산해보세요.',
+      imageUrl: CALC_SHARE_IMAGE_URL,
+      buttonTitle: '계산기 바로가기',
+      copiedToastMessage: '링크가 복사되었습니다.',
+      onToast: setShareToast
+    });
 
   return (
     <main className="calc-root bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <CalcHeader
           headerRef={headerRef}
-          kakaoShareEnabled={Boolean(KAKAO_JAVASCRIPT_KEY)}
+          kakaoShareEnabled={kakaoShareEnabled}
           onShareCalc={shareCalcLink}
         />
 
@@ -423,7 +358,7 @@ export function EnforcementFineCalculatorClient({
         onSelect={handleAddressSelect}
       />
 
-      {KAKAO_JAVASCRIPT_KEY ? (
+      {kakaoShareEnabled ? (
         <Script
           src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.5/kakao.min.js"
           strategy="afterInteractive"

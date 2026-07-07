@@ -7,6 +7,7 @@ import { LandingView } from '@/components/diagnosis/LandingView';
 import { QuizView } from '@/components/diagnosis/QuizView';
 import { ResultView } from '@/components/diagnosis/ResultView';
 import { getAuthErrorMessage } from '@/lib/auth/errors';
+import { useKakaoShare } from '@/hooks/useKakaoShare';
 import type {
   DiagnosisAnswer,
   DiagnosisHistoryItem,
@@ -15,41 +16,6 @@ import type {
   DiagnosisResponse
 } from '@/lib/diagnosis/legalization';
 
-type KakaoShareTemplate = {
-  objectType: 'feed';
-  content: {
-    title: string;
-    description: string;
-    imageUrl: string;
-    imageWidth: number;
-    imageHeight: number;
-    link: {
-      mobileWebUrl: string;
-      webUrl: string;
-    };
-  };
-  buttons: Array<{
-    title: string;
-    link: {
-      mobileWebUrl: string;
-      webUrl: string;
-    };
-  }>;
-};
-
-declare global {
-  interface Window {
-    Kakao?: {
-      init: (key: string) => void;
-      isInitialized: () => boolean;
-      Share?: {
-        sendDefault: (template: KakaoShareTemplate) => void;
-      };
-    };
-  }
-}
-
-const KAKAO_JAVASCRIPT_KEY = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY;
 const DIAGNOSIS_SHARE_TITLE = '1분 양성화 자가진단';
 const DIAGNOSIS_SHARE_DESCRIPTION = '우리 건물도 특정건축물 특별조치법 대상인지 확인해보세요.';
 const DIAGNOSIS_SHARE_ORIGIN = 'https://www.archlegal.co.kr';
@@ -70,13 +36,7 @@ export function LegalizationCheckClient() {
   const [isConsultationOpen, setConsultationOpen] = useState(false);
   const [consultationInitialMessage, setConsultationInitialMessage] = useState('');
 
-  const initializeKakaoSdk = () => {
-    if (!KAKAO_JAVASCRIPT_KEY || !window.Kakao || window.Kakao.isInitialized()) {
-      return;
-    }
-
-    window.Kakao.init(KAKAO_JAVASCRIPT_KEY);
-  };
+  const { kakaoShareEnabled, initializeKakaoSdk, share } = useKakaoShare();
 
   useEffect(() => {
     if (!toast) {
@@ -209,68 +169,17 @@ export function LegalizationCheckClient() {
     }
   };
 
-  const fallbackShareDiagnosisLink = async (shareUrl: string) => {
-    const shareData = {
+  const shareDiagnosisLink = () =>
+    share({
+      shareUrl: `${DIAGNOSIS_SHARE_ORIGIN}/check`,
       title: DIAGNOSIS_SHARE_TITLE,
-      text: DIAGNOSIS_SHARE_DESCRIPTION,
-      url: shareUrl
-    };
-
-    if (navigator.share) {
-      await navigator.share(shareData);
-      return;
-    }
-
-    await navigator.clipboard.writeText(shareUrl);
-    setToast('자가진단 링크가 복사되었습니다.');
-  };
-
-  const shareDiagnosisLink = async () => {
-    const shareUrl = `${DIAGNOSIS_SHARE_ORIGIN}/check`;
-
-    try {
-      initializeKakaoSdk();
-
-      if (window.Kakao?.Share && window.Kakao.isInitialized()) {
-        window.Kakao.Share.sendDefault({
-          objectType: 'feed',
-          content: {
-            title: DIAGNOSIS_SHARE_TITLE,
-            description: DIAGNOSIS_SHARE_DESCRIPTION,
-            imageUrl: DIAGNOSIS_SHARE_IMAGE_URL,
-            imageWidth: 800,
-            imageHeight: 800,
-            link: {
-              mobileWebUrl: shareUrl,
-              webUrl: shareUrl
-            }
-          },
-          buttons: [
-            {
-              title: '자가진단 시작하기',
-              link: {
-                mobileWebUrl: shareUrl,
-                webUrl: shareUrl
-              }
-            }
-          ]
-        });
-        return;
-      }
-
-      await fallbackShareDiagnosisLink(shareUrl);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return;
-      }
-
-      try {
-        await fallbackShareDiagnosisLink(shareUrl);
-      } catch {
-        setToast('공유를 지원하지 않는 브라우저입니다. 주소창의 링크를 복사해주세요.');
-      }
-    }
-  };
+      description: DIAGNOSIS_SHARE_DESCRIPTION,
+      imageUrl: DIAGNOSIS_SHARE_IMAGE_URL,
+      buttonTitle: '자가진단 시작하기',
+      webShareText: DIAGNOSIS_SHARE_DESCRIPTION,
+      copiedToastMessage: '자가진단 링크가 복사되었습니다.',
+      onToast: setToast
+    });
 
   const openConsultation = () => {
     if (copyText) {
@@ -284,7 +193,7 @@ export function LegalizationCheckClient() {
 
   return (
     <div className="diagnosis-root">
-      {KAKAO_JAVASCRIPT_KEY ? (
+      {kakaoShareEnabled ? (
         <Script
           src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.5/kakao.min.js"
           strategy="afterInteractive"
