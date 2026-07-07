@@ -3,9 +3,9 @@
    다른 페이지에 영향이 없도록 한다. 다크모드는 사이트 기존 방식(html.dark)을 따른다. */
 
 .sa-root {
-  /* 잉크(쿨 네이비, hue 222) — 히어로·쇼피스·최종 CTA 밴드 */
-  --sa-ink: hsl(222 47% 10%);
-  --sa-ink-2: hsl(222 44% 14%);
+  /* 잉크(랜딩 primary 블루 #3D6EE1 계열, 살짝 딥하게) — 히어로·쇼피스·최종 CTA 밴드 */
+  --sa-ink: hsl(223 65% 47%);
+  --sa-ink-2: hsl(223 60% 41%);
   /* 종이(쿨 뉴트럴) — 사이트 bg-muted 밴드와 같은 인상 */
   --sa-paper: #f8fafc;
   /* 브랜드 액센트 — 사이트 primary에 연동(라이트 파랑 / 다크 주홍 자동 전환) */
@@ -94,6 +94,15 @@
   background-image:
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 3px);
   pointer-events: none;
+}
+
+/* 히어로 배경이 브랜드 블루라 파란 강조(accent)가 묻힘 → 히어로 내부는 밝게 */
+.sa-hero .sa-accent-text {
+  color: #ffffff;
+}
+.sa-hero .sa-stamp {
+  border-color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 /* 인장 스탬프 (CSS만) */

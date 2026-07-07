@@ -22,7 +22,7 @@ export function SpecialActFaq({ items }: { items: FaqItem[] }) {
               aria-expanded={isOpen}
               aria-controls={`sa-faq-panel-${index}`}
             >
-              <span className="sa-serif text-[1.05rem] font-semibold leading-snug text-foreground">
+              <span className="text-[1.05rem] font-semibold leading-snug text-foreground">
                 {item.question}
               </span>
               <span
