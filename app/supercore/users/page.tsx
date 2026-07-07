@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import Pagination from '@/components/supercore/Pagination';
-import type { Admin, User } from '@/types/admin';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import type { User } from '@/types/admin';
 
 interface SearchFilters {
   dateFrom: string;
@@ -19,9 +20,6 @@ interface SearchFilters {
 
 export default function UsersPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [admin, setAdmin] = useState<Admin | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -77,31 +75,8 @@ export default function UsersPage() {
     }
   }, [itemsPerPage, searchFilters]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAdmin(data.admin);
-        setIsAuthenticated(true);
-        await loadUsers();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadUsers, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(() => loadUsers(), [loadUsers]);
+  const { isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   const handleSearch = () => {
     loadUsers(1, searchFilters);
@@ -143,7 +118,7 @@ export default function UsersPage() {
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  if (isLoading) {
+  if (isCheckingAuth) {
     return <AdminLoadingScreen />;
   }
 

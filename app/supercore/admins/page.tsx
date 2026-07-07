@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -10,12 +10,11 @@ import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import PasswordInput from '@/components/supercore/PasswordInput';
 import { Shield, ShieldOff } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { AdminAccount } from '@/types/admin';
 
 export default function AdminsPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [admins, setAdmins] = useState<AdminAccount[]>([]);
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
 
@@ -74,29 +73,8 @@ export default function AdminsPage() {
     }
   }, []);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setIsAuthenticated(true);
-        await loadAdmins();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadAdmins, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(() => loadAdmins(), [loadAdmins]);
+  const { isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -351,7 +329,7 @@ export default function AdminsPage() {
     return `${year}-${month}-${day} ${hours}:${minutes}`;
   };
 
-  if (isLoading) {
+  if (isCheckingAuth) {
     return <AdminLoadingScreen />;
   }
 

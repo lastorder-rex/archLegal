@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check, X, Link as LinkIcon, Unplug } from 'lucide-react';
 import { CreditCardMultiple, Comment1, GoogleDrive, Link2AngularRight } from 'lineicons-react';
-import type { Admin } from '@/types/admin';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface DriveFolderChildSummary {
   id: string | null;
@@ -130,10 +130,7 @@ export default function AdminPaymentDetailPage() {
   const paymentIdParam = params?.id;
   const paymentId = Array.isArray(paymentIdParam) ? paymentIdParam[0] : paymentIdParam;
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
-  const [admin, setAdmin] = useState<Admin | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isTokenLoading, setIsTokenLoading] = useState(false);
   const [uploadTokens, setUploadTokens] = useState<UploadTokenRow[]>([]);
@@ -201,33 +198,11 @@ export default function AdminPaymentDetailPage() {
     }
   }, [paymentId]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/supercore');
-        return;
-      }
-
-      const data = await response.json();
-      setAdmin(data.admin);
-      setIsAuthenticated(true);
-      await loadPaymentDetail();
-      await loadUploadTokens();
-    } catch (error) {
-      console.error('관리자 인증 오류', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadPaymentDetail, loadUploadTokens, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(async () => {
+    await loadPaymentDetail();
+    await loadUploadTokens();
+  }, [loadPaymentDetail, loadUploadTokens]);
+  const { isAuthenticated, isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   const handleCancelPayment = async () => {
     if (!paymentId) return;
@@ -351,7 +326,7 @@ export default function AdminPaymentDetailPage() {
     [loadUploadTokens, paymentId]
   );
 
-  if (isLoading) {
+  if (isCheckingAuth) {
     return <AdminLoadingScreen />;
   }
 

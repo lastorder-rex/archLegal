@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Folder } from 'lucide-react';
-import type { Admin, PaymentRow } from '@/types/admin';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import type { PaymentRow } from '@/types/admin';
 
 interface SearchFilters {
   requestedFrom: string;
@@ -79,9 +80,6 @@ function getDefaultDateRange() {
 
 export default function AdminPaymentsPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [admin, setAdmin] = useState<Admin | null>(null);
 
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -149,32 +147,8 @@ export default function AdminPaymentsPage() {
     }
   }, [itemsPerPage]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/supercore');
-        return;
-      }
-
-      const data = await response.json();
-      setAdmin(data.admin);
-      setIsAuthenticated(true);
-      await loadPayments(1);
-    } catch (error) {
-      console.error('관리자 인증 오류', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadPayments, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(() => loadPayments(1), [loadPayments]);
+  const { isAuthenticated, isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   const handleFilterChange = (field: keyof SearchFilters, value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
@@ -204,7 +178,7 @@ export default function AdminPaymentsPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
 
-  if (isLoading) {
+  if (isCheckingAuth) {
     return <AdminLoadingScreen />;
   }
 

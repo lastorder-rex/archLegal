@@ -1,21 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import Pagination from '@/components/supercore/Pagination';
-import type { Admin, Consultation } from '@/types/admin';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import type { Consultation } from '@/types/admin';
 
 export default function UserConsultationsPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.userId as string;
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [admin, setAdmin] = useState<Admin | null>(null);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoadingConsultations, setIsLoadingConsultations] = useState(false);
@@ -55,31 +53,8 @@ export default function UserConsultationsPage() {
     }
   }, [itemsPerPage, userId]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAdmin(data.admin);
-        setIsAuthenticated(true);
-        await loadConsultations();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadConsultations, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(() => loadConsultations(), [loadConsultations]);
+  const { isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -93,7 +68,7 @@ export default function UserConsultationsPage() {
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  if (isLoading) {
+  if (isCheckingAuth) {
     return <AdminLoadingScreen />;
   }
 

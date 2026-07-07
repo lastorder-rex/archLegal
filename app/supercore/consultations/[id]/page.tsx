@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { getFileUrl } from '@/lib/utils/file-upload';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
-import type { Admin } from '@/types/admin';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface Consultation {
   id: string;
@@ -72,9 +72,6 @@ export default function ConsultationDetailPage() {
   const params = useParams();
   const consultationId = params.id as string;
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [admin, setAdmin] = useState<Admin | null>(null);
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [isLoadingConsultation, setIsLoadingConsultation] = useState(false);
   const [paymentStages, setPaymentStages] = useState<PaymentStage[]>([]);
@@ -155,32 +152,8 @@ export default function ConsultationDetailPage() {
     }
   }, [consultationId, router]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/supercore');
-        return;
-      }
-
-      const data = await response.json();
-      setAdmin(data.admin);
-      setIsAuthenticated(true);
-      await loadConsultation();
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadConsultation, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(() => loadConsultation(), [loadConsultation]);
+  const { isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   useEffect(() => {
     if (!toast) return;
@@ -318,7 +291,7 @@ export default function ConsultationDetailPage() {
     }
   };
 
-  if (isLoading || isLoadingConsultation) {
+  if (isCheckingAuth || isLoadingConsultation) {
     return <AdminLoadingScreen />;
   }
 
