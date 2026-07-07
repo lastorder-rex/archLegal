@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createEaisIssueJob, listRecentEaisIssueJobs } from '@/lib/eais/jobs';
-import { verifyAdminSession } from '@/lib/utils/admin-auth';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 export const dynamic = 'force-dynamic';
 

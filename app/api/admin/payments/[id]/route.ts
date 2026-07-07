@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { DriveFolderSummary } from '@/lib/services/consultation-drive-service';
 import { fetchDriveFolderSummary } from '@/lib/services/consultation-drive-service';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
-import { verifyAdminSession } from '@/lib/utils/admin-auth';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 type UpdateAction =
   | { action: 'markPaid'; paidAmount?: number | null; paidAt?: string | null; paymentKey?: string | null }

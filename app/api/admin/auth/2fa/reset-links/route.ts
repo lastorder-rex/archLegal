@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
-import { verifyAdminSession } from '@/lib/utils/admin-auth';
+import { verifyAdminSession } from '@/lib/admin/auth';
 import { hashToken } from '@/lib/admin/token-hash';
 
 const DEFAULT_EXPIRY_HOURS = 72;
