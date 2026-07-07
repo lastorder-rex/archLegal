@@ -235,3 +235,118 @@ export function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
+
+// --- Client-side upload preprocessing (moved from app/upload/UploadPageClient.tsx) ---
+// NOTE: The existing module-private `resizeImage` above keeps the original name/type.
+// The variant migrated from the upload page (HEIC→JPEG conversion + filename derivation)
+// is exported here as `resizeImageForPreprocess` to avoid a duplicate declaration.
+
+export const IMAGE_RESIZE_THRESHOLD_BYTES = 2 * 1024 * 1024; // 2MB
+
+export function deriveFileNameForMimeType(originalName: string, mimeType: string): string {
+  if (mimeType === 'image/jpeg') {
+    if (/\.(jpe?g)$/i.test(originalName)) {
+      return originalName;
+    }
+    return `${originalName.replace(/\.[^/.]+$/, '')}.jpg`;
+  }
+
+  return originalName;
+}
+
+export async function resizeImageForPreprocess(file: File, maxWidth = 1200, quality = 0.85): Promise<File> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+
+      const targetMimeType = file.type === 'image/heic' || file.type === 'image/heif' ? 'image/jpeg' : file.type;
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const nextFileName = deriveFileNameForMimeType(file.name, targetMimeType);
+            const resizedFile = new File([blob], nextFileName, {
+              type: targetMimeType,
+              lastModified: Date.now()
+            });
+            resolve(resizedFile);
+          } else {
+            resolve(file);
+          }
+        },
+        targetMimeType,
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+
+    img.src = objectUrl;
+  });
+}
+
+export async function preprocessFileForUpload(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) {
+    return file;
+  }
+
+  if (file.size <= IMAGE_RESIZE_THRESHOLD_BYTES) {
+    return file;
+  }
+
+  try {
+    return await resizeImageForPreprocess(file);
+  } catch (error) {
+    console.warn('[upload] failed to resize image, using original file', error);
+    return file;
+  }
+}
+
+// --- Display formatters (moved from app/upload/UploadPageClient.tsx) ---
+
+export function formatKoreanDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).format(date);
+}
+
+export function formatExpiry(seconds: number): string {
+  if (seconds <= 0) return '만료됨';
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}시간 ${mins}분 남음`;
+  }
+  if (minutes > 0) {
+    return `${minutes}분 ${remainingSeconds}초 남음`;
+  }
+  return `${remainingSeconds}초 남음`;
+}

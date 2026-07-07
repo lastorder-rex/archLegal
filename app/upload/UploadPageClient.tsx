@@ -5,180 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Upload, CircleX, Trash2, Image as ImageIcon, FileText as FileTextIcon, Loader, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { generateFilePreview } from '@/lib/utils/file-upload';
-
-type UploadLog = {
-  id: string;
-  fileName: string;
-  filePath: string | null;
-  mimeType: string | null;
-  uploadedAt: string;
-  preview?: string; // 클라이언트 미리보기 URL
-  thumbnailUrl?: string | null; // 서버 썸네일 URL (Google Drive)
-};
-
-type UploadFolder = {
-  templateName: string;
-  displayName: string;
-  folderId: string | null;
-  remainingSlots: number;
-  uploads: UploadLog[];
-};
-
-type UploadContextResponse = {
-  consultation: {
-    id: string;
-    name: string | null;
-    phone: string | null;
-    address: string | null;
-    addressDetail: string | null;
-  };
-  paymentStage: {
-    id: string;
-    status: string;
-    title: string | null;
-    requestAmount: number | null;
-    paidAmount: number | null;
-  } | null;
-  driveFolder: {
-    id: string | null;
-    name: string | null;
-    status: string | null;
-  } | null;
-  folders: UploadFolder[];
-  token: {
-    id: string;
-    expiresAt: string;
-    expiresInSeconds: number;
-  };
-  dryRun: boolean;
-  maxFilesPerFolder: number;
-  audience: 'customer' | 'staff';
-  allowedTemplates: string[];
-};
-
-type FolderStatus = {
-  uploading: boolean;
-  error: string | null;
-  successMessage: string | null;
-  uploadProgress?: {
-    current: number;
-    total: number;
-  };
-};
-
-type FolderStatusMap = Record<string, FolderStatus>;
+import {
+  generateFilePreview,
+  preprocessFileForUpload,
+  formatKoreanDateTime,
+  formatExpiry
+} from '@/lib/utils/file-upload';
+import type {
+  UploadFolder,
+  UploadContextResponse,
+  FolderStatus,
+  FolderStatusMap
+} from '@/types/upload';
 
 interface UploadPageClientProps {
   token: string;
-}
-
-const IMAGE_RESIZE_THRESHOLD_BYTES = 2 * 1024 * 1024; // 2MB
-
-function deriveFileNameForMimeType(originalName: string, mimeType: string): string {
-  if (mimeType === 'image/jpeg') {
-    if (/\.(jpe?g)$/i.test(originalName)) {
-      return originalName;
-    }
-    return `${originalName.replace(/\.[^/.]+$/, '')}.jpg`;
-  }
-
-  return originalName;
-}
-
-async function resizeImage(file: File, maxWidth = 1200, quality = 0.85): Promise<File> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-
-      let { width, height } = img;
-      if (width > maxWidth) {
-        height = (height * maxWidth) / width;
-        width = maxWidth;
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      ctx?.drawImage(img, 0, 0, width, height);
-
-      const targetMimeType = file.type === 'image/heic' || file.type === 'image/heif' ? 'image/jpeg' : file.type;
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const nextFileName = deriveFileNameForMimeType(file.name, targetMimeType);
-            const resizedFile = new File([blob], nextFileName, {
-              type: targetMimeType,
-              lastModified: Date.now()
-            });
-            resolve(resizedFile);
-          } else {
-            resolve(file);
-          }
-        },
-        targetMimeType,
-        quality
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(file);
-    };
-
-    img.src = objectUrl;
-  });
-}
-
-async function preprocessFileForUpload(file: File): Promise<File> {
-  if (!file.type.startsWith('image/')) {
-    return file;
-  }
-
-  if (file.size <= IMAGE_RESIZE_THRESHOLD_BYTES) {
-    return file;
-  }
-
-  try {
-    return await resizeImage(file);
-  } catch (error) {
-    console.warn('[upload] failed to resize image, using original file', error);
-    return file;
-  }
-}
-
-function formatKoreanDateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }).format(date);
-}
-
-function formatExpiry(seconds: number): string {
-  if (seconds <= 0) return '만료됨';
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes >= 60) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}시간 ${mins}분 남음`;
-  }
-  if (minutes > 0) {
-    return `${minutes}분 ${remainingSeconds}초 남음`;
-  }
-  return `${remainingSeconds}초 남음`;
 }
 
 export default function UploadPageClient({ token }: UploadPageClientProps) {
