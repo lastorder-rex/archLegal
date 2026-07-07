@@ -25,7 +25,7 @@ export function useConsultationHistoryInit({
         setPageError(null);
         setConsultationsError(null);
 
-        const userResponse = await fetch('/api/debug/user-info', {
+        const userResponse = await fetch('/api/user/me', {
           credentials: 'include'
         });
 

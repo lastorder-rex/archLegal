@@ -5,7 +5,7 @@ import { createExpiredSessionResponse, isUserSessionExpired } from '@/lib/auth/u
 
 export const dynamic = 'force-dynamic';
 
-// 개발용: 현재 로그인한 사용자 정보 확인
+// 현재 로그인한 사용자 세션 정보 조회 (클라이언트에서 user id 확보용)
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = cookies();
