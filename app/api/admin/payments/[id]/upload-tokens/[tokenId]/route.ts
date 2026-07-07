@@ -6,11 +6,7 @@ import {
   resolveAllowedTemplates,
   resolveMaxFilesPerFolder
 } from '@/lib/services/upload-context';
-
-function buildUploadUrl(token: string) {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'http://localhost:3002';
-  return `${base.replace(/\/$/, '')}/upload?token=${token}`;
-}
+import { buildUploadUrl } from '@/lib/admin/upload-url';
 
 export async function PATCH(
   request: NextRequest,

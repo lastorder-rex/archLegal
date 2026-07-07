@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
+import Pagination from '@/components/supercore/Pagination';
 
 interface Admin {
   id: string;
@@ -158,11 +160,7 @@ export default function UsersPage() {
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+    return <AdminLoadingScreen />;
   }
 
   return (
@@ -305,52 +303,7 @@ export default function UsersPage() {
 
             {/* Pagination */}
             {!isLoadingUsers && totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-center gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => loadUsers(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  이전
-                </Button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant="primary"
-                        size="sm"
-                        onClick={() => loadUsers(pageNum)}
-                        className="w-10"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => loadUsers(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  다음
-                </Button>
-              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} onChange={loadUsers} />
             )}
           </div>
         </div>

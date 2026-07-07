@@ -13,6 +13,39 @@ interface Admin {
   username: string;
 }
 
+const SHORTCUT_CARDS = [
+  {
+    path: '/supercore/consultations',
+    title: '상담 게시판',
+    description: '고객 상담 요청을 확인하고 관리합니다.',
+    Icon: FileText,
+    cardClass: 'bg-blue-50 border border-blue-200 rounded-lg p-4',
+    iconClass: 'w-5 h-5 text-blue-900',
+    titleClass: 'font-semibold text-blue-900',
+    descriptionClass: 'text-sm text-blue-700',
+  },
+  {
+    path: '/supercore/users',
+    title: '회원 관리',
+    description: '회원 정보와 상담 내역을 관리합니다.',
+    Icon: Users,
+    cardClass: 'bg-green-50 border border-green-200 rounded-lg p-4',
+    iconClass: 'w-5 h-5 text-green-900',
+    titleClass: 'font-semibold text-green-900',
+    descriptionClass: 'text-sm text-green-700',
+  },
+  {
+    path: '/supercore/payments',
+    title: '결제 관리',
+    description: '결제 단계 상태와 문서 폴더를 확인하고 관리합니다.',
+    Icon: CreditCard,
+    cardClass: 'bg-purple-50 border border-purple-200 rounded-lg p-4',
+    iconClass: 'w-5 h-5 text-purple-900',
+    titleClass: 'font-semibold text-purple-900',
+    descriptionClass: 'text-sm text-purple-700',
+  },
+] as const;
+
 export default function SupercorePage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -258,56 +291,24 @@ export default function SupercorePage() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <FileText className="w-5 h-5 text-blue-900" />
-              <h3 className="font-semibold text-blue-900">상담 게시판</h3>
+          {SHORTCUT_CARDS.map(({ path, title, description, Icon, cardClass, iconClass, titleClass, descriptionClass }) => (
+            <div key={path} className={cardClass}>
+              <div className="flex items-center gap-2 mb-2">
+                <Icon className={iconClass} />
+                <h3 className={titleClass}>{title}</h3>
+              </div>
+              <p className={descriptionClass}>
+                {description}
+              </p>
+              <Button
+                onClick={() => router.push(path)}
+                variant="outline"
+                className="mt-3 w-full"
+              >
+                바로가기
+              </Button>
             </div>
-            <p className="text-sm text-blue-700">
-              고객 상담 요청을 확인하고 관리합니다.
-            </p>
-            <Button
-              onClick={() => router.push('/supercore/consultations')}
-              variant="outline"
-              className="mt-3 w-full"
-            >
-              바로가기
-            </Button>
-          </div>
-
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="w-5 h-5 text-green-900" />
-              <h3 className="font-semibold text-green-900">회원 관리</h3>
-            </div>
-            <p className="text-sm text-green-700">
-              회원 정보와 상담 내역을 관리합니다.
-            </p>
-            <Button
-              onClick={() => router.push('/supercore/users')}
-              variant="outline"
-              className="mt-3 w-full"
-            >
-              바로가기
-            </Button>
-          </div>
-
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <CreditCard className="w-5 h-5 text-purple-900" />
-              <h3 className="font-semibold text-purple-900">결제 관리</h3>
-            </div>
-            <p className="text-sm text-purple-700">
-              결제 단계 상태와 문서 폴더를 확인하고 관리합니다.
-            </p>
-            <Button
-              onClick={() => router.push('/supercore/payments')}
-              variant="outline"
-              className="mt-3 w-full"
-            >
-              바로가기
-            </Button>
-          </div>
+          ))}
         </div>
       </div>
     </SupercoreLayout>

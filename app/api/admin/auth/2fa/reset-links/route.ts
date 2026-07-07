@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 import { verifyAdminSession } from '@/lib/utils/admin-auth';
+import { hashToken } from '@/lib/admin/token-hash';
 
 const DEFAULT_EXPIRY_HOURS = 72;
 const MAX_EXPIRY_HOURS = 72;
-
-function hashToken(token: string) {
-  return createHash('sha256').update(token).digest('hex');
-}
 
 function buildResetUrl(request: NextRequest, token: string) {
   const configuredBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Comment1, CreditCardMultiple } from 'lineicons-react';
 
@@ -118,11 +119,7 @@ export default function UserDetailPage() {
   }, [checkAuth]);
 
   if (isLoading && !userDetail) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+    return <AdminLoadingScreen />;
   }
 
   return (

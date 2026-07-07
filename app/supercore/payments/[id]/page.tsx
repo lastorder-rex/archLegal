@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -355,11 +356,7 @@ export default function AdminPaymentDetailPage() {
   );
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+    return <AdminLoadingScreen />;
   }
 
   if (!isAuthenticated) {

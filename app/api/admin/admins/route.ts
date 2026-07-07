@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -67,7 +68,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create admin user

@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash } from 'crypto';
 import bcrypt from 'bcryptjs';
 import QRCode from 'qrcode';
 import speakeasy from 'speakeasy';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
-
-function hashToken(token: string) {
-  return createHash('sha256').update(token).digest('hex');
-}
+import { hashToken } from '@/lib/admin/token-hash';
 
 async function fetchActiveResetToken(token: string) {
   const supabase = getSupabaseAdminClient();

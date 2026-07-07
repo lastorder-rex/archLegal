@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
@@ -235,11 +236,7 @@ export default function AdminPaymentsPage() {
   const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+    return <AdminLoadingScreen />;
   }
 
   if (!isAuthenticated) {

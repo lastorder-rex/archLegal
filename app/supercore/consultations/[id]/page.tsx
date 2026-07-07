@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getFileUrl } from '@/lib/utils/file-upload';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 
 interface Admin {
   id: string;
@@ -322,11 +323,7 @@ export default function ConsultationDetailPage() {
   };
 
   if (isLoading || isLoadingConsultation) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+    return <AdminLoadingScreen />;
   }
 
   if (!consultation) {
@@ -401,35 +398,6 @@ export default function ConsultationDetailPage() {
             </div>
           </div>
         </div>
-
-        {/* 건축물 정보 */}
-        {/* <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">건축물 정보</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-slate-600">주요 용도</p>
-              <p className="text-base font-medium text-slate-900">{consultation.main_purps}</p>
-            </div>
-            {consultation.tot_area && (
-              <div>
-                <p className="text-sm text-slate-600">연면적</p>
-                <p className="text-base font-medium text-slate-900">{consultation.tot_area.toFixed(2)}㎡</p>
-              </div>
-            )}
-            {consultation.plat_area && (
-              <div>
-                <p className="text-sm text-slate-600">대지면적</p>
-                <p className="text-base font-medium text-slate-900">{consultation.plat_area.toFixed(2)}㎡</p>
-              </div>
-            )}
-            {consultation.ground_floor_cnt && (
-              <div>
-                <p className="text-sm text-slate-600">지상 층수</p>
-                <p className="text-base font-medium text-slate-900">{consultation.ground_floor_cnt}층</p>
-              </div>
-            )}
-          </div>
-        </div> */}
 
         {/* 상담 내용 */}
         {consultation.message && (
