@@ -51,6 +51,26 @@ interface PaymentStage {
   updatedAt: string | null;
 }
 
+type ViolationCheckStatus =
+  | 'idle'
+  | 'loading'
+  | 'violation'
+  | 'not_found'
+  | 'no_data_region'
+  | 'no_code'
+  | 'error';
+
+interface ViolationBuilding {
+  jibun: string | null;
+  bld_nm: string | null;
+  use_name: string | null;
+  floors: number | null;
+  useapr_day: string | null;
+  collected_at: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
 const stageStatusMeta: Record<PaymentStageStatus, { text: string; className: string }> = {
   locked: { text: '비활성', className: 'bg-slate-200 text-slate-700' },
   requested: { text: '결제 요청됨', className: 'bg-amber-100 text-amber-700 border border-amber-200' },
@@ -73,6 +93,8 @@ export default function ConsultationDetailPage() {
   const [cancellingStageId, setCancellingStageId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'info' | 'error'; message: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [violationStatus, setViolationStatus] = useState<ViolationCheckStatus>('idle');
+  const [violationBuilding, setViolationBuilding] = useState<ViolationBuilding | null>(null);
 
   const downloadAttachment = async (attachment: { name: string; size: number; type: string; storagePath: string }) => {
     try {
@@ -153,6 +175,39 @@ export default function ConsultationDetailPage() {
     }, 4000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  // 상세 진입/상담 로드 시마다 위반건축물 등재 여부를 fresh 하게 재검사한다.
+  useEffect(() => {
+    if (!consultation?.id) return;
+    let cancelled = false;
+
+    setViolationStatus('loading');
+    setViolationBuilding(null);
+
+    (async () => {
+      try {
+        const response = await fetch(
+          `/api/admin/consultations/${consultation.id}/violation-check`,
+          { credentials: 'include' }
+        );
+        if (!response.ok) throw new Error('violation check failed');
+        const data = await response.json();
+        if (cancelled) return;
+        setViolationStatus((data?.status as ViolationCheckStatus) ?? 'error');
+        setViolationBuilding(data?.building ?? null);
+      } catch (error) {
+        console.error('Violation check error:', error);
+        if (!cancelled) {
+          setViolationStatus('error');
+          setViolationBuilding(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [consultation?.id]);
 
   const requestableStages = useMemo(() => {
     if (!paymentStages.length) return [];
@@ -338,6 +393,46 @@ export default function ConsultationDetailPage() {
               {consultation.address_detail ? (
                 <p className="text-sm text-slate-700 mt-1">{consultation.address_detail}</p>
               ) : null}
+
+              {/* 위반건축물 등재 여부 */}
+              <div className="mt-2">
+                {violationStatus === 'loading' ? (
+                  <p className="text-xs text-slate-500">위반건축물 조회 중…</p>
+                ) : violationStatus === 'violation' ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-full border border-red-200 bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+                      🚨 위반건축물 등재
+                    </span>
+                    <span className="text-xs text-slate-600">
+                      {[
+                        violationBuilding?.jibun,
+                        violationBuilding?.use_name,
+                        violationBuilding?.floors != null ? `${violationBuilding.floors}층` : null,
+                        violationBuilding?.collected_at
+                          ? violationBuilding.collected_at.slice(0, 10)
+                          : null
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  </div>
+                ) : violationStatus === 'not_found' ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                      위반건축물 등재 없음
+                    </span>
+                    <span className="text-xs text-slate-400">(수집 데이터 기준)</span>
+                  </div>
+                ) : violationStatus === 'no_data_region' ? (
+                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                    지역 데이터 미수집 — 판단 불가
+                  </span>
+                ) : violationStatus === 'no_code' || violationStatus === 'error' ? (
+                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                    위반 여부 확인 불가
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             <div className="rounded-md border border-border bg-muted/30 p-4 space-y-3">
