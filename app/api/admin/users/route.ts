@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       .from('consultations')
       .select('user_id')
       .in('user_id', authIds)
-      .is('deleted_at', null);
+      .eq('is_del', 'N'); // 상담 soft-delete 판정은 코드베이스 표준인 is_del 사용 (타 12곳과 통일)
 
     if (countError) {
       console.error('Consultation count error:', countError);
