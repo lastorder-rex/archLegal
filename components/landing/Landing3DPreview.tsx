@@ -39,7 +39,7 @@ export function Landing3DPreview() {
           <img
             src="/3d1.webp"
             width={1500}
-            height={912}
+            height={968}
             alt="3D 건물에서 위반 부위 12곳을 짚어보는 미리보기"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
