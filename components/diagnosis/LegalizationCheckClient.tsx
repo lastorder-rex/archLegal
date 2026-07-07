@@ -1,9 +1,11 @@
 'use client';
 
 import Script from 'next/script';
-import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import { ConsultationModal } from '@/components/landing/ConsultationModal';
+import { LandingView } from '@/components/diagnosis/LandingView';
+import { QuizView } from '@/components/diagnosis/QuizView';
+import { ResultView } from '@/components/diagnosis/ResultView';
 import { getAuthErrorMessage } from '@/lib/auth/errors';
 import type {
   DiagnosisAnswer,
@@ -52,36 +54,8 @@ const DIAGNOSIS_SHARE_TITLE = '1분 양성화 자가진단';
 const DIAGNOSIS_SHARE_DESCRIPTION = '우리 건물도 특정건축물 특별조치법 대상인지 확인해보세요.';
 const DIAGNOSIS_SHARE_ORIGIN = 'https://www.archlegal.co.kr';
 const DIAGNOSIS_SHARE_IMAGE_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/kakao_b.png';
-const TYPE_OPTION_IMAGES: Record<string, string> = {
-  multi: '/qna3d/bld-1.png',
-  single: '/qna3d/bld-2.png',
-  dagagu: '/qna3d/bld-3.png',
-  near: '/qna3d/bld-4.png'
-};
 
 type View = 'landing' | 'quiz' | 'result';
-
-function ResultList({ items }: { items: string[] }) {
-  return (
-    <ul>
-      {items.map(item => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
-  );
-}
-
-function ResultText({ text }: { text: string }) {
-  return <pre className="result-text">{text}</pre>;
-}
-
-function KakaoTalkIcon() {
-  return (
-    <span className="kakao-talk-icon" aria-hidden="true">
-      TALK
-    </span>
-  );
-}
 
 export function LegalizationCheckClient() {
   const [view, setView] = useState<View>('landing');
@@ -319,261 +293,27 @@ export function LegalizationCheckClient() {
       ) : null}
       <div className="app-shell">
         <main>
-          <section className={`view ${view === 'landing' ? 'active' : ''}`}>
-            <div className="hero-grid">
-              <article className="hero-card">
-                <div>
-                  <div className="eyebrow">
-                    <span className="eyebrow-dot" /> 2026년 특별조치법 대비 · 1분 자가진단
-                  </div>
-                  <h1>
-                    우리 건물,
-                    <br />
-                    양성화 가능성이
-                    <br />
-                    있는지 먼저 확인하세요.
-                  </h1>
-                  <p className="hero-copy">
-                    불법·무허가·준공미필·무단 용도변경 건축물이 법 요건에 들어오는지 O/X와 간단한 객관식으로
-                    확인합니다. 결과가 애매한 경우 바로 양성화.com 상담으로 연결됩니다.
-                  </p>
-                  <div className="hero-actions">
-                    <button className="primary-btn" type="button" onClick={startDiagnosis}>
-                      자가진단 시작하기
-                    </button>
-                    <button className="secondary-btn share-btn" type="button" onClick={shareDiagnosisLink}>
-                      <KakaoTalkIcon />
-                      자가진단 공유하기
-                    </button>
-                  </div>
-                </div>
-                <div className="metric-row" aria-label="핵심 조건">
-                  <div className="metric">
-                    <strong>2023.12.31</strong>
-                    <span>이전 사실상 완공</span>
-                  </div>
-                  <div className="metric">
-                    <strong>주거 50%+</strong>
-                    <span>주거용 특정건축물</span>
-                  </div>
-                  <div className="metric">
-                    <strong>18개월</strong>
-                    <span>시행 후 한시 신청</span>
-                  </div>
-                </div>
-              </article>
+          <LandingView active={view === 'landing'} onStart={startDiagnosis} onShare={shareDiagnosisLink} />
 
-              <aside className="side-stack" id="info-section">
-                <section className="panel">
-                  <div className="panel-title">
-                    <h2>먼저 확인할 대상 요건</h2>
-                    <span className="pill">법 기준</span>
-                  </div>
-                  <ul className="check-list">
-                    <li>건축허가·신고 없이 지었거나 대수선한 건축물</li>
-                    <li>허가·신고는 했지만 사용승인을 받지 못한 건축물</li>
-                    <li>용도변경 허가·신고 없이 주택으로 사용 중인 건축물</li>
-                    <li>연면적의 50% 이상이 주거용인 건축물</li>
-                    <li>다세대·단독·다가구·근린생활시설-&gt;주택 유형에 해당하는 건축물</li>
-                  </ul>
-                </section>
+          <QuizView
+            active={view === 'quiz'}
+            question={question}
+            progress={progress}
+            history={history}
+            onAnswer={answer}
+            onBack={goBack}
+            onRestart={restart}
+          />
 
-                <section className="panel">
-                  <div className="panel-title">
-                    <h3>진단 후 진행 흐름</h3>
-                    <span className="pill">Lead Flow</span>
-                  </div>
-                  <div className="process">
-                    <div className="process-step">
-                      <b>1</b>
-                      <div>
-                        <strong>자가진단</strong>
-                        <span>면적·완공일·구역·소방 조건 확인</span>
-                      </div>
-                    </div>
-                    <div className="process-step">
-                      <b>2</b>
-                      <div>
-                        <strong>상담 접수</strong>
-                        <span>주소와 위반 내용을 남겨 전문가 검토</span>
-                      </div>
-                    </div>
-                    <div className="process-step">
-                      <b>3</b>
-                      <div>
-                        <strong>현장·서류 검토</strong>
-                        <span>건축물대장, 토지이용계획, 현장조사</span>
-                      </div>
-                    </div>
-                    <div className="process-step">
-                      <b>4</b>
-                      <div>
-                        <strong>신고 준비</strong>
-                        <span>설계도서·현장조사서 작성 및 관할청 신고</span>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <div className="notice">
-                  <span>!</span>
-                  <span>
-                    자가진단은 영업·상담용 1차 필터입니다. 최종 가능 여부는 법 시행령, 지자체 조례,
-                    토지이용계획확인서, 건축물 현장조사 결과에 따라 달라질 수 있습니다.
-                  </span>
-                </div>
-              </aside>
-            </div>
-          </section>
-
-          <section className={`view ${view === 'quiz' ? 'active' : ''}`}>
-            <div className="diagnosis-layout">
-              <article className="panel quiz-card">
-                <div className="quiz-header">
-                  <div className="quiz-topline">
-                    <span className="pill">{question?.badge || '자가진단'}</span>
-                    <div className="progress-meta">
-                      <span>{`${Math.min(progress.done + 1, progress.total)} / ${progress.total}`}</span>
-                      <span>{progress.percent}%</span>
-                    </div>
-                  </div>
-                  <div className="progress-track">
-                    <div className="progress-fill" style={{ width: `${Math.max(6, progress.percent)}%` }} />
-                  </div>
-                </div>
-
-                <div className="question-body">
-                  <div className="question-badge">{question?.badge || 'START'}</div>
-                  <h2 className="question-title">{question?.title}</h2>
-                  <p className="question-desc">{question?.desc}</p>
-                  <div className="hint-box">{question?.hint}</div>
-                  <div className={`option-grid ${question?.options.length === 3 ? 'three' : ''}`}>
-                    {question?.options.map((option, index) => {
-                      const optionImage = question.id === 'type' ? TYPE_OPTION_IMAGES[option.id] : null;
-
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          className="option-card"
-                          data-tone={option.tone || 'yes'}
-                          onClick={() => answer(option.id)}
-                        >
-                          {optionImage ? (
-                            <span className="option-icon option-icon-image">
-                              <img src={optionImage} alt="" aria-hidden="true" />
-                            </span>
-                          ) : (
-                            <span className="option-icon">{option.icon || index + 1}</span>
-                          )}
-                          <span className="option-content">
-                            <strong>{option.label}</strong>
-                            <span>{option.detail || ''}</span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="quiz-footer">
-                  <div className="law-ref">근거: {question?.law || '근거 조항'}</div>
-                  <div className="footer-actions">
-                    <button className="ghost-btn" type="button" onClick={goBack}>
-                      이전
-                    </button>
-                    <button className="danger-btn" type="button" onClick={restart}>
-                      처음으로
-                    </button>
-                  </div>
-                </div>
-              </article>
-
-              <aside className="panel side-card summary-card">
-                <h3>응답 요약</h3>
-                <div className={`summary-empty ${history.length > 0 ? 'hidden' : ''}`}>
-                  선택한 답변이 여기에 쌓입니다. 애매한 항목은 ‘모름/확인 필요’를 선택해도 상담으로 연결됩니다.
-                </div>
-                <div className="answer-log">
-                  {history.map((item, index) => (
-                    <div className="log-item" key={`${item.id}-${index}`}>
-                      <span>
-                        {String(index + 1).padStart(2, '0')} · {item.law}
-                      </span>
-                      <strong>{item.typeLabel || item.label}</strong>
-                    </div>
-                  ))}
-                </div>
-              </aside>
-            </div>
-          </section>
-
-          <section className={`view ${view === 'result' ? 'active' : ''}`}>
-            <div className="result-layout">
-              <div>
-                <article className="result-hero" style={{ '--result-color': result?.color || 'var(--primary)' } as CSSProperties}>
-                  <div className="result-chip">{result?.chip || '결과'}</div>
-                  <h2 className="result-title">{result?.title}</h2>
-                  <p className="result-copy">{result?.copy}</p>
-                </article>
-
-                <div className="result-grid">
-                  <section className="result-box">
-                    <h3>다음 액션</h3>
-                    <ResultList items={result?.actions || []} />
-                  </section>
-                  <section className="result-box">
-                    <h3>확인 필요 서류</h3>
-                    <ResultList items={result?.documents || []} />
-                  </section>
-                  <section className="result-box">
-                    <h3>진단 요약</h3>
-                    <ResultText text={copyText || summary.join('\n')} />
-                  </section>
-                  <section className="result-box">
-                    <h3>주의사항</h3>
-                    <ResultList items={result?.cautions || []} />
-                  </section>
-                </div>
-
-                <div className="result-actions">
-                  <button className="primary-btn" type="button" onClick={openConsultation}>
-                    무료상담 신청하기
-                  </button>
-                  <button className="secondary-btn share-btn" type="button" onClick={shareDiagnosisLink}>
-                    <KakaoTalkIcon />
-                    이 자가진단 링크 공유하기
-                  </button>
-                  <button className="ghost-btn" type="button" onClick={restart}>
-                    다시 진단하기
-                  </button>
-                </div>
-              </div>
-
-              <aside className="contact-card" id="contact-card">
-                <div className="pill contact-pill">인터월드 상담 연결</div>
-                <h2>
-                  전문가가 확인하면
-                  <br />
-                  놓치는 조건이 줄어듭니다.
-                </h2>
-                <p>진단 결과를 복사한 뒤 아래 번호로 연락하면 확인해야 할 항목을 빠르게 이어서 상담할 수 있습니다.</p>
-                <div className="contact-actions">
-                  <div className="phone-card">
-                    <span>상담 휴대폰</span>
-                    <strong>010-8742-1008</strong>
-                    <small>평일 09:00-18:00 상담팀 연결</small>
-                  </div>
-                  <a className="primary-btn call-link" href="tel:01087421008">
-                    전화 상담 연결
-                  </a>
-                  <button className="secondary-btn" type="button" onClick={openConsultation}>
-                    무료상담 신청하기
-                  </button>
-                </div>
-              </aside>
-            </div>
-          </section>
+          <ResultView
+            active={view === 'result'}
+            result={result}
+            summary={summary}
+            copyText={copyText}
+            onConsult={openConsultation}
+            onShare={shareDiagnosisLink}
+            onRestart={restart}
+          />
         </main>
       </div>
 
