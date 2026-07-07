@@ -3,6 +3,7 @@ import { Building2, ChevronRight, MousePointerClick } from 'lucide-react';
 
 // home-v2 히어로(주소 진단) 바로 아래 — 사라진 3D 위반사례 후크를 되살린다.
 // 보는 콘텐츠가 아니라 "내 건물에 대입"하는 진입점으로 /qna3d 3D 사례로 연결.
+// 미리보기 이미지는 /qna3d 실제 캡처(3d1.webp) — 씬이 바뀌면 캡처도 갱신할 것.
 export function Landing3DPreview() {
   return (
     <section className="border-y border-border bg-muted/20" aria-label="3D 위반사례">
@@ -37,9 +38,9 @@ export function Landing3DPreview() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/3d1.webp"
-            width={1420}
+            width={1500}
             height={912}
-            alt="실사 미니어처 건물에서 위반 부위 12곳을 짚어보는 미리보기"
+            alt="3D 건물에서 위반 부위 12곳을 짚어보는 미리보기"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
           <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-md">
