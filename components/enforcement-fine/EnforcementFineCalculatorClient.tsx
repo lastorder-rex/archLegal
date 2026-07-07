@@ -24,6 +24,36 @@ import { LoginModal } from '@/components/landing/LoginModal';
 import { AddressSearchModal } from '@/components/consultation/AddressSearchModal';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import type { AddressSearchResult } from '@/lib/validations/consultation';
+import {
+  CURRENT_YEAR,
+  EXTENSION_VIOLATION_GROUP_CODE,
+  EXTENSION_VIOLATION_GROUP_FALLBACK_LABEL,
+  MANUAL_ADJUSTMENT_OPTIONS,
+  MITIGATION_CONDITION_CODES,
+  RESIDENTIAL_SPECIAL_CODES,
+  VIOLATION_CATEGORY_CODES,
+  VIOLATION_CATEGORY_OPTIONS,
+  VIOLATION_EXAMPLE_TIPS,
+  type ManualAdjustmentKey,
+  type ViolationCategoryKey
+} from '@/lib/enforcement-fine/calculator-constants';
+import {
+  buildCalcConsultMessage,
+  CALC_CONSULT_KEY,
+  formatArea,
+  formatCurrency,
+  formatCurrencyPerM2,
+  formatDecimal,
+  formatRate,
+  getErrorMessage,
+  getManualAdjustmentCodes,
+  getUseCategorySelectionKey,
+  parseJsonResponse,
+  sanitizeAreaInput,
+  sanitizeYearInput,
+  type CalculateResult,
+  type PreparedData
+} from '@/lib/enforcement-fine/calculator-helpers';
 
 declare global {
   interface Window {
@@ -65,8 +95,6 @@ type ViolationType = {
   requiresUserConfirmation: boolean;
   description?: string | null;
 };
-
-type PreparedData = Record<string, any>;
 
 type StructureOption = {
   id: string;
@@ -117,325 +145,10 @@ type ExtensionConstructionOption = {
   sortOrder: number;
 };
 
-type CalculateResult = {
-  estimateId: string;
-  result: {
-    estimatedFineKrw: number;
-    estimatedFineMinKrw: number;
-    estimatedFineMaxKrw: number;
-    standardPriceKrwPerM2: number;
-    buildingStandardValueKrw: number;
-    formulaType: string;
-    violationLabel: string;
-    warnings: string[];
-  };
-  calculationBasis: Record<string, any>;
-};
-
 type AreaUnit = 'm2' | 'pyeong';
-type ManualAdjustmentKey =
-  | ''
-  | 'commercial_1f'
-  | 'commercial_2f'
-  | 'commercial_basement_1f'
-  | 'commercial_basement_2f_lower'
-  | 'commercial_5f_plus'
-  | 'parking_lot_2f_plus'
-  | 'residential_garage'
-  | 'no_wall_25_to_50_percent'
-  | 'no_wall_50_to_75_percent'
-  | 'no_wall_75_plus_percent'
-  | 'steel_structure_wall_material'
-  | 'container_temp_under_30m2';
-type ViolationCategoryKey =
-  | 'extension'
-  | 'use'
-  | 'major_repair'
-  | 'site_layout'
-  | 'height_sunlight'
-  | 'safety'
-  | 'other';
-
-const CURRENT_YEAR = new Date().getFullYear();
-const EXTENSION_VIOLATION_GROUP_CODE = 'violation_1';
-const EXTENSION_VIOLATION_GROUP_FALLBACK_LABEL = '허가를 받지 않거나, 신고를 하지 않고 신축, 증축한 건축물';
-const VIOLATION_CATEGORY_OPTIONS: Array<{ key: ViolationCategoryKey; label: string }> = [
-  { key: 'extension', label: EXTENSION_VIOLATION_GROUP_FALLBACK_LABEL },
-  { key: 'use', label: '무단 용도·사용' },
-  { key: 'major_repair', label: '무단 대수선' },
-  { key: 'site_layout', label: '대지·배치 기준 위반' },
-  { key: 'height_sunlight', label: '높이·일조 기준 위반' },
-  { key: 'safety', label: '구조·피난·방화·안전 기준 위반' },
-  { key: 'other', label: '기타 건축법령 위반' }
-];
-const VIOLATION_CATEGORY_CODES: Record<ViolationCategoryKey, string[]> = {
-  extension: [
-    'coverage_ratio_excess',
-    'floor_area_ratio_excess',
-    'unauthorized_extension',
-    'unreported_extension'
-  ],
-  use: [
-    'unauthorized_use_change',
-    'use_without_approval'
-  ],
-  major_repair: [
-    'unauthorized_major_repair'
-  ],
-  site_layout: [
-    'landscape_violation',
-    'building_line_violation'
-  ],
-  height_sunlight: [
-    'height_limit_violation',
-    'sunlight_height_violation'
-  ],
-  safety: [
-    'structural_safety_violation',
-    'evacuation_fire_compartment_violation',
-    'fire_resistant_wall_violation',
-    'fire_district_violation',
-    'finish_material_violation',
-    'building_equipment_violation'
-  ],
-  other: [
-    'building_act_order_violation'
-  ]
-};
-
-const MANUAL_ADJUSTMENT_OPTIONS: Array<{ value: ManualAdjustmentKey; label: string }> = [
-  { value: '', label: '해당 없음' },
-  { value: 'commercial_1f', label: '1층 상가부분' },
-  { value: 'commercial_2f', label: '2층 상가부분' },
-  { value: 'commercial_basement_1f', label: '지하1층 상가부분' },
-  { value: 'commercial_basement_2f_lower', label: '지하2층 이하 상가부분' },
-  { value: 'commercial_5f_plus', label: '5층 이상 상가부분' },
-  { value: 'parking_lot_2f_plus', label: '2층 이상 주차장' },
-  { value: 'residential_garage', label: '주택 차고' },
-  { value: 'no_wall_25_to_50_percent', label: '무벽 1/4 이상 2/4 미만' },
-  { value: 'no_wall_50_to_75_percent', label: '무벽 2/4 이상 3/4 미만' },
-  { value: 'no_wall_75_plus_percent', label: '무벽 3/4 이상' },
-  { value: 'steel_structure_wall_material', label: '철골조 벽면 특례' },
-  { value: 'container_temp_under_30m2', label: '컨테이너 30㎡ 이하' }
-];
-
-const MITIGATION_CONDITION_CODES = new Set([
-  'acquired_after_violation',
-  'tenant_correction_difficulty',
-  'existing_at_use_approval'
-]);
-
-const RESIDENTIAL_SPECIAL_CODES = new Set([
-  'article80_small_residential_half',
-  'article80_use_without_approval_residential_half',
-  'article80_landscape_residential_half',
-  'article80_height_residential_half',
-  'article80_sunlight_residential_half',
-  'article80_ordinance_residential_half'
-]);
-
-const VIOLATION_EXAMPLE_TIPS = [
-  {
-    title: '불법 증축',
-    description: '옥상방, 창고, 테라스, 점포 앞 확장, 필로티 막기처럼 면적이 늘어난 경우입니다.',
-    mapsTo: '허가를 받지 않거나, 신고를 하지 않고 신축, 증축한 건축물 > 허가를 받지 아니하고 건축한 경우 / 신고를 하지 아니하고 건축한 경우 / 건폐율·용적률 초과'
-  },
-  {
-    title: '무단 용도변경',
-    description: '근린생활시설을 주거로 쓰거나, 주차장을 창고·상가로 쓰거나, 사무실을 음식점·카페로 쓰는 경우입니다.',
-    mapsTo: '무단 용도·사용 > 허가·신고 없이 무단 용도변경한 건축물'
-  },
-  {
-    title: '무단 대수선',
-    description: '방쪼개기, 세대·가구 경계벽 변경, 계단 변경, 방화구획 변경, 내력벽·기둥·보 변경처럼 구조나 구획을 바꾸는 경우입니다.',
-    mapsTo: '무단 대수선 > 허가·신고 없이 증설 또는 해체로 대수선을 한 건축물'
-  },
-  {
-    title: '높이·일조·건축선 위반',
-    description: '층을 올리거나 옥탑·다락·복층을 만들면서 높이 제한, 일조사선, 건축선 후퇴 기준을 넘긴 경우입니다.',
-    mapsTo: '높이·일조 기준 위반 > 높이 제한을 위반한 건축물 / 일조 등의 확보를 위한 높이 제한을 위반한 건축물, 대지·배치 기준 위반 > 건축선에 적합하지 아니한 건축물'
-  },
-  {
-    title: '조경·주차장·공용공간 훼손',
-    description: '조경면적을 없애거나, 부설주차장·필로티·공용부분을 창고·방·점포로 쓰는 경우입니다.',
-    mapsTo: '대지·배치 기준 위반 > 대지의 조경에 관한 사항을 위반한 건축물, 무단 용도·사용 > 허가·신고 없이 무단 용도변경한 건축물'
-  },
-  {
-    title: '구조·피난·방화 안전 위반',
-    description: '내력벽 철거, 기둥 제거, 보 변경, 피난계단 변경, 방화문·방화구획 훼손처럼 안전 기준을 건드린 경우입니다.',
-    mapsTo: '구조·피난·방화·안전 기준 위반 > 구조내력기준에 적합하지 아니한 건축물 / 피난시설, 용도·구조 제한, 방화구획 등 기준에 적합하지 아니한 건축물 / 내화구조 및 방화벽 기준에 적합하지 아니한 건축물'
-  }
-];
-
-function formatCurrency(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return '-';
-  return `${Math.round(value).toLocaleString('ko-KR')}원`;
-}
-
-function formatCurrencyPerM2(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return '-';
-  return `${Math.round(value).toLocaleString('ko-KR')}원/㎡`;
-}
-
-function formatArea(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return '-';
-  return `${Number(value.toFixed(2)).toLocaleString('ko-KR')}㎡`;
-}
-
-function formatRate(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return '-';
-  return `${Number((value * 100).toFixed(1)).toLocaleString('ko-KR')}%`;
-}
-
-function formatDecimal(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return '-';
-  return Number(value.toFixed(4)).toLocaleString('ko-KR');
-}
-
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback;
-}
-
-function getExtensionConstructionLabel(value: string) {
-  if (value === 'not_applicable') return '해당없음';
-  if (value === 'with_foundation') return '기초공사 있음';
-  if (value === 'without_foundation_multilevel') return '기초 없음 + 복층';
-  return '기초공사 없음';
-}
-
-function getManualAdjustmentCodes(value: ManualAdjustmentKey, groundFloorCount: number | null | undefined) {
-  const floors = Number(groundFloorCount || 0);
-
-  if (!value) return [];
-  if (value === 'commercial_1f') {
-    if (floors < 5) return ['commercial_1f_under_5_floors'];
-    if (floors <= 10) return ['commercial_1f_5_to_10_floors'];
-    if (floors <= 20) return ['commercial_1f_11_to_20_floors'];
-    if (floors <= 30) return ['commercial_1f_21_to_30_floors'];
-    return ['commercial_1f_over_30_floors'];
-  }
-  if (value === 'commercial_2f') {
-    if (floors >= 11 && floors <= 20) return ['commercial_2f_11_to_20_floors'];
-    if (floors >= 21 && floors <= 30) return ['commercial_2f_21_to_30_floors'];
-    if (floors > 30) return ['commercial_2f_over_30_floors'];
-    return [];
-  }
-  if (value === 'commercial_basement_1f') {
-    return [floors > 10 ? 'commercial_basement_1_over_10_floors' : 'commercial_basement_1_under_10_floors'];
-  }
-  if (value === 'commercial_basement_2f_lower') return ['commercial_basement_2_or_lower'];
-  if (value === 'commercial_5f_plus') {
-    if (floors >= 5 && floors <= 10) return ['commercial_5f_plus_5_to_10_floors'];
-    if (floors >= 11 && floors <= 20) return ['commercial_5f_plus_11_to_20_floors'];
-    if (floors >= 21 && floors <= 30) return ['commercial_5f_plus_21_to_30_floors'];
-    if (floors > 30) return ['commercial_5f_plus_over_30_floors'];
-    return [];
-  }
-  return [value];
-}
-
-const CALC_CONSULT_KEY = 'calc_consultation_prefill';
-
-function buildCalcConsultMessage(
-  result: CalculateResult,
-  preparedData: PreparedData,
-  violationDisplayLabel: string
-): string {
-  const r = result.result;
-  const sp = result.calculationBasis?.standardPrice;
-  const ref = preparedData?.reference;
-  const fmt = (n: number) => n.toLocaleString('ko-KR');
-
-  const lines: string[] = [
-    '이행강제금 계산기로 예상 금액을 확인하고 양성화 절차 상담을 요청드립니다.',
-    '',
-    '[계산 결과]',
-    `위반유형: ${violationDisplayLabel}`,
-  ];
-
-  const areaM2 = result.calculationBasis?.area?.violationAreaM2;
-  if (areaM2) lines.push(`위반면적: ${Number(areaM2).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}㎡`);
-
-  lines.push(`예상 이행강제금: ${fmt(r.estimatedFineKrw)}원`);
-
-  const hasRange = r.estimatedFineMinKrw !== r.estimatedFineKrw || r.estimatedFineMaxKrw !== r.estimatedFineKrw;
-  if (hasRange) {
-    lines.push(`예상범위: ${fmt(r.estimatedFineMinKrw)}원 ~ ${fmt(r.estimatedFineMaxKrw)}원`);
-  }
-
-  lines.push('', '[산정 기준]');
-
-  const structureName = sp?.structureName || ref?.structure?.name;
-  const structureIndex = sp?.structureIndex ?? ref?.structure?.index;
-  if (structureName) lines.push(`구조: ${structureName} (${structureIndex})`);
-
-  const useName = sp?.useName || ref?.use?.detailUse || ref?.use?.mainUse;
-  const useIndex = sp?.useIndex ?? ref?.use?.index;
-  if (useName) lines.push(`용도: ${useName} (${useIndex})`);
-
-  if (sp?.locationIndex != null) lines.push(`위치지수: ${sp.locationIndex}`);
-  if (sp?.depreciationRate != null) lines.push(`잔가율: ${sp.depreciationRate}`);
-  if (sp?.adjustmentRate != null && sp.adjustmentRate !== 1) lines.push(`가감산계수: ${sp.adjustmentRate}`);
-
-  lines.push('', '이행강제금 납부 및 양성화 절차 전반에 대해 상담 부탁드립니다.');
-
-  return lines.join('\n').slice(0, 1000);
-}
 
 function formatUseOptionLabel(item: UseOption) {
   return item.detailUse || item.mainUse;
-}
-
-function abbreviateDetailUse(detail: string): string {
-  if (detail.length <= 22) return detail;
-  const colonIdx = detail.indexOf(' : ');
-  if (colonIdx > 0 && colonIdx <= 18) return detail.slice(0, colonIdx);
-  const commaIdx = detail.indexOf(',');
-  if (commaIdx > 0 && commaIdx <= 18) return detail.slice(0, commaIdx).trim() + ' 등';
-  const parenIdx = detail.indexOf('(');
-  if (parenIdx > 2 && parenIdx <= 16) return detail.slice(0, parenIdx).trim() + ' 등';
-  return detail.slice(0, 20).trim() + '…';
-}
-
-function formatUseOptionLabelShort(item: UseOption) {
-  return `${abbreviateDetailUse(item.detailUse)} (${formatDecimal(item.index)})`;
-}
-
-function getUseCategorySelectionKey(categoryCode: string | null | undefined): 'I' | 'II' | 'other' | '' {
-  if (categoryCode === 'I' || categoryCode === 'II') return categoryCode;
-  return categoryCode ? 'other' : '';
-}
-
-function sanitizeAreaInput(value: string) {
-  const cleaned = value.replace(/[^\d.]/g, '');
-  const [integerPart, ...decimalParts] = cleaned.split('.');
-  const limitedIntegerPart = integerPart.slice(0, 5);
-  const decimalPart = decimalParts.join('').slice(0, 2);
-
-  if (cleaned.startsWith('.')) {
-    return decimalPart ? `0.${decimalPart}` : '0.';
-  }
-  if (decimalParts.length > 0) {
-    return `${limitedIntegerPart}.${decimalPart}`;
-  }
-  return limitedIntegerPart;
-}
-
-function sanitizeYearInput(value: string) {
-  return value.replace(/\D/g, '').slice(0, 4);
-}
-
-async function parseJsonResponse<T>(response: Response): Promise<T> {
-  const json = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const message = typeof json?.error === 'string' ? json.error : '요청 처리 중 오류가 발생했습니다.';
-    const error = new Error(message);
-    (error as Error & { status?: number }).status = response.status;
-    throw error;
-  }
-
-  return json as T;
 }
 
 type EnforcementFineCalculatorClientProps = {
@@ -472,8 +185,6 @@ export function EnforcementFineCalculatorClient({
   const [mitigationId, setMitigationId] = useState('');
   const [residentialSpecialId, setResidentialSpecialId] = useState('');
   const [acquiredAfterViolation, setAcquiredAfterViolation] = useState(false);
-  const [forProfitPurpose, setForProfitPurpose] = useState(false);
-  const [repeatedViolation, setRepeatedViolation] = useState(false);
   const [violationTypes, setViolationTypes] = useState<ViolationType[]>([]);
   const [structureOptions, setStructureOptions] = useState<StructureOption[]>([]);
   const [useOptions, setUseOptions] = useState<UseOption[]>([]);
@@ -803,8 +514,6 @@ export function EnforcementFineCalculatorClient({
     setMitigationId('');
     setResidentialSpecialId('');
     setAcquiredAfterViolation(false);
-    setForProfitPurpose(false);
-    setRepeatedViolation(false);
   };
 
   const clearPreparedCalculation = () => {
