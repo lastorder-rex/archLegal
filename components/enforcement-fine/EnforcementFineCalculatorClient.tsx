@@ -561,125 +561,83 @@ export function EnforcementFineCalculatorClient({
     return false;
   };
 
-  const loadViolationTypes = async () => {
-    setLoadingTypes(true);
+  const loadOptions = async <T,>({
+    url,
+    setLoading,
+    setItems,
+    errorMessage
+  }: {
+    url: string;
+    setLoading: (loading: boolean) => void;
+    setItems: (items: T[]) => void;
+    errorMessage: string;
+  }) => {
+    setLoading(true);
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/enforcement-fine/violation-types', {
+      const response = await fetch(url, {
         method: 'GET',
         credentials: 'include'
       });
-      const data = await parseJsonResponse<{ items: ViolationType[] }>(response);
-      setViolationTypes(data.items || []);
+      const data = await parseJsonResponse<{ items: T[] }>(response);
+      setItems(data.items || []);
     } catch (error) {
       if (!handleUnauthorized(error as Error & { status?: number })) {
-        setErrorMessage(getErrorMessage(error, '위반유형을 불러오지 못했습니다.'));
+        setErrorMessage(getErrorMessage(error, errorMessage));
       }
     } finally {
-      setLoadingTypes(false);
+      setLoading(false);
     }
   };
 
-  const loadStructureOptions = async () => {
-    setLoadingStructures(true);
-    setErrorMessage('');
+  const loadViolationTypes = () =>
+    loadOptions<ViolationType>({
+      url: '/api/enforcement-fine/violation-types',
+      setLoading: setLoadingTypes,
+      setItems: setViolationTypes,
+      errorMessage: '위반유형을 불러오지 못했습니다.'
+    });
 
-    try {
-      const response = await fetch('/api/enforcement-fine/structure-options', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await parseJsonResponse<{ items: StructureOption[] }>(response);
-      setStructureOptions(data.items || []);
-    } catch (error) {
-      if (!handleUnauthorized(error as Error & { status?: number })) {
-        setErrorMessage(getErrorMessage(error, '구조지수 목록을 불러오지 못했습니다.'));
-      }
-    } finally {
-      setLoadingStructures(false);
-    }
-  };
+  const loadStructureOptions = () =>
+    loadOptions<StructureOption>({
+      url: '/api/enforcement-fine/structure-options',
+      setLoading: setLoadingStructures,
+      setItems: setStructureOptions,
+      errorMessage: '구조지수 목록을 불러오지 못했습니다.'
+    });
 
-  const loadUseOptions = async () => {
-    setLoadingUses(true);
-    setErrorMessage('');
+  const loadUseOptions = () =>
+    loadOptions<UseOption>({
+      url: '/api/enforcement-fine/use-options',
+      setLoading: setLoadingUses,
+      setItems: setUseOptions,
+      errorMessage: '용도지수 목록을 불러오지 못했습니다.'
+    });
 
-    try {
-      const response = await fetch('/api/enforcement-fine/use-options', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await parseJsonResponse<{ items: UseOption[] }>(response);
-      setUseOptions(data.items || []);
-    } catch (error) {
-      if (!handleUnauthorized(error as Error & { status?: number })) {
-        setErrorMessage(getErrorMessage(error, '용도지수 목록을 불러오지 못했습니다.'));
-      }
-    } finally {
-      setLoadingUses(false);
-    }
-  };
+  const loadAdjustmentOptions = () =>
+    loadOptions<AdjustmentOption>({
+      url: '/api/enforcement-fine/adjustment-options',
+      setLoading: setLoadingAdjustments,
+      setItems: setAdjustmentOptions,
+      errorMessage: '가산·감산 항목을 불러오지 못했습니다.'
+    });
 
-  const loadAdjustmentOptions = async () => {
-    setLoadingAdjustments(true);
-    setErrorMessage('');
+  const loadSpecialConditionOptions = () =>
+    loadOptions<SpecialConditionOption>({
+      url: '/api/enforcement-fine/special-condition-options',
+      setLoading: setLoadingSpecialConditions,
+      setItems: setSpecialConditionOptions,
+      errorMessage: '가중·감경 항목을 불러오지 못했습니다.'
+    });
 
-    try {
-      const response = await fetch('/api/enforcement-fine/adjustment-options', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await parseJsonResponse<{ items: AdjustmentOption[] }>(response);
-      setAdjustmentOptions(data.items || []);
-    } catch (error) {
-      if (!handleUnauthorized(error as Error & { status?: number })) {
-        setErrorMessage(getErrorMessage(error, '가산·감산 항목을 불러오지 못했습니다.'));
-      }
-    } finally {
-      setLoadingAdjustments(false);
-    }
-  };
-
-  const loadSpecialConditionOptions = async () => {
-    setLoadingSpecialConditions(true);
-    setErrorMessage('');
-
-    try {
-      const response = await fetch('/api/enforcement-fine/special-condition-options', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await parseJsonResponse<{ items: SpecialConditionOption[] }>(response);
-      setSpecialConditionOptions(data.items || []);
-    } catch (error) {
-      if (!handleUnauthorized(error as Error & { status?: number })) {
-        setErrorMessage(getErrorMessage(error, '가중·감경 항목을 불러오지 못했습니다.'));
-      }
-    } finally {
-      setLoadingSpecialConditions(false);
-    }
-  };
-
-  const loadExtensionConstructionOptions = async () => {
-    setLoadingExtensionConstructionOptions(true);
-    setErrorMessage('');
-
-    try {
-      const response = await fetch('/api/enforcement-fine/extension-construction-options', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await parseJsonResponse<{ items: ExtensionConstructionOption[] }>(response);
-      setExtensionConstructionOptions(data.items || []);
-    } catch (error) {
-      if (!handleUnauthorized(error as Error & { status?: number })) {
-        setErrorMessage(getErrorMessage(error, '무허가 증축 기초시공 항목을 불러오지 못했습니다.'));
-      }
-    } finally {
-      setLoadingExtensionConstructionOptions(false);
-    }
-  };
+  const loadExtensionConstructionOptions = () =>
+    loadOptions<ExtensionConstructionOption>({
+      url: '/api/enforcement-fine/extension-construction-options',
+      setLoading: setLoadingExtensionConstructionOptions,
+      setItems: setExtensionConstructionOptions,
+      errorMessage: '무허가 증축 기초시공 항목을 불러오지 못했습니다.'
+    });
 
   const prepareBuilding = async () => {
     if (requireLogin()) return;
