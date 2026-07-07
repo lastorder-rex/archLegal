@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { SignupForm } from '@/components/auth/SignupForm';
 import type { UserProfile } from '@/types/profile';
 import { isUserSessionExpired } from '@/lib/auth/user-session';
+import { USER_PROFILE_COLUMNS } from '@/lib/auth/user-profile';
 import { sanitizeRedirectPath } from '@/lib/utils/navigation';
 import {
   extractKakaoProfile,
@@ -42,9 +43,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
   const { data: profileRow } = await supabase
     .from('users')
-    .select(
-      'auth_id, full_name, email, phone, legal_name, contact_phone, profile_completed, profile_completed_at, consent_terms_at, consent_privacy_at, contact_phone_verified_at, birth_date'
-    )
+    .select(USER_PROFILE_COLUMNS)
     .eq('auth_id', session.user.id)
     .maybeSingle();
 

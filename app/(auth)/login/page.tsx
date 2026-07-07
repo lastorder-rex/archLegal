@@ -6,6 +6,7 @@ import { CheckCircle2 } from 'lucide-react';
 import AuthPanel from '@/components/auth/AuthPanel';
 import type { UserProfile } from '@/types/profile';
 import { isUserSessionExpired } from '@/lib/auth/user-session';
+import { USER_PROFILE_COLUMNS, buildFallbackProfile } from '@/lib/auth/user-profile';
 
 export const revalidate = 0;
 
@@ -29,9 +30,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (activeSession?.user) {
     const { data: profileRows } = await supabase
       .from('users')
-      .select(
-        'auth_id, full_name, email, phone, legal_name, contact_phone, profile_completed, profile_completed_at, consent_terms_at, consent_privacy_at, contact_phone_verified_at, birth_date'
-      )
+      .select(USER_PROFILE_COLUMNS)
       .eq('auth_id', activeSession.user.id)
       .limit(1);
 
@@ -40,23 +39,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     if (data) {
       profile = data;
     } else {
-      profile = {
-        auth_id: activeSession.user.id,
-        full_name:
-          (activeSession.user.user_metadata?.name ||
-            activeSession.user.user_metadata?.full_name ||
-            activeSession.user.email) ?? null,
-        email: activeSession.user.email ?? null,
-        phone: activeSession.user.phone ?? null,
-        legal_name: null,
-        contact_phone: null,
-        profile_completed: false,
-        profile_completed_at: null,
-        consent_terms_at: null,
-        consent_privacy_at: null,
-        contact_phone_verified_at: null,
-        birth_date: null
-      };
+      profile = buildFallbackProfile(activeSession.user);
     }
   }
 

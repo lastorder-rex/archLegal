@@ -5,6 +5,7 @@ import { isUserSessionExpired } from '@/lib/auth/user-session';
 import { MyPageShell } from '@/components/mypage/MyPageShell';
 import type { ConsultationSummary } from '@/types/mypage';
 import type { UserProfile } from '@/types/profile';
+import { USER_PROFILE_COLUMNS, buildFallbackProfile } from '@/lib/auth/user-profile';
 
 export const revalidate = 0;
 
@@ -31,31 +32,13 @@ export default async function MyPageLayout({ children }: MyPageLayoutProps) {
 
   const { data: profileRow } = await supabase
     .from('users')
-    .select(
-      'auth_id, full_name, email, phone, legal_name, contact_phone, profile_completed, profile_completed_at, consent_terms_at, consent_privacy_at, contact_phone_verified_at, birth_date'
-    )
+    .select(USER_PROFILE_COLUMNS)
     .eq('auth_id', session.user.id)
     .maybeSingle();
 
   const profile: UserProfile = profileRow
     ? profileRow
-    : {
-        auth_id: session.user.id,
-        full_name:
-          (session.user.user_metadata?.name ||
-            session.user.user_metadata?.full_name ||
-            session.user.email) ?? null,
-        email: session.user.email ?? null,
-        phone: session.user.phone ?? null,
-        legal_name: null,
-        contact_phone: null,
-        profile_completed: false,
-        profile_completed_at: null,
-        consent_terms_at: null,
-        consent_privacy_at: null,
-        contact_phone_verified_at: null,
-        birth_date: null
-      };
+    : buildFallbackProfile(session.user);
 
   const { data: consultationsRows } = await supabase
     .from('consultations')
