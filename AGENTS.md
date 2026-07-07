@@ -2,6 +2,8 @@
 
 > **모든 AI 코딩 에이전트(Claude Code, GPT Codex 등)의 단일 진입 문서.**
 > Claude Code는 `CLAUDE.md`가 이 파일을 import하므로, 프로젝트 규칙이 바뀌면 **이 파일만** 수정한다.
+>
+> 📌 **작업 시작 전 `docs/PROJECT_STATUS.md`를 먼저 읽어라.** 최근 작업·미push 상태·남은 할일이 거기 있다(계정/기기가 바뀌어도 이어서 작업하기 위함). 작업을 마치면 그 문서를 갱신한다.
 
 ## 프로젝트 개요
 
@@ -16,6 +18,7 @@
 
 | 알고 싶은 것 | 문서 |
 |---|---|
+| **현재 진행 상태·최근 작업·미push·남은 할일** (작업 시작 전 필독) | `docs/PROJECT_STATUS.md` |
 | **폴더 구조·파일 위치** (구조 질문은 여기 먼저) | `docs/folder-structure.md` |
 | 모듈별 구현 요약 (Auth·상담·진단·계산기·마이페이지·콘텐츠) | `docs/모듈별 상세 개발정의서.md` |
 | 특별조치법 **내부 기준 문서** (콘텐츠·로직의 법적 근거) | `docs/legalization-special-act-current.md` |
