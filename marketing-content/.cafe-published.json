@@ -1,114 +1,272 @@
 [
   {
-    "num": "001",
-    "file": "001_옥탑방도_위반건축물_양성화가_가능할까요.md",
-    "articleId": 2,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/2",
-    "publishedAt": "2026-07-04T07:32:50.406Z"
-  },
-  {
-    "num": "001",
-    "file": "001_옥탑방도_위반건축물_양성화가_가능할까요.md",
-    "articleId": 3,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/3",
-    "publishedAt": "2026-07-04T07:47:03.550Z"
-  },
-  {
-    "num": "001",
-    "file": "001_옥탑방도_위반건축물_양성화가_가능할까요.md",
-    "articleId": 10,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/10",
-    "publishedAt": "2026-07-04T08:14:22.755Z"
-  },
-  {
     "num": "007",
     "file": "007_이미_이행강제금을_낸_건물도_양성화_신청이_가능한가요.md",
-    "articleId": 11,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/11",
-    "publishedAt": "2026-07-04T08:19:31.444Z"
+    "articleId": 55,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/55",
+    "publishedAt": "2026-07-07T04:12:00.182Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "011",
     "file": "011_이행강제금은_한_번만_내면_끝인가요.md",
-    "articleId": 12,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/12",
-    "publishedAt": "2026-07-04T08:20:22.209Z"
+    "articleId": 56,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/56",
+    "publishedAt": "2026-07-07T04:13:11.606Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "012",
     "file": "012_이행강제금은_어떻게_계산되나요.md",
-    "articleId": 13,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/13",
-    "publishedAt": "2026-07-04T08:21:13.006Z"
+    "articleId": 57,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/57",
+    "publishedAt": "2026-07-07T04:14:23.175Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "013",
     "file": "013_이행강제금이_매년_반복_부과될_수_있나요.md",
-    "articleId": 14,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/14",
-    "publishedAt": "2026-07-04T08:38:41.153Z"
+    "articleId": 58,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/58",
+    "publishedAt": "2026-07-07T04:15:34.553Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "014",
     "file": "014_무단증축_면적이_작아도_이행강제금이_나오나요.md",
-    "articleId": 15,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/15",
-    "publishedAt": "2026-07-04T08:39:36.773Z"
+    "articleId": 59,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/59",
+    "publishedAt": "2026-07-07T04:16:46.443Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "015",
     "file": "015_이행강제금을_내고_있으면_매매가_가능한가요.md",
-    "articleId": 16,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/16",
-    "publishedAt": "2026-07-04T08:40:32.352Z"
+    "articleId": 60,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/60",
+    "publishedAt": "2026-07-07T04:17:57.907Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "016",
     "file": "016_이행강제금_부과_전_양성화_상담을_받아야_하나요.md",
-    "articleId": 17,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/17",
-    "publishedAt": "2026-07-04T08:41:27.956Z"
+    "articleId": 61,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/61",
+    "publishedAt": "2026-07-07T04:19:09.493Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "017",
     "file": "017_이행강제금_계산기만으로_정확한_금액을_알_수_있나요.md",
-    "articleId": 18,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/18",
-    "publishedAt": "2026-07-04T08:42:23.510Z"
+    "articleId": 62,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/62",
+    "publishedAt": "2026-07-07T04:20:20.970Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "001",
+    "file": "001_옥탑방도_위반건축물_양성화가_가능할까요.md",
+    "articleId": 63,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/63",
+    "publishedAt": "2026-07-07T04:21:32.514Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "002",
     "file": "002_오래전에_만든_옥상_창고도_양성화_대상이_될_수_있나요.md",
-    "articleId": 19,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/19",
-    "publishedAt": "2026-07-04T08:55:36.229Z"
+    "articleId": 64,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/64",
+    "publishedAt": "2026-07-07T04:22:44.128Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "003",
     "file": "003_베란다를_확장했는데_위반건축물로_볼_수_있나요.md",
-    "articleId": 20,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/20",
-    "publishedAt": "2026-07-04T08:56:46.800Z"
+    "articleId": 65,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/65",
+    "publishedAt": "2026-07-07T04:23:55.606Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "005",
     "file": "005_다세대주택_한_세대만_위반인_경우도_양성화가_가능한가요.md",
-    "articleId": 21,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/21",
-    "publishedAt": "2026-07-04T08:57:57.343Z"
+    "articleId": 66,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/66",
+    "publishedAt": "2026-07-07T04:25:07.373Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "008",
     "file": "008_작은_면적의_무단증축도_위반건축물에_해당하나요.md",
-    "articleId": 22,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/22",
-    "publishedAt": "2026-07-04T08:59:07.835Z"
+    "articleId": 67,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/67",
+    "publishedAt": "2026-07-07T04:26:18.967Z",
+    "withImage": true,
+    "richHtml": true
   },
   {
     "num": "010",
     "file": "010_오래된_위반건축물은_시간이_지나면_괜찮아지나요.md",
-    "articleId": 23,
-    "articleUrl": "https://cafe.naver.com/skybluebdahj/23",
-    "publishedAt": "2026-07-04T09:00:18.561Z"
+    "articleId": 68,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/68",
+    "publishedAt": "2026-07-07T04:27:30.504Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "019",
+    "file": "019_옥상_창고를_설치한_경우_양성화_가능성은_어떻게_보나요.md",
+    "articleId": 69,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/69",
+    "publishedAt": "2026-07-07T04:28:41.900Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "026",
+    "file": "026_위반건축물_표시가_있으면_매매가_어려운가요.md",
+    "articleId": 70,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/70",
+    "publishedAt": "2026-07-07T04:29:53.686Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "027",
+    "file": "027_전세_계약_전_위반건축물_여부를_꼭_확인해야_하나요.md",
+    "articleId": 71,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/71",
+    "publishedAt": "2026-07-07T04:31:05.150Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "028",
+    "file": "028_위반건축물은_대출이나_보증보험에_문제가_될_수_있나요.md",
+    "articleId": 72,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/72",
+    "publishedAt": "2026-07-07T04:32:16.637Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "018",
+    "file": "018_옥상에_방을_만든_경우_어떤_점을_확인해야_할까요.md",
+    "articleId": 73,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/73",
+    "publishedAt": "2026-07-07T04:33:27.954Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "020",
+    "file": "020_주차장을_창고로_사용_중인_경우_문제가_될_수_있나요.md",
+    "articleId": 74,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/74",
+    "publishedAt": "2026-07-07T04:34:39.640Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "021",
+    "file": "021_근린생활시설을_주거용_원룸처럼_쓰는_경우는_어떤가요.md",
+    "articleId": 75,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/75",
+    "publishedAt": "2026-07-07T04:35:51.365Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "023",
+    "file": "023_1층_필로티나_주차장_일부를_막아_사용한_경우.md",
+    "articleId": 76,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/76",
+    "publishedAt": "2026-07-07T04:37:03.074Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "029",
+    "file": "029_매수_후_위반_사실을_알게_되면_어떻게_해야_하나요.md",
+    "articleId": 77,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/77",
+    "publishedAt": "2026-07-07T04:38:14.528Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "004",
+    "file": "004_테라스에_지붕을_설치한_경우도_문제가_되나요.md",
+    "articleId": 78,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/78",
+    "publishedAt": "2026-07-07T04:39:26.312Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "006",
+    "file": "006_건축물대장에_위반_표시가_없으면_괜찮은_건가요.md",
+    "articleId": 79,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/79",
+    "publishedAt": "2026-07-07T04:40:38.355Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "009",
+    "file": "009_사용승인_후_내부_구조를_바꾼_경우도_문제가_되나요.md",
+    "articleId": 80,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/80",
+    "publishedAt": "2026-07-07T04:41:50.258Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "022",
+    "file": "022_발코니를_실내처럼_확장한_경우_확인할_점.md",
+    "articleId": 81,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/81",
+    "publishedAt": "2026-07-07T04:43:01.816Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "024",
+    "file": "024_마당이나_테라스에_고정식_지붕을_설치한_경우.md",
+    "articleId": 82,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/82",
+    "publishedAt": "2026-07-07T04:44:13.253Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "025",
+    "file": "025_건물_뒤편에_무단으로_공간을_늘린_경우.md",
+    "articleId": 83,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/83",
+    "publishedAt": "2026-07-07T04:45:24.770Z",
+    "withImage": true,
+    "richHtml": true
+  },
+  {
+    "num": "030",
+    "file": "030_건축물대장_확인만으로_위반_여부를_알_수_있나요.md",
+    "articleId": 84,
+    "articleUrl": "https://cafe.naver.com/skybluebdahj/84",
+    "publishedAt": "2026-07-07T04:46:36.031Z",
+    "withImage": true,
+    "richHtml": true
   }
 ]

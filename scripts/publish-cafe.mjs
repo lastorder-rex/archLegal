@@ -7,7 +7,7 @@
  *   node scripts/publish-cafe.mjs 001 --go       # 001번 실제 발행
  *   node scripts/publish-cafe.mjs --next         # 미발행 우선순위 다음 글 미리보기
  *   node scripts/publish-cafe.mjs --next --go    # 그 글 실제 발행
- *   옵션: --clubid <id> --menuid <id> --force
+ *   옵션: --clubid <id> --menuid <id> --force --with-image --rich-html
  *
  * 준비:
  *   - node scripts/naver-cafe-token.mjs 로 .env.naver-cafe-token.json 발급
@@ -21,6 +21,10 @@ import { fileURLToPath } from 'url';
 // (한 번만 인코딩하면 내부 이중 디코딩으로 한글이 깨짐 — 실측 확인)
 function encodeParam(str) {
   return encodeURIComponent(encodeURIComponent(str));
+}
+
+function encodeParamOnce(str) {
+  return encodeURIComponent(str);
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -61,6 +65,8 @@ const opt = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1
 const GO = flag('--go');
 const NEXT = flag('--next');
 const FORCE = flag('--force');
+const WITH_IMAGE = flag('--with-image');
+const RICH_HTML = flag('--rich-html');
 const CLUB_ID = opt('--clubid') || getEnv('NAVER_CAFE_CLUB_ID');
 const MENU_ID = opt('--menuid') || getEnv('NAVER_CAFE_MENU_ID');
 const GROUP = opt('--group'); // 특정 게시판(그룹)만 발행
@@ -129,6 +135,12 @@ function savePublished(list) {
   fs.writeFileSync(PUBLISHED_FILE, JSON.stringify(list, null, 2) + '\n', 'utf8');
 }
 
+function imagePathFor(num) {
+  const img = imageInfo(num);
+  if (!img?.file) return null;
+  return path.join(ROOT, 'marketing-content', 'generated-images', 'cafe', img.file);
+}
+
 // ── MD 파싱 → subject / content(HTML) ────────────────────────
 const DECOR = /^━+$/;                          // ━━━ 장식선
 const SECTION_RE = /^\[([^\]]+)\]\s*$/;         // [섹션명]
@@ -138,9 +150,45 @@ const BODY_SECTIONS = [
   '주의', '상담 전 메모', '다음 단계', '댓글 유도 문구',
 ];
 const LIST_SECTIONS = new Set(['체크리스트']);
+const SITE_ORIGIN = 'https://www.archlegal.co.kr';
 
 function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// 카페 API 허용 태그: <b> <strong> <u> <mark> <p> <br> (style/color/table 은 거부됨)
+// 밑줄 = 핵심 판단 기준 용어, 볼드 = 주제 키워드
+const UNDERLINE_TERMS = [
+  '건축물대장', '대피공간', '방화 기준', '바닥면적', '피난',
+  '2023년 12월 31일', '특별조치법', '이행강제금',
+];
+const BOLD_TERMS = [
+  '발코니', '베란다', '테라스', '위반건축물', '무단증축',
+  '새시', '패널', '벽체', '현장 사진', '기존 평면도', '양성화',
+];
+// 카페 원고의 CTA 경로 → 실제 운영 라우트 매핑 (다르면 여기서 교정)
+const PATH_MAP = { '/qna': '/qna3d' }; // /qna 라우트 없음 → 3D QnA(/qna3d)
+function renderRichParagraph(text) {
+  let safe = escapeHtml(text);
+  safe = safe.replace(/양성화\.com(\/[A-Za-z0-9?=&._#%/-]*)?/g, (match, pathPart = '', offset, str) => {
+    let p = pathPart || '/';
+    if (PATH_MAP[p]) p = PATH_MAP[p];
+    const url = `${SITE_ORIGIN}${p}`;
+    // 네이버 자동링크가 뒤 한글 조사까지 링크에 포함시키므로, 조사가 붙으면 공백으로 경계 분리
+    const nextChar = str[offset + match.length] || '';
+    return /[가-힣]/.test(nextChar) ? `${url} ` : url;
+  });
+  for (const word of UNDERLINE_TERMS) {
+    safe = safe.replaceAll(escapeHtml(word), `<u>${escapeHtml(word)}</u>`);
+  }
+  for (const word of BOLD_TERMS) {
+    safe = safe.replaceAll(escapeHtml(word), `<b>${escapeHtml(word)}</b>`);
+  }
+  return safe;
+}
+
+function sectionTitle(name) {
+  return `<p><b>[${escapeHtml(name)}]</b></p>`;
 }
 
 function parseArticle(full) {
@@ -181,12 +229,20 @@ function parseArticle(full) {
 
   // (1) 한 줄 요약 리드
   const summary = (sections.get('한 줄 요약') || []).map((l) => l.trim()).filter(Boolean);
-  if (summary.length) parts.push(`<p><b>${escapeHtml(summary.join(' '))}</b></p>`, '<br>');
+  if (summary.length) {
+    const line = escapeHtml(summary.join(' '));
+    // 카페 API는 배경색(형광펜)을 렌더링하지 않음 → 볼드+밑줄로만 강조 가능
+    parts.push(
+      '<p><b>핵심 요약</b></p>',
+      RICH_HTML ? `<p>💡 <b><u>${line}</u></b></p>` : `<p><b>${line}</b></p>`,
+      '<br>',
+    );
+  }
 
-  // (2) 이미지 삽입 위치 마커 (API로는 이미지 첨부 불가 → 발행 후 수동 삽입 안내)
+  // (2) 이미지 삽입 위치 마커 (이미지 자동 첨부 시에는 본문 안내 제거)
   const num = (path.basename(full).match(/^(\d{3})/) || [])[1];
   const img = num && imageInfo(num);
-  if (img && img.file) {
+  if (img && img.file && !WITH_IMAGE) {
     parts.push(`<p>┌───── 🖼 이미지 삽입 위치 (본문 상단) ─────</p>`);
     parts.push(`<p>│ 파일: ${escapeHtml(img.file)} · 비율 1:1${img.thumb ? ` · 문구 “${escapeHtml(img.thumb)}”` : ''}</p>`);
     parts.push(`<p>└ (이미지 넣은 뒤 이 안내 2줄은 지우세요)</p>`, '<br>');
@@ -197,19 +253,38 @@ function parseArticle(full) {
     const body = sections.get(name).map((l) => l.trim()).filter(Boolean);
     if (!body.length) continue;
     // '댓글 유도 문구'는 운영 라벨이므로 제목 없이 문단만 노출
-    if (name !== '댓글 유도 문구') parts.push(`<b>${escapeHtml(name)}</b><br>`);
+    if (name !== '댓글 유도 문구') parts.push(RICH_HTML ? sectionTitle(name) : `<b>${escapeHtml(name)}</b><br>`);
     if (LIST_SECTIONS.has(name)) {
       const items = body
         .filter((l) => l.startsWith('- '))
-        .map((l) => `<li>${escapeHtml(l.slice(2).trim())}</li>`);
+        .map((l) => l.slice(2).trim());
       const rest = body.filter((l) => !l.startsWith('- '));
-      for (const p of rest) parts.push(`<p>${escapeHtml(p)}</p>`);
-      if (items.length) parts.push(`<ul>${items.join('')}</ul>`);
+      for (const p of rest) parts.push(`<p>${RICH_HTML ? renderRichParagraph(p) : escapeHtml(p)}</p>`);
+      if (items.length) {
+        if (RICH_HTML) {
+          for (const item of items) parts.push(`<p>✓ ${renderRichParagraph(item)}</p>`);
+        } else {
+          parts.push(`<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`);
+        }
+      }
     } else {
-      for (const p of body) parts.push(`<p>${escapeHtml(p)}</p>`);
+      for (const p of body) {
+        const prefix = RICH_HTML && name === '주의' ? '⚠ ' : '';
+        parts.push(`<p>${prefix}${RICH_HTML ? renderRichParagraph(p) : escapeHtml(p)}</p>`);
+      }
     }
     parts.push('<br>');
   }
+
+  // 해시태그 (본문 끝에 넣으면 네이버 카페가 클릭 태그로 등록함)
+  const kwLine = lines.find((l) => l.startsWith('추천 키워드:'));
+  const keywords = kwLine ? kwLine.replace('추천 키워드:', '').split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const baseTags = ['위반건축물', '양성화', '특정건축물양성화'];
+  const tags = [...new Set([...keywords, ...baseTags])]
+    .map((t) => '#' + t.replace(/\s+/g, ''))   // 태그는 공백 제거 (#베란다 확장 → #베란다확장)
+    .slice(0, 8);
+  if (tags.length) parts.push('<br>', `<p>${tags.join(' ')}</p>`);
+
   const content = parts.join('\n');
   return { subject, content };
 }
@@ -247,7 +322,8 @@ async function refreshAccessToken() {
 // ── 발행 ─────────────────────────────────────────────────────
 async function publish(accessToken, subject, content, menuid) {
   const url = `https://openapi.naver.com/v1/cafe/${CLUB_ID}/menu/${menuid}/articles`;
-  const body = `subject=${encodeParam(subject)}&content=${encodeParam(content)}`;
+  // openyn=전체공개, searchopen=검색허용(SEO), replyyn=덧글허용
+  const body = `subject=${encodeParam(subject)}&content=${encodeParam(content)}&openyn=true&searchopen=true&replyyn=true`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -261,6 +337,36 @@ async function publish(accessToken, subject, content, menuid) {
   const msg = json?.message?.result || json?.result || json;
   if (!res.ok || json?.message?.error || (msg && msg.errorCode)) {
     throw new Error(`발행 실패(HTTP ${res.status}): ${JSON.stringify(json)}`);
+  }
+  return {
+    articleId: msg?.articleId ?? null,
+    articleUrl: msg?.articleUrl ?? null,
+    raw: json,
+  };
+}
+
+async function publishWithImage(accessToken, subject, content, menuid, imagePath) {
+  const url = `https://openapi.naver.com/v1/cafe/${CLUB_ID}/menu/${menuid}/articles`;
+  const form = new FormData();
+  // multipart 이미지 첨부 경로는 x-www-form-urlencoded 경로와 다르게 한 번만 디코딩된다.
+  // raw UTF-8은 깨지고, 이중 인코딩은 %EB... 형태가 남으므로 1회 인코딩만 사용한다.
+  form.append('subject', encodeParamOnce(subject));
+  form.append('content', encodeParamOnce(content));
+  const image = new Blob([fs.readFileSync(imagePath)], { type: 'image/png' });
+  form.append('image', image, path.basename(imagePath));
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': 'archLegal-cafe/1.0',
+    },
+    body: form,
+  });
+  const json = await res.json().catch(() => ({}));
+  const msg = json?.message?.result || json?.result || json;
+  if (!res.ok || json?.message?.error || (msg && msg.errorCode)) {
+    throw new Error(`이미지 첨부 발행 실패(HTTP ${res.status}): ${JSON.stringify(json)}`);
   }
   return {
     articleId: msg?.articleId ?? null,
@@ -301,10 +407,12 @@ async function publishOne(target, accessToken, published, publishedNums) {
   const { subject, content } = parseArticle(target.full);
   const menuid = menuFor(target.num);
   const boardName = NUM_TO_BOARD[target.num] || '(기본)';
+  const imagePath = WITH_IMAGE ? imagePathFor(target.num) : null;
   console.log('\n════════ 미리보기 ════════');
   console.log(`파일   : ${target.file}`);
   console.log(`제목   : ${subject}`);
   console.log(`게시판 : ${boardName} (menuid=${menuid || '미설정'})   clubid: ${CLUB_ID || '(미설정)'}`);
+  console.log(`이미지 : ${WITH_IMAGE ? (imagePath || '(이미지 정보 없음)') : '(첨부 안 함)'}`);
   console.log('──────── content(HTML) ────────');
   console.log(content);
   console.log('════════════════════════════\n');
@@ -318,13 +426,22 @@ async function publishOne(target, accessToken, published, publishedNums) {
     return false;
   }
 
+  if (WITH_IMAGE && (!imagePath || !fs.existsSync(imagePath))) {
+    console.error(`❌ 이미지 파일을 찾을 수 없습니다: ${imagePath || '(없음)'}`);
+    return false;
+  }
+
   console.log(`📤 [${boardName}] 발행 중…`);
-  const result = await publish(accessToken, subject, content, menuid);
+  const result = WITH_IMAGE
+    ? await publishWithImage(accessToken, subject, content, menuid, imagePath)
+    : await publish(accessToken, subject, content, menuid);
   console.log(`✅ 발행 완료  ${result.articleUrl}`);
   published.push({
     num: target.num, file: target.file,
     articleId: result.articleId, articleUrl: result.articleUrl,
     publishedAt: new Date().toISOString(),
+    withImage: WITH_IMAGE,
+    richHtml: RICH_HTML,
   });
   publishedNums.add(target.num);
   savePublished(published);
