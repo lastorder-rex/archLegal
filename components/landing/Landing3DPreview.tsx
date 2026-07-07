@@ -36,8 +36,10 @@ export function Landing3DPreview() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/3d1.png"
-            alt="3D 건물에서 위반 부위를 짚어보는 미리보기"
+            src="/3d1.webp"
+            width={1420}
+            height={912}
+            alt="실사 미니어처 건물에서 위반 부위 12곳을 짚어보는 미리보기"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
           <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-md">
