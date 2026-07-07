@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -12,12 +12,9 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
-
-    // Verify admin authentication
-    const adminCookie = cookieStore.get('admin_session');
-    if (!adminCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     // Use service role to bypass RLS
@@ -92,12 +89,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
-
-    // Verify admin authentication
-    const adminCookie = cookieStore.get('admin_session');
-    if (!adminCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     // Use service role to bypass RLS
@@ -108,17 +102,8 @@ export async function DELETE(
       }
     });
 
-    // Parse admin cookie to get current admin ID
-    let currentAdminId;
-    try {
-      const cookieData = JSON.parse(adminCookie.value);
-      currentAdminId = cookieData.adminId;
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
-
     // Prevent self-deletion
-    if (currentAdminId === params.id) {
+    if (authResult.adminId === params.id) {
       return NextResponse.json({ error: '자기 자신은 삭제할 수 없습니다.' }, { status: 400 });
     }
 

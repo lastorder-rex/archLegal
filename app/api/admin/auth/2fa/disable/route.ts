@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -9,22 +9,12 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 // Disable 2FA
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-
-    // Verify admin authentication
-    const adminCookie = cookieStore.get('admin_session');
-    if (!adminCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
-    // Parse admin cookie to get admin ID
-    let adminId;
-    try {
-      const cookieData = JSON.parse(adminCookie.value);
-      adminId = cookieData.adminId;
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
+    const adminId = authResult.adminId;
 
     const { password } = await request.json();
 

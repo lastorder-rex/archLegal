@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -11,11 +11,9 @@ export async function GET(
 ) {
   try {
     // Check admin authentication
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('admin_session');
-
-    if (!sessionCookie) {
-      return NextResponse.json({ error: '인증되지 않았습니다.' }, { status: 401 });
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     const { userId } = await params;
