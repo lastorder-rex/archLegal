@@ -9,38 +9,7 @@ import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Folder } from 'lucide-react';
-
-interface Admin {
-  id: string;
-  username: string;
-}
-
-interface PaymentRow {
-  id: string;
-  userId: string;
-  consultationId: string | null;
-  stageTemplateId: string;
-  status: string;
-  requestAmount: number | null;
-  requestedAt: string | null;
-  requestedBy: string | null;
-  paidAmount: number | null;
-  paidAt: string | null;
-  paymentKey: string | null;
-  updatedAt: string | null;
-  consultation: {
-    id: string;
-    name: string | null;
-    phone: string | null;
-    address: string | null;
-    address_detail: string | null;
-  } | null;
-  driveFolder: {
-    driveFolderId: string | null;
-    driveFolderName: string | null;
-    status: string | null;
-  } | null;
-}
+import type { Admin, PaymentRow } from '@/types/admin';
 
 interface SearchFilters {
   requestedFrom: string;

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check, X, Link as LinkIcon, Unplug } from 'lucide-react';
 import { CreditCardMultiple, Comment1, GoogleDrive, Link2AngularRight } from 'lineicons-react';
+import type { Admin } from '@/types/admin';
 
 interface DriveFolderChildSummary {
   id: string | null;
@@ -23,11 +24,6 @@ interface DriveFolderSummary {
     hasFiles: boolean | null;
     sampleFiles: { id: string; name: string }[];
   };
-}
-
-interface Admin {
-  id: string;
-  username: string;
 }
 
 interface PaymentDetail {

@@ -6,24 +6,7 @@ import { Button } from '@/components/ui/button';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import Pagination from '@/components/supercore/Pagination';
-
-interface Admin {
-  id: string;
-  username: string;
-}
-
-interface Consultation {
-  id: string;
-  name: string;
-  phone: string;
-  email: string | null;
-  address: string;
-  address_detail: string | null;
-  main_purps: string;
-  message: string | null;
-  created_at: string;
-  attachments: any[];
-}
+import type { Admin, Consultation } from '@/types/admin';
 
 export default function UserConsultationsPage() {
   const router = useRouter();

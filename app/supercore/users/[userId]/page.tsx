@@ -6,24 +6,7 @@ import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Comment1, CreditCardMultiple } from 'lineicons-react';
-
-interface UserDetail {
-  id: string;
-  legal_name: string;
-  email: string;
-  phone: string | null;
-  birth_date: string | null;
-  profile_completed: boolean;
-  profile_completed_at: string | null;
-  consent_terms_at: string | null;
-  consent_privacy_at: string | null;
-  created_at: string;
-  updated_at: string | null;
-  last_sign_in_at: string | null;
-  email_confirmed_at: string | null;
-  user_metadata: Record<string, unknown>;
-  app_metadata: Record<string, unknown>;
-}
+import type { UserDetail } from '@/types/admin';
 
 interface UserDetailResponse {
   user: UserDetail;

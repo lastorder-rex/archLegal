@@ -9,23 +9,7 @@ import { Label } from '@/components/ui/label';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import Pagination from '@/components/supercore/Pagination';
-
-interface Admin {
-  id: string;
-  username: string;
-}
-
-interface User {
-  id: string;
-  legal_name: string;
-  email: string;
-  phone: string;
-  birth_date: string | null;
-  created_at: string;
-  last_sign_in_at: string;
-  consultation_count: number;
-  payment_count: number;
-}
+import type { Admin, User } from '@/types/admin';
 
 interface SearchFilters {
   dateFrom: string;

@@ -6,11 +6,7 @@ import { Button } from '@/components/ui/button';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import Pagination from '@/components/supercore/Pagination';
-
-interface Admin {
-  id: string;
-  username: string;
-}
+import type { Admin } from '@/types/admin';
 
 interface StageTemplate {
   id: string;

@@ -7,11 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import { FileText, Users, CreditCard } from 'lucide-react';
-
-interface Admin {
-  id: string;
-  username: string;
-}
+import type { Admin } from '@/types/admin';
 
 const SHORTCUT_CARDS = [
   {

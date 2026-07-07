@@ -10,19 +10,13 @@ import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import PasswordInput from '@/components/supercore/PasswordInput';
 import { Shield, ShieldOff } from 'lucide-react';
-
-interface Admin {
-  id: string;
-  username: string;
-  created_at: string;
-  two_factor_enabled: boolean;
-}
+import type { AdminAccount } from '@/types/admin';
 
 export default function AdminsPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [admins, setAdmins] = useState<AdminAccount[]>([]);
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
 
   // Create admin form
@@ -51,7 +45,7 @@ export default function AdminsPage() {
   const [verifyCode, setVerifyCode] = useState('');
   const [setup2FAError, setSetup2FAError] = useState('');
   const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
-  const [currentAdminFor2FA, setCurrentAdminFor2FA] = useState<Admin | null>(null);
+  const [currentAdminFor2FA, setCurrentAdminFor2FA] = useState<AdminAccount | null>(null);
   const [resetLinkInfo, setResetLinkInfo] = useState<{
     username: string;
     resetUrl: string;
@@ -212,7 +206,7 @@ export default function AdminsPage() {
     }
   };
 
-  const handleSetup2FA = async (admin: Admin) => {
+  const handleSetup2FA = async (admin: AdminAccount) => {
     if (admin.two_factor_enabled) {
       const shouldReset = confirm(
         `"${admin.username}" 관리자의 2FA를 재설정하시겠습니까?\n\n새 QR 코드로 인증을 완료하면 기존 Google Authenticator 코드는 더 이상 사용할 수 없습니다.`
@@ -296,7 +290,7 @@ export default function AdminsPage() {
     }
   };
 
-  const handleCreate2FAResetLink = async (admin: Admin) => {
+  const handleCreate2FAResetLink = async (admin: AdminAccount) => {
     const shouldCreate = confirm(
       `"${admin.username}" 관리자에게 보낼 원격 2FA 재설정 링크를 생성하시겠습니까?\n\n기존에 발급된 미사용 링크는 폐기됩니다.`
     );

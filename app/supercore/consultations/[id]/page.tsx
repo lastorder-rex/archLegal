@@ -8,11 +8,7 @@ import { Input } from '@/components/ui/input';
 import { getFileUrl } from '@/lib/utils/file-upload';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
-
-interface Admin {
-  id: string;
-  username: string;
-}
+import type { Admin } from '@/types/admin';
 
 interface Consultation {
   id: string;
