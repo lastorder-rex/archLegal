@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { path: '/supercore/consultations', label: '상담 게시판', Icon: FileText, exact: false },
   { path: '/supercore/users', label: '회원 관리', Icon: Users, exact: false },
   { path: '/supercore/payments', label: '결제 관리', Icon: CreditCard, exact: false },
-  { path: '/map', label: '위반 지도', Icon: Map, exact: false },
+  { path: '/map', label: '위반 지도', Icon: Map, exact: false, newTab: true }, // 지도는 새 탭 — 관리자 화면 유지
   { path: '/supercore/admins', label: '관리자 계정', Icon: UserCog, exact: false },
 ] as const;
 
@@ -56,8 +56,12 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
     return pathname?.startsWith(path);
   };
 
-  const handleMenuClick = (path: string) => {
-    router.push(path);
+  const handleMenuClick = (path: string, newTab?: boolean) => {
+    if (newTab) {
+      window.open(path, '_blank', 'noopener');
+    } else {
+      router.push(path);
+    }
     setIsMobileMenuOpen(false);
   };
 
@@ -140,10 +144,10 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
             </button>
           </div>
           <ul className="space-y-2">
-            {NAV_ITEMS.map(({ path, label, Icon, exact }) => (
+            {NAV_ITEMS.map(({ path, label, Icon, exact, ...item }) => (
               <li key={path}>
                 <button
-                  onClick={() => handleMenuClick(path)}
+                  onClick={() => handleMenuClick(path, 'newTab' in item && item.newTab)}
                   className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                     (exact ? pathname === path : isActive(path))
                       ? 'bg-primary text-white'
@@ -166,10 +170,12 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
             <nav className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 sticky top-8">
               <h2 className="text-lg font-semibold text-slate-900 mb-4">메뉴</h2>
               <ul className="space-y-2">
-                {NAV_ITEMS.map(({ path, label, Icon, exact }) => (
+                {NAV_ITEMS.map(({ path, label, Icon, exact, ...item }) => (
                   <li key={path}>
                     <button
-                      onClick={() => router.push(path)}
+                      onClick={() =>
+                        'newTab' in item && item.newTab ? window.open(path, '_blank', 'noopener') : router.push(path)
+                      }
                       className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
                         (exact ? pathname === path : isActive(path))
                           ? 'bg-primary text-white'
