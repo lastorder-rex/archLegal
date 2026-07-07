@@ -7,6 +7,7 @@ import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Comment1, CreditCardMultiple } from 'lineicons-react';
 import type { UserDetail } from '@/types/admin';
+import { formatDateTimeShortSafe as formatDateTime } from '@/lib/admin/format';
 
 interface UserDetailResponse {
   user: UserDetail;
@@ -27,18 +28,6 @@ export default function UserDetailPage() {
   const [userDetail, setUserDetail] = useState<UserDetail | null>(null);
   const [stats, setStats] = useState<UserDetailResponse['stats'] | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return '-';
-    const year = date.getFullYear().toString().slice(-2);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
 
   const loadUserDetail = useCallback(async () => {
     try {

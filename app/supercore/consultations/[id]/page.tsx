@@ -9,6 +9,7 @@ import { getFileUrl } from '@/lib/utils/file-upload';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { formatAmountWonLocale as formatCurrency, formatDateTimeLocale as formatDateTime } from '@/lib/admin/format';
 
 interface Consultation {
   id: string;
@@ -55,16 +56,6 @@ const stageStatusMeta: Record<PaymentStageStatus, { text: string; className: str
   requested: { text: '결제 요청됨', className: 'bg-amber-100 text-amber-700 border border-amber-200' },
   awaiting: { text: '결제 요청됨', className: 'bg-amber-100 text-amber-700 border border-amber-200' },
   paid: { text: '결제 완료', className: 'bg-emerald-100 text-emerald-700 border border-emerald-200' }
-};
-
-const formatCurrency = (value: number | null | undefined) => {
-  if (value === null || value === undefined) return '-';
-  return `${value.toLocaleString('ko-KR')}원`;
-};
-
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) return '-';
-  return new Date(value).toLocaleString('ko-KR');
 };
 
 export default function ConsultationDetailPage() {

@@ -7,6 +7,7 @@ import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import Pagination from '@/components/supercore/Pagination';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { formatDateTimeShortNullable as formatDateTime, formatAmountWon as formatAmount } from '@/lib/admin/format';
 
 interface StageTemplate {
   id: string;
@@ -83,22 +84,6 @@ export default function UserPaymentsPage() {
 
   const handleAuthReady = useCallback(() => loadPayments(), [loadPayments]);
   const { isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
-
-  const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    const year = date.getFullYear().toString().slice(-2);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
-
-  const formatAmount = (amount: number | null) => {
-    if (amount === null) return '-';
-    return `${amount.toLocaleString()}원`;
-  };
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {

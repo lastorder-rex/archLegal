@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Folder } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { PaymentRow } from '@/types/admin';
+import { statusLabelMap, formatDateTimeShortSafe as formatDateTime, formatAmountNumber as formatAmount } from '@/lib/admin/format';
 
 interface SearchFilters {
   requestedFrom: string;
@@ -34,14 +35,6 @@ const statusOptions = [
   { value: 'paid', label: '결제 완료' }
 ];
 
-const statusLabelMap: Record<string, string> = {
-  awaiting: '결제 대기',
-  requested: '요청됨',
-  paid: '결제 완료',
-  locked: '잠금',
-  canceled: '결제취소'
-};
-
 const statusClassMap: Record<string, string> = {
   awaiting: 'bg-amber-100 text-amber-800 border-amber-200',
   requested: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -49,23 +42,6 @@ const statusClassMap: Record<string, string> = {
   locked: 'bg-slate-100 text-slate-700 border-slate-200',
   canceled: 'bg-red-100 text-red-800 border-red-200'
 };
-
-function formatDateTime(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  const year = date.getFullYear().toString().slice(-2);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
-
-function formatAmount(value: number | null) {
-  if (value === null || Number.isNaN(value)) return '-';
-  return new Intl.NumberFormat('ko-KR').format(value);
-}
 
 function getDefaultDateRange() {
   const today = new Date();

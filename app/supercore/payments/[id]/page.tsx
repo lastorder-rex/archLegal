@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Check, X, Link as LinkIcon, Unplug } from 'lucide-react';
 import { CreditCardMultiple, Comment1, GoogleDrive, Link2AngularRight } from 'lineicons-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { statusLabelMap, formatDateTimeFullSafe as formatDateTime, formatDateTimeNoYear as formatDateTimeWithoutYear, formatAmountCurrency as formatAmount } from '@/lib/admin/format';
 
 interface DriveFolderChildSummary {
   id: string | null;
@@ -71,14 +72,6 @@ interface PaymentDetail {
   } | null;
 }
 
-const statusLabelMap: Record<string, string> = {
-  awaiting: '결제 대기',
-  requested: '요청됨',
-  paid: '결제 완료',
-  locked: '잠금',
-  canceled: '결제취소'
-};
-
 interface UploadTokenRow {
   id: string;
   token: string;
@@ -92,36 +85,6 @@ interface UploadTokenRow {
   audience: 'customer' | 'staff';
   allowedTemplates: string[];
   maxFilesPerFolder: number;
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
-
-function formatDateTimeWithoutYear(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${month}-${day} ${hours}:${minutes}`;
-}
-
-function formatAmount(value: number | null) {
-  if (value === null || Number.isNaN(value)) {
-    return '-';
-  }
-  return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(value);
 }
 
 export default function AdminPaymentDetailPage() {

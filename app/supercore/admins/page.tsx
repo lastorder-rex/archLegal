@@ -12,6 +12,7 @@ import PasswordInput from '@/components/supercore/PasswordInput';
 import { Shield, ShieldOff } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { AdminAccount } from '@/types/admin';
+import { formatDateTimeFull as formatDateTime } from '@/lib/admin/format';
 
 export default function AdminsPage() {
   const router = useRouter();
@@ -317,16 +318,6 @@ export default function AdminsPage() {
     } finally {
       setIsCreatingResetLinkFor(null);
     }
-  };
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
   };
 
   if (isCheckingAuth) {
