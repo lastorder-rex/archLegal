@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'ArchLegal(archlegal.co.kr)의 개인정보 처리방침 안내문입니다.'
 };
 
-const effectiveDate = '2024년 9월 25일';
+const effectiveDate = '2026년 7월 8일';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -66,14 +66,23 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>회사는 이용자의 사전 동의 없이 개인정보를 제3자에게 제공하지 않습니다.</li>
               <li>다만 법령에 근거하거나 수사기관의 적법한 요청이 있는 경우에는 예외적으로 제공할 수 있습니다.</li>
+              <li>서비스 제공을 위해 외부 사업자에게 개인정보 처리를 맡기는 경우는 &lsquo;제공&rsquo;이 아닌 &lsquo;처리위탁&rsquo;에 해당하며, 그 현황은 아래 6항에 별도로 명시합니다.</li>
             </ul>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-foreground">6. 개인정보 처리의 위탁</h2>
+            <p>회사는 원활한 서비스 제공을 위해 아래와 같이 개인정보 처리 업무를 외부 전문 업체에 위탁하고 있습니다.</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li>회사는 서비스 운영을 위해 시스템 인프라 운영, 고객 상담, 데이터 백업 등 업무를 외부 전문 업체에 위탁할 수 있습니다.</li>
-              <li>위탁 시 개인정보 보호 관련 법령을 준수하며, 수탁업체명·위탁업무·보유 기간을 홈페이지에 고지합니다.</li>
+              <li><span className="font-medium text-foreground">Supabase</span>: 데이터베이스·인증·파일 저장 등 서비스 인프라 운영 및 호스팅</li>
+              <li><span className="font-medium text-foreground">Kakao(카카오)</span>: 소셜 로그인(카카오 계정) 인증 처리</li>
+              <li><span className="font-medium text-foreground">TossPayments(토스페이먼츠)</span>: 결제 처리 및 결제 정보 관리</li>
+              <li><span className="font-medium text-foreground">Google(구글)</span>: 상담 첨부파일 저장(Google Drive)</li>
+            </ul>
+            <ul className="list-disc space-y-2 pl-5">
+              <li>회사는 위탁 계약 시 개인정보 보호 관련 법령을 준수하며, 수탁자가 개인정보를 안전하게 처리하도록 관리·감독합니다.</li>
+              <li>위 수탁업체 중 Supabase, Google 등 해외 사업자가 제공하는 서비스의 특성상 이용자의 개인정보가 국외에서 처리·보관될 수 있습니다.</li>
+              <li>위탁 업무의 내용이나 수탁자가 변경되는 경우 본 처리방침을 통해 변경 내용을 공개합니다.</li>
             </ul>
           </section>
 
@@ -141,7 +150,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-foreground">13. 고지의 의무</h2>
             <ul className="list-disc space-y-2 pl-5">
-              <li>본 방침은 2024년 9월 25일부터 적용됩니다.</li>
+              <li>본 방침은 2026년 7월 8일부터 적용됩니다.</li>
               <li>내용 추가, 삭제, 수정이 있을 경우 시행 7일 전부터 홈페이지 또는 알림톡을 통해 공지합니다.</li>
             </ul>
           </section>
