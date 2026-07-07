@@ -2,9 +2,16 @@
 
 import Script from 'next/script';
 import type { CSSProperties } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ConsultationModal } from '@/components/landing/ConsultationModal';
 import { getAuthErrorMessage } from '@/lib/auth/errors';
+import type {
+  DiagnosisAnswer,
+  DiagnosisHistoryItem,
+  PublicDiagnosisQuestion as DiagnosisQuestion,
+  DiagnosisResult,
+  DiagnosisResponse
+} from '@/lib/diagnosis/legalization';
 
 type KakaoShareTemplate = {
   objectType: 'feed';
@@ -52,65 +59,6 @@ const TYPE_OPTION_IMAGES: Record<string, string> = {
   near: '/qna3d/bld-4.png'
 };
 
-type DiagnosisAnswer = {
-  questionId: string;
-  optionId: string;
-};
-
-type DiagnosisHistoryItem = {
-  id: string;
-  question: string;
-  label: string;
-  law: string;
-  flag: string | null;
-  typeLabel: string | null;
-};
-
-type DiagnosisQuestion = {
-  id: string;
-  badge: string;
-  title: string;
-  desc: string;
-  hint: string;
-  law: string;
-  options: Array<{
-    id: string;
-    label: string;
-    detail?: string;
-    icon?: string;
-    tone?: string;
-  }>;
-};
-
-type DiagnosisResult = {
-  grade: 'A' | 'B' | 'C' | 'D' | 'E';
-  status: 'high' | 'review' | 'info' | 'fail';
-  color: string;
-  chip: string;
-  title: string;
-  copy: string;
-  actions: string[];
-  documents: string[];
-  cautions: string[];
-};
-
-type DiagnosisResponse =
-  | {
-      type: 'question';
-      question: DiagnosisQuestion;
-      history: DiagnosisHistoryItem[];
-      progress: { done: number; total: number; percent: number };
-    }
-  | {
-      type: 'result';
-      result: DiagnosisResult;
-      history: DiagnosisHistoryItem[];
-      flags: string[];
-      summary: string[];
-      copyText: string;
-      progress: { done: number; total: number; percent: number };
-    };
-
 type View = 'landing' | 'quiz' | 'result';
 
 function ResultList({ items }: { items: string[] }) {
@@ -145,11 +93,8 @@ export function LegalizationCheckClient() {
   const [copyText, setCopyText] = useState('');
   const [progress, setProgress] = useState({ done: 0, total: 12, percent: 0 });
   const [toast, setToast] = useState('');
-  const [isDark] = useState(false);
   const [isConsultationOpen, setConsultationOpen] = useState(false);
   const [consultationInitialMessage, setConsultationInitialMessage] = useState('');
-
-  const rootClassName = useMemo(() => `diagnosis-root${isDark ? ' dark-mode' : ''}`, [isDark]);
 
   const initializeKakaoSdk = () => {
     if (!KAKAO_JAVASCRIPT_KEY || !window.Kakao || window.Kakao.isInitialized()) {
@@ -253,10 +198,6 @@ export function LegalizationCheckClient() {
     setView('landing');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // const scrollToInfo = () => {
-  //   document.getElementById('info-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  // };
 
   const answer = async (optionId: string) => {
     if (!question) {
@@ -368,7 +309,7 @@ export function LegalizationCheckClient() {
   };
 
   return (
-    <div className={rootClassName}>
+    <div className="diagnosis-root">
       {KAKAO_JAVASCRIPT_KEY ? (
         <Script
           src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.5/kakao.min.js"
@@ -404,11 +345,6 @@ export function LegalizationCheckClient() {
                       <KakaoTalkIcon />
                       자가진단 공유하기
                     </button>
-                    {/*
-                    <button className="secondary-btn" type="button" onClick={scrollToInfo}>
-                      대상 요건 보기
-                    </button>
-                    */}
                   </div>
                 </div>
                 <div className="metric-row" aria-label="핵심 조건">

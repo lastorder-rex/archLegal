@@ -58,7 +58,7 @@ export type DiagnosisResult = {
   cautions: string[];
 };
 
-type DiagnosisResponse =
+export type DiagnosisResponse =
   | {
       type: 'question';
       question: PublicDiagnosisQuestion;
