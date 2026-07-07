@@ -11,6 +11,7 @@ import {
   parseKakaoIdentityData
 } from '@/lib/auth/kakao-profile';
 import { setUserSessionCookie } from '@/lib/auth/user-session';
+import { isAtLeastAge } from '@/lib/validations/user';
 import { createSupabaseAdminClient } from '../../../supabase/admin';
 
 const pickFirstString = (...values: Array<string | null | undefined>): string | null => {
@@ -71,9 +72,6 @@ export async function GET(request: Request) {
         ? await fetchKakaoUserProfile(providerAccessToken)
         : null;
       const kakaoAccount = kakaoApiProfile?.kakao_account ?? null;
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Kakao API profile response:', JSON.stringify(kakaoApiProfile, null, 2));
-      }
       const { legalName, phone: kakaoPhone, birthDate } = extractKakaoProfile(
         metadata,
         identityData,
@@ -83,15 +81,28 @@ export async function GET(request: Request) {
       const rawBirthyear = getKakaoString(kakaoAccount?.birthyear);
       const rawBirthday = getKakaoString(kakaoAccount?.birthday);
       const kakaoBirthDate = birthDate ?? combineBirthDate(rawBirthyear, rawBirthday);
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Extracted Kakao profile:', {
-          legalName,
-          kakaoPhone,
-          birthDate: kakaoBirthDate,
-          rawBirthyear,
-          rawBirthday
-        });
+
+      // 만 14세 미만 회원가입 차단: PII를 저장하지 않고 계정·세션을 정리한다.
+      if (kakaoBirthDate && !isAtLeastAge(kakaoBirthDate, 14)) {
+        try {
+          await admin.auth.admin.deleteUser(user.id);
+        } catch (deleteError) {
+          console.error('Failed to delete underage Kakao auth user', deleteError);
+        }
+        await supabase.auth.signOut();
+
+        const ageRestrictedUrl = new URL('/login', requestUrl.origin);
+        ageRestrictedUrl.searchParams.set('auth_error', 'age_restricted');
+        const ageRestrictedRedirect = NextResponse.redirect(ageRestrictedUrl);
+        // signOut 이후에도 브라우저에 남을 수 있는 supabase auth 쿠키를 명시적으로 만료
+        for (const cookie of cookies().getAll()) {
+          if (cookie.name.startsWith('sb-')) {
+            ageRestrictedRedirect.cookies.set(cookie.name, '', { maxAge: 0, path: '/' });
+          }
+        }
+        return ageRestrictedRedirect;
       }
+
       // 카카오 실명(name)을 최우선으로 사용
       const fullName = pickFirstString(
         legalName,
