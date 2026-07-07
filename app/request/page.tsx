@@ -65,16 +65,6 @@ export default async function RequestPage() {
                   나의 상담 내역 보기
                 </Button>
               </Link>
-
-              {/* Development Notice */}
-              <div className="hidden lg:block bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-xs text-yellow-800 font-medium">
-                  🚧 개발 테스트 페이지
-                </p>
-                <p className="text-xs text-yellow-700">
-                  임시 페이지입니다 (feature/request-form)
-                </p>
-              </div>
             </div>
           </div>
         </div>
