@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ReactNode, useEffect, useState } from 'react';
 import { handleAdminLogout } from '@/lib/auth/logout';
-import { Box, FileText, Users, CreditCard, UserCog, LogOut } from 'lucide-react';
+import { Box, FileText, Users, CreditCard, Map, UserCog, LogOut } from 'lucide-react';
 
 interface SupercoreLayoutProps {
   children: ReactNode;
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { path: '/supercore/consultations', label: '상담 게시판', Icon: FileText, exact: false },
   { path: '/supercore/users', label: '회원 관리', Icon: Users, exact: false },
   { path: '/supercore/payments', label: '결제 관리', Icon: CreditCard, exact: false },
+  { path: '/map', label: '위반 지도', Icon: Map, exact: false },
   { path: '/supercore/admins', label: '관리자 계정', Icon: UserCog, exact: false },
 ] as const;
 
