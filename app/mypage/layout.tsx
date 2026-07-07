@@ -1,11 +1,8 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { isUserSessionExpired } from '@/lib/auth/user-session';
 import { MyPageShell } from '@/components/mypage/MyPageShell';
 import type { ConsultationSummary } from '@/types/mypage';
 import type { UserProfile } from '@/types/profile';
 import { USER_PROFILE_COLUMNS, buildFallbackProfile } from '@/lib/auth/user-profile';
+import { requireUserSession } from '@/lib/auth/require-session';
 
 export const revalidate = 0;
 
@@ -14,21 +11,7 @@ type MyPageLayoutProps = {
 };
 
 export default async function MyPageLayout({ children }: MyPageLayoutProps) {
-  const cookieStore = cookies();
-
-  if (isUserSessionExpired(cookieStore)) {
-    redirect('/login?redirect=/mypage');
-  }
-
-  const supabase = createServerComponentClient({ cookies });
-  const {
-    data: { session },
-    error: sessionError
-  } = await supabase.auth.getSession();
-
-  if (sessionError || !session?.user) {
-    redirect('/login?redirect=/mypage');
-  }
+  const { supabase, session } = await requireUserSession('/mypage', { checkAuthError: true });
 
   const { data: profileRow } = await supabase
     .from('users')

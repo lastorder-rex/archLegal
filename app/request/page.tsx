@@ -1,49 +1,17 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import ConsultationForm from '@/components/consultation/ConsultationForm';
 import { Button } from '@/components/ui/button';
-import type { UserProfile } from '@/types/profile';
-import { isUserSessionExpired } from '@/lib/auth/user-session';
-import { USER_PROFILE_COLUMNS } from '@/lib/auth/user-profile';
+import { requireUserSession, requireCompletedProfile } from '@/lib/auth/require-session';
 
 export const revalidate = 0;
 
 export default async function RequestPage() {
-  // Initialize Supabase client
-  const cookieStore = cookies();
+  const { supabase, session } = await requireUserSession('/request', { checkAuthError: true });
 
-  if (isUserSessionExpired(cookieStore)) {
-    redirect('/login?redirect=/request');
-  }
-
-  const supabase = createServerComponentClient({ cookies });
-
-  // Get current session
-  const {
-    data: { session },
-    error: authError
-  } = await supabase.auth.getSession();
-
-  // Redirect to login if not authenticated
-  if (authError || !session?.user) {
-    redirect('/login?redirect=/request');
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .select(USER_PROFILE_COLUMNS)
-    .eq('auth_id', session.user.id)
-    .maybeSingle<UserProfile>();
-
-  if (profileError) {
-    console.error('Failed to load user profile for request page', profileError);
-  }
-
-  if (!profile || !profile.profile_completed) {
-    redirect(`/signup?next=${encodeURIComponent('/request')}`);
-  }
+  const profile = await requireCompletedProfile(supabase, session, {
+    nextTo: '/request',
+    logError: true
+  });
 
   return (
     <main className="min-h-screen bg-background">

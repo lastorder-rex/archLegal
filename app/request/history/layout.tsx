@@ -1,41 +1,20 @@
 import { ReactNode } from 'react';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { isUserSessionExpired } from '@/lib/auth/user-session';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { HouseHeart } from 'lucide-react';
+import { requireUserSession, requireCompletedProfile } from '@/lib/auth/require-session';
 
 interface HistoryLayoutProps {
   children: ReactNode;
 }
 
 export default async function HistoryLayout({ children }: HistoryLayoutProps) {
-  const cookieStore = cookies();
+  const { supabase, session } = await requireUserSession('/request/history');
 
-  if (isUserSessionExpired(cookieStore)) {
-    redirect('/login?redirect=/request/history');
-  }
-
-  const supabase = createServerComponentClient({ cookies });
-  const {
-    data: { session }
-  } = await supabase.auth.getSession();
-
-  if (!session?.user) {
-    redirect('/login?redirect=/request/history');
-  }
-
-  const { data: profile } = await supabase
-    .from('users')
-    .select('profile_completed')
-    .eq('auth_id', session.user.id)
-    .maybeSingle();
-
-  if (!profile?.profile_completed) {
-    redirect(`/signup?next=${encodeURIComponent('/request/history')}`);
-  }
+  await requireCompletedProfile(supabase, session, {
+    nextTo: '/request/history',
+    columns: 'profile_completed'
+  });
 
   const tabs = [
     { id: 'info', label: '정보수정', href: '/mypage/info' },

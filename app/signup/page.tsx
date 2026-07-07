@@ -1,10 +1,7 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { SignupForm } from '@/components/auth/SignupForm';
 import type { UserProfile } from '@/types/profile';
-import { isUserSessionExpired } from '@/lib/auth/user-session';
 import { USER_PROFILE_COLUMNS } from '@/lib/auth/user-profile';
+import { requireUserSession } from '@/lib/auth/require-session';
 import { sanitizeRedirectPath } from '@/lib/utils/navigation';
 import {
   extractKakaoProfile,
@@ -21,20 +18,7 @@ type SignupPageProps = {
 };
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
-  const cookieStore = cookies();
-
-  if (isUserSessionExpired(cookieStore)) {
-    redirect('/login?redirect=/signup');
-  }
-
-  const supabase = createServerComponentClient({ cookies });
-  const {
-    data: { session }
-  } = await supabase.auth.getSession();
-
-  if (!session?.user) {
-    redirect('/login?redirect=/signup');
-  }
+  const { supabase, session } = await requireUserSession('/signup');
 
   const nextParam = Array.isArray(searchParams?.next)
     ? searchParams?.next?.[0]
