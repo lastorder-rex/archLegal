@@ -59,7 +59,7 @@ import {
 
 type NavigationItem =
   | { label: string; type: 'modal'; icon?: ReactNode; requiresAuth?: boolean }
-  | { label: string; type: 'link'; href: string; icon?: ReactNode; requiresAuth?: boolean }
+  | { label: string; type: 'link'; href: string; icon?: ReactNode; requiresAuth?: boolean; compactLg?: boolean }
   | { label: string; type: 'anchor'; target: string; icon?: ReactNode; requiresAuth?: boolean }
   | { label: string; type: 'notification'; icon?: ReactNode; requiresAuth?: boolean };
 
@@ -116,7 +116,8 @@ const navigationItems: NavigationItem[] = [
     type: 'link',
     href: '/mypage',
     icon: <UserRoundCog className="h-4 w-4" aria-hidden />,
-    requiresAuth: true
+    requiresAuth: true,
+    compactLg: true // 로그인 시 폭 부족(lg)에서 아이콘만 — xl부터 라벨 표시
   },
   {
     label: '결제 알림',
@@ -498,13 +499,13 @@ export function LandingPage({
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6">
             <a
               href="#attention-section"
-              className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:text-white"
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-sm font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:text-white"
             >
               <Image src="/docu/logo.png" alt="" width={28} height={28} aria-hidden="true" />
               <span>양성화.com</span>
             </a>
             <div className="flex items-center gap-3">
-              <nav className="hidden items-center gap-5 text-sm font-medium text-white/80 lg:flex">
+              <nav className="hidden items-center gap-3 text-sm font-medium text-white/80 lg:flex xl:gap-4">
                 {navigationItems.map(item => {
                   if (item.requiresAuth && !sessionUser) {
                     return null;
@@ -529,29 +530,33 @@ export function LandingPage({
                         key={item.href}
                         href={item.href}
                         className="flex items-center gap-2 whitespace-nowrap transition hover:text-white"
+                        aria-label={item.compactLg ? item.label : undefined}
+                        title={item.compactLg ? item.label : undefined}
                       >
                         {icon}
-                        <span>{item.label}</span>
+                        <span className={item.compactLg ? 'hidden xl:inline' : undefined}>{item.label}</span>
                       </Link>
                     );
                   }
                   if (item.type === 'notification') {
+                    const badgeCount =
+                      paymentNoticeItems.reduce((sum, item) => sum + item.count, 0) + paymentNoticeOverflow;
                     return (
                       <div
                         key={item.label}
-                        className="relative flex items-center"
+                        className="relative flex shrink-0 items-center"
                         onMouseEnter={() => setPaymentNoticeOpen(true)}
                         onMouseLeave={() => setPaymentNoticeOpen(false)}
                       >
                         <Link
                           href="/mypage/payments"
-                          className="flex items-center gap-1 p-0 text-white opacity-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.65)] transition hover:text-white"
-                          aria-label="결제 알림"
+                          className="relative flex items-center p-0 text-white opacity-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.65)] transition hover:text-white"
+                          aria-label={`결제 알림${badgeCount > 0 ? ` ${badgeCount}건` : ''}`}
                         >
                           {icon}
-                          {paymentNoticeItems.length > 0 || paymentNoticeOverflow > 0 ? (
-                            <span className="text-sm">
-                              ({paymentNoticeItems.reduce((sum, item) => sum + item.count, 0) + paymentNoticeOverflow})
+                          {badgeCount > 0 ? (
+                            <span className="absolute -right-2.5 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                              {badgeCount}
                             </span>
                           ) : null}
                         </Link>

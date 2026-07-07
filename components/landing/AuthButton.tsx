@@ -13,7 +13,7 @@ export function AuthButton({ sessionUser, size = 'desktop', onLogin, onLogout }:
     size === 'desktop' ? 'px-4 py-1.5 text-base' : 'px-3 py-1 text-xs';
 
   const baseClasses =
-    'rounded-full border border-white/50 font-semibold text-white transition hover:border-white hover:bg-white/10';
+    'shrink-0 whitespace-nowrap rounded-full border border-white/50 font-semibold text-white transition hover:border-white hover:bg-white/10';
 
   if (sessionUser) {
     return (
