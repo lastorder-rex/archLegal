@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,12 +46,19 @@ export default function ConsultationsPage() {
     phone: '',
     address: ''
   });
+
+  const searchFiltersRef = useRef<SearchFilters>(searchFilters);
+
+  useEffect(() => {
+    searchFiltersRef.current = searchFilters;
+  }, [searchFilters]);
+
   const itemsPerPage = 15;
 
   const loadConsultations = useCallback(async (page = 1, filters?: SearchFilters) => {
     setIsLoadingConsultations(true);
     try {
-      const effectiveFilters = filters ?? searchFilters;
+      const effectiveFilters = filters ?? searchFiltersRef.current;
       const params = new URLSearchParams({
         page: page.toString(),
         limit: itemsPerPage.toString(),
@@ -82,7 +89,7 @@ export default function ConsultationsPage() {
     } finally {
       setIsLoadingConsultations(false);
     }
-  }, [itemsPerPage, searchFilters]);
+  }, [itemsPerPage]);
 
   const handleAuthReady = useCallback(() => loadConsultations(), [loadConsultations]);
   const { isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
