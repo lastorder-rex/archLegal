@@ -303,23 +303,29 @@ export default function ConsultationHistoryPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      variant="outline"
-                      className="md:w-auto"
-                      onClick={() => (isEditing ? resetEditing() : handleStartEdit(record))}
-                    >
-                      {isEditing ? '취소' : '수정'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="md:w-auto border-destructive text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDelete(record)}
-                      disabled={submitting}
-                    >
-                      삭제
-                    </Button>
-                  </div>
+                  {record.payment_locked ? (
+                    <span className="inline-flex items-center self-start rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      결제 완료 (수정·삭제 불가)
+                    </span>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        variant="outline"
+                        className="md:w-auto"
+                        onClick={() => (isEditing ? resetEditing() : handleStartEdit(record))}
+                      >
+                        {isEditing ? '취소' : '수정'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="md:w-auto border-destructive text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(record)}
+                        disabled={submitting}
+                      >
+                        삭제
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {!isEditing && (

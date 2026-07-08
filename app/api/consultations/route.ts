@@ -7,6 +7,7 @@ import { isValidKoreanPhone, isValidEmail } from '@/lib/validations/user';
 import { getUserNickname } from '@/lib/auth/user-utils';
 import { createFallbackBuildingInfo } from '@/lib/utils/building-info';
 import { consultationsResponseSchema } from '@/lib/validations/consultation';
+import { createSupabaseAdminClient } from '@/supabase/admin';
 
 const REPRESENTATIVE_ATTACHMENT_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 7;
 
@@ -333,7 +334,38 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const parsed = consultationsResponseSchema.parse({ consultations: consultations ?? [] });
+    const rows = consultations ?? [];
+
+    // 결제잠금 판정: 상담 id 집합에 대해 user_payment_stages를 1회 조회한다.
+    // (paid_at 존재 && canceled_at 없음 → 잠금). RLS 우회를 위해 admin 클라이언트 사용.
+    const lockedIds = new Set<string>();
+    if (rows.length > 0) {
+      const ids = rows.map(row => row.id);
+      const admin = createSupabaseAdminClient();
+      const { data: lockedStages, error: lockError } = await admin
+        .from('user_payment_stages')
+        .select('consultation_id')
+        .in('consultation_id', ids)
+        .not('paid_at', 'is', null)
+        .is('canceled_at', null);
+
+      if (lockError) {
+        console.error('Payment lock check error:', lockError);
+      } else {
+        for (const stage of lockedStages ?? []) {
+          if (stage.consultation_id) {
+            lockedIds.add(stage.consultation_id);
+          }
+        }
+      }
+    }
+
+    const consultationsWithLock = rows.map(row => ({
+      ...row,
+      payment_locked: lockedIds.has(row.id)
+    }));
+
+    const parsed = consultationsResponseSchema.parse({ consultations: consultationsWithLock });
 
     return NextResponse.json(parsed);
 

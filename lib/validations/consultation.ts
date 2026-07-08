@@ -144,7 +144,8 @@ export const consultationRecordSchema = z.object({
   attachments: z.array(consultationAttachmentSchema).nullable().optional(),
   created_at: z.string(),
   is_del: z.enum(['Y', 'N']),
-  deleted_at: z.string().nullable().optional()
+  deleted_at: z.string().nullable().optional(),
+  payment_locked: z.boolean().optional()
 });
 
 export const consultationSummarySchema = consultationRecordSchema.pick({
