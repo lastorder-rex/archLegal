@@ -37,6 +37,11 @@ export default function RefundPolicyPage() {
             <h2 className="text-xl font-semibold text-foreground">2. 환불 원칙</h2>
             <ol className="list-decimal space-y-2 pl-5">
               <li>고객은 결제 전에 마이페이지 또는 담당자가 발송한 결제 요청서의 서비스 내용과 금액을 반드시 확인해야 합니다.</li>
+              <li>
+                이용자는 「전자상거래 등에서의 소비자보호에 관한 법률」 제17조에 따라 결제일 또는 서비스 내용을 고지받은 날 중 나중의 날부터
+                7일 이내에 청약철회를 할 수 있습니다. 다만 회사가 서비스(실측, 현장조사, 행정 대행 등)의 제공을 개시한 경우에는 이용자의 사전
+                동의 하에 청약철회가 제한될 수 있으며, 이 경우 이미 수행된 업무 비용을 공제한 후 환불합니다.
+              </li>
               <li>회사의 귀책 사유가 없고 서비스가 아직 착수되지 않은 경우에는 결제 환불이 가능합니다.</li>
               <li>서비스가 착수되었거나 현장 방문 및 실측이 완료된 경우에는 이미 수행된 업무 비용을 공제한 후 환불합니다.</li>
             </ol>
@@ -48,7 +53,7 @@ export default function RefundPolicyPage() {
               <h3 className="text-base font-semibold text-foreground">A. 결제 취소(전액 환불) - 가능</h3>
               <ul className="list-disc space-y-1 pl-5">
                 <li>관리자가 결제 요청을 보냈으나 고객이 결제를 진행하지 않은 상태에서 요청이 취소된 경우</li>
-                <li>고객이 결제 후 24시간 이내에 환불을 요청하고 회사가 서비스를 아직 착수하지 않은 경우</li>
+                <li>고객이 청약철회 기간(7일) 내에 환불을 요청하고 회사가 서비스를 아직 착수하지 않은 경우</li>
               </ul>
             </div>
             <div className="space-y-2">
