@@ -14,7 +14,7 @@ export default function TermsOfServicePage() {
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">이용약관</h1>
           <p className="text-muted-foreground">
-            이 문서는 ArchLegal(이하 “회사”)가 제공하는 서비스 이용과 관련하여 회사와 이용자 간의 권리·의무 및 책임사항 등 기본적인 사항을 규정합니다.
+            이 문서는 ㈜인터월드엔지니어링건축사사무소(이하 “회사”)가 제공하는 서비스 이용과 관련하여 회사와 이용자 간의 권리·의무 및 책임사항 등 기본적인 사항을 규정합니다. ‘양성화.com’·‘인건(仁建)’은 회사가 운영하는 서비스의 브랜드명입니다.
           </p>
         </header>
 

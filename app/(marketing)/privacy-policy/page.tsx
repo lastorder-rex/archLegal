@@ -16,8 +16,8 @@ export default function PrivacyPolicyPage() {
           <p className="text-sm font-medium text-primary">시행일: {effectiveDate}</p>
           <h1 className="text-3xl font-bold text-foreground">개인정보 처리방침</h1>
           <p className="text-sm text-muted-foreground">
-            ArchLegal(이하 &ldquo;회사&rdquo;)는 이용자의 개인정보를 소중히 여기며 안전하게 보호하기 위해 최선을 다하고 있습니다. 본 방침은
-            회사가 제공하는 상담 서비스와 카카오 로그인 연동 과정에서 수집·이용되는 개인정보 처리 기준을 설명합니다.
+            ㈜인터월드엔지니어링건축사사무소(이하 &ldquo;회사&rdquo;)는 이용자의 개인정보를 소중히 여기며 안전하게 보호하기 위해 최선을 다하고 있습니다. 본 방침은
+            회사가 제공하는 상담 서비스와 카카오 로그인 연동 과정에서 수집·이용되는 개인정보 처리 기준을 설명합니다. &lsquo;양성화.com&rsquo;·&lsquo;인건(仁建)&rsquo;은 회사가 운영하는 서비스의 브랜드명입니다.
           </p>
         </header>
 

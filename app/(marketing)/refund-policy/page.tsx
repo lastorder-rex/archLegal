@@ -16,8 +16,8 @@ export default function RefundPolicyPage() {
           <p className="text-sm font-medium text-primary">마지막 업데이트: {lastUpdated}</p>
           <h1 className="text-3xl font-bold text-foreground">환불 · 취소 정책</h1>
           <p className="text-sm text-muted-foreground">
-            ArchLegal(이하 &#39;회사&#39;)는 상담 중심의 행정 대행 서비스를 제공하며, 결제와 환불은 상담 및 견적 절차를 완료한 고객을
-            대상으로 이루어집니다. 본 정책은 회사가 제공하는 모든 유료 서비스에 적용됩니다.
+            ㈜인터월드엔지니어링건축사사무소(이하 &#39;회사&#39;)는 상담 중심의 행정 대행 서비스를 제공하며, 결제와 환불은 상담 및 견적 절차를 완료한 고객을
+            대상으로 이루어집니다. 본 정책은 회사가 제공하는 모든 유료 서비스에 적용됩니다. &lsquo;양성화.com&rsquo;·&lsquo;인건(仁建)&rsquo;은 회사가 운영하는 서비스의 브랜드명입니다.
           </p>
           <p className="text-xs text-muted-foreground">
             적용 대상: 양성화전문 플랫폼(ArchLegal)에서 제공하는 모든 유료 서비스(견적 기반 행정 대행 서비스 포함)
@@ -146,6 +146,18 @@ export default function RefundPolicyPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>본 정책은 관계 법령 및 결제 대행사 정책에 따라 변경될 수 있으며, 변경 시 홈페이지 공지와 함께 적용 일자를 명시합니다.</li>
               <li>환불 관련 세부 운영 절차는 내부 운영 매뉴얼을 따릅니다.</li>
+            </ul>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-semibold text-foreground">사업자 정보</h2>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>상호: ㈜인터월드엔지니어링건축사사무소</li>
+              <li>대표자: 김형준</li>
+              <li>사업자등록번호: 120-81-59920</li>
+              <li>통신판매업 신고번호: (추후 등록 예정)</li>
+              <li>주소: 서울특별시 금천구 벚꽃로 286, 1407호(가산동, 삼성리더스타워)</li>
+              <li>고객센터: 02-6348-1009 · support@archlegal.co.kr (운영 시간: 월~금 09:30~18:30)</li>
             </ul>
           </section>
 
