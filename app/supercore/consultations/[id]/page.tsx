@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { Dialog, Transition } from '@headlessui/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getFileUrl } from '@/lib/utils/file-upload';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
 import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -98,13 +97,29 @@ export default function ConsultationDetailPage() {
 
   const downloadAttachment = async (attachment: { name: string; size: number; type: string; storagePath: string }) => {
     try {
-      const result = await getFileUrl(attachment.storagePath);
-      if (!result.url) {
-        alert(`다운로드 실패: ${result.error}`);
+      const urlResponse = await fetch(
+        `/api/admin/consultations/${consultationId}/attachment-url`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storagePath: attachment.storagePath })
+        }
+      );
+
+      if (!urlResponse.ok) {
+        const errorData = await urlResponse.json().catch(() => ({}));
+        alert(`다운로드 실패: ${errorData.error ?? '첨부파일 URL을 가져올 수 없습니다.'}`);
         return;
       }
 
-      const response = await fetch(result.url);
+      const { url } = await urlResponse.json();
+      if (!url) {
+        alert('다운로드 실패: 첨부파일 URL을 가져올 수 없습니다.');
+        return;
+      }
+
+      const response = await fetch(url);
       if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
 
       const blob = await response.blob();
