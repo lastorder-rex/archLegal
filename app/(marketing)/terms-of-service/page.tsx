@@ -51,7 +51,7 @@ export default function TermsOfServicePage() {
 
           <div>
             <h2 className="text-lg font-semibold text-foreground">제4조 (회원가입)</h2>
-            <p>① 이용자는 카카오/네이버 등 외부 인증을 통해 로그인한 뒤 회사가 요청하는 필수 정보를 정확히 입력하여 회원가입을 완료할 수 있습니다.</p>
+            <p>① 이용자는 카카오 계정 인증을 통해 로그인한 뒤 회사가 요청하는 필수 정보를 정확히 입력하여 회원가입을 완료할 수 있습니다.</p>
             <p>② 이용자는 회원가입 시 허위 정보를 제공해서는 안 되며, 정보 변경 시 지체 없이 수정해야 합니다.</p>
             <p>③ 회원가입 및 서비스 이용과정에서 회사는 개인정보 처리방침에 따라 최소한의 정보를 수집·이용합니다.</p>
           </div>
@@ -119,7 +119,11 @@ export default function TermsOfServicePage() {
 
           <div>
             <h2 className="text-lg font-semibold text-foreground">문의</h2>
-            <p>본 약관에 관한 문의는 서비스 내 문의 채널 또는 support@archlegal.co.kr 로 연락해 주세요.</p>
+            <p>본 약관에 관한 문의는 서비스 내 문의 채널 또는 아래로 연락해 주세요.</p>
+            <ul className="list-inside list-disc space-y-1">
+              <li>이메일: support@archlegal.co.kr</li>
+              <li>전화: 02-6348-1009 (운영 시간: 월~금 09:30~18:30)</li>
+            </ul>
           </div>
 
 

@@ -142,7 +142,7 @@ export default function RefundPolicyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold text-foreground">11. 기타</h2>
+            <h2 className="text-xl font-semibold text-foreground">10. 기타</h2>
             <ul className="list-disc space-y-2 pl-5">
               <li>본 정책은 관계 법령 및 결제 대행사 정책에 따라 변경될 수 있으며, 변경 시 홈페이지 공지와 함께 적용 일자를 명시합니다.</li>
               <li>환불 관련 세부 운영 절차는 내부 운영 매뉴얼을 따릅니다.</li>
