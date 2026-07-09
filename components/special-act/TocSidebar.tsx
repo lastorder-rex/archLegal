@@ -36,7 +36,7 @@ export function TocSidebar({ items }: { items: TocItem[] }) {
   const num = (i: number) => String(i + 1).padStart(2, '0');
 
   return (
-    <nav aria-label="목차">
+    <nav aria-label="목차" className="min-w-0">
       {/* 데스크톱: 스티키 세로 목차 */}
       <div className="sticky top-24 hidden lg:block">
         <p className="mb-4 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
@@ -62,7 +62,7 @@ export function TocSidebar({ items }: { items: TocItem[] }) {
       </div>
 
       {/* 모바일: 가로 스크롤 칩 */}
-      <div className="lg:hidden">
+      <div className="min-w-0 lg:hidden">
         <ul className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((t, i) => (
             <li key={t.id} className="shrink-0">

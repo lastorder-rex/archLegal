@@ -85,7 +85,7 @@
 
   /* ── stage ────────────────────────────────────────────── */
   #stage{position:relative; flex:1; min-height:0}
-  #gl{position:absolute; inset:0; display:block; touch-action:none}
+  #gl{position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none}
   #labels{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:4}
   #labels > *{pointer-events:auto}
 
@@ -1538,14 +1538,43 @@ function closeRoom(){
   openedRoom = null; applyRoom();
   flyView(HOME.pos, HOME.tgt);
 }
-// 반응형 프레이밍 — 세로(portrait)일수록 카메라를 뒤로 빼서 건물 전체가 들어오게
+// 반응형 프레이밍 — 화면비가 아니라 모델 바운딩과 현재 FOV 기준으로 건물 전체를 맞춘다.
 const BASE_DIST = HOME.pos.distanceTo(HOME.tgt);
 const BASE_DIR = HOME.pos.clone().sub(HOME.tgt).normalize();
+const DESKTOP_INITIAL_ZOOM = 0.95;
+const MOBILE_INITIAL_ZOOM = 0.97;
+const FIT_BOX = new THREE.Box3();
+const FIT_SPHERE = new THREE.Sphere();
+function fitSphere(){
+  FIT_BOX.setFromObject(building);
+  if(FIT_BOX.isEmpty()){
+    FIT_SPHERE.center.copy(HOME.tgt);
+    FIT_SPHERE.radius = BASE_DIST * 0.45;
+  } else {
+    FIT_BOX.getBoundingSphere(FIT_SPHERE);
+    FIT_SPHERE.center.y = Math.min(7.1, Math.max(5.1, FIT_SPHERE.center.y));
+  }
+  return FIT_SPHERE;
+}
+function framingDistance(w,h){
+  const aspect = w / Math.max(1,h);
+  const vFov = THREE.MathUtils.degToRad(camera.fov);
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
+  const fitFov = Math.max(THREE.MathUtils.degToRad(8), Math.min(vFov, hFov));
+  const sphere = fitSphere();
+  HOME.tgt.copy(sphere.center);
+  const smallScreen = Math.min(w,h) < 560;
+  const portrait = aspect < 0.78;
+  const lowHeight = h < 720;
+  const margin = (smallScreen ? 1.16 : 1.04) * (portrait ? 1.08 : 1) * (lowHeight ? 1.04 : 1);
+  const zoom = smallScreen ? MOBILE_INITIAL_ZOOM : DESKTOP_INITIAL_ZOOM;
+  return Math.max(BASE_DIST, sphere.radius / Math.sin(fitFov / 2) * margin) * zoom;
+}
 function applyFraming(){
-  const a = stage.clientWidth / Math.max(1, stage.clientHeight);
-  const f = a >= 1 ? 1 : Math.min(1.85, 1 + (1 - a) * 0.95);
-  const want = BASE_DIST * f;
+  const want = framingDistance(stage.clientWidth, stage.clientHeight);
   HOME.pos.copy(BASE_DIR).multiplyScalar(want).add(HOME.tgt); // 시점초기화 기준도 갱신
+  controls.maxDistance = Math.max(85, want * 1.45);
+  if(!selected && !openedRoom && !fly) controls.target.copy(HOME.tgt);
   if (flyCam) { flyCam.to.copy(HOME.pos); }
   else {
     const dir = camera.position.clone().sub(controls.target);
@@ -1555,6 +1584,7 @@ function applyFraming(){
 }
 function resize(){
   const w=stage.clientWidth, h=stage.clientHeight;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1,2));
   renderer.setSize(w,h,false); labelRenderer.setSize(w,h);
   camera.aspect=w/h; camera.updateProjectionMatrix();
   applyFraming();

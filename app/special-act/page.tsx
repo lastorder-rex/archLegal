@@ -184,8 +184,8 @@ export default function SpecialActPage() {
           </section>
 
           {/* ④ 스티키 목차 + 본문 2컬럼 */}
-          <div className="mt-12 grid gap-10 lg:mt-16 lg:grid-cols-[210px_1fr] lg:gap-16">
-            <aside>
+          <div className="mt-12 grid min-w-0 gap-10 lg:mt-16 lg:grid-cols-[210px_1fr] lg:gap-16">
+            <aside className="min-w-0">
               <TocSidebar items={TOC} />
             </aside>
 
