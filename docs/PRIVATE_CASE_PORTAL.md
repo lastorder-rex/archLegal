@@ -1,6 +1,6 @@
 # 비공개 자료실 /case-room
 
-rex 안의 비공개 자료 화면. 사이트 탐색 메뉴·sitemap에는 등록하지 않는다.
+rex 안의 비공개 자료 화면. 짧은 주소 `/h`는 `next.config.mjs`에서 `/case-room`으로 307 리다이렉트한다. 사이트 탐색 메뉴·sitemap에는 등록하지 않는다.
 
 ## 구조
 

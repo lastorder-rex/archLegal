@@ -3,6 +3,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/h',
+        destination: '/case-room',
+        permanent: false,
+      },
+      {
         // 구 실험 랜딩 /home-v2를 메인(/)으로 승격 → 기존 URL·북마크·내부링크 정리
         source: '/home-v2',
         destination: '/',

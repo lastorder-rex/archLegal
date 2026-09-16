@@ -1,5 +1,7 @@
 # PROJECT_STATUS — rex 현재 진행 상태·최근 작업·남은 할일
 
+- 2026-09-16: Added /h short URL redirect to /case-room in next.config.mjs. Existing password protection remains at the destination.
+
 - 2026-09-16: Added password-protected /case-room on feat/violation-map. Server-only document access, signed sessions, no-store responses and DB login limits. Header omits surname; original records are preserved. Personal data and credentials excluded from Git.
 
 > 이 문서는 **세션·계정·기기가 바뀌어도 이어서 작업**할 수 있게 현재 상태를 남기는 살아있는 문서다.
