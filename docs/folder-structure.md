@@ -620,3 +620,7 @@ lib/validations/consultation.ts에 검증 스키마도 추가하고"
 
 **마지막 업데이트**: 2026-05-28
 **프로젝트 버전**: 0.1.1
+
+## 비공개 자료실 (2026-09-16)
+
+`app/case-room`과 `components/private-case`에서 자료 열람을 제공한다. `lib/private-case/server.ts` 및 `app/api/private-case`에서 공용 비밀번호·서명 세션을 검증하고 전용 사례연구 DB만 읽는다. 로컬 의료자료를 빌드에 포함하지 않는다. 환경변수·로그인 횟수 제한과 배포 절차는 `docs/PRIVATE_CASE_PORTAL.md` 참조.
