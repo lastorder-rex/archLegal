@@ -58,10 +58,16 @@ export function History({ data, year, search, onYear, onSearch }: { data: Obj; y
 }
 export function Travel({ data }: { data: Obj }) {
   const routes = list(data.routes).map(obj), totals = obj(data.totals);
+  const omittedNotes = [
+    '업무 관련성·산입 여부는 미확정입니다.',
+    '해외 이동에 적용할 시간대·업무시간 인정 여부·가산 적정성은 미검토입니다.',
+    '인용된 6개 판정 사례는 엑셀 기재 그대로 보존했으며 해당 사건 원문과 이번 사실관계의 적용 가능성은 미대조입니다.',
+  ];
+  const notes = list(data.notes).map(value => omittedNotes.reduce((note, sentence) => note.replace(sentence, ''), text(value)).trim()).filter(Boolean);
   return <><h2>출장 기록</h2><p className="pc-source">{text(obj(data.source).name)} · {text(obj(data.source).sheet)} · {text(obj(data.source).range)}</p><Table headers={['집계 범위', '경과시간']} rows={[
     ['본 출장 이동 구간', duration(totals.main_travel_seconds)], ['전날 이동 포함 전체', duration(totals.all_elapsed_seconds)],
-  ]} /><p className="pc-source">시작·종료 시각의 차이이며 업무시간 인정 여부는 미검토입니다. 현지 근무시간은 포함하지 않습니다.</p><Table headers={['날짜', '시작 → 종료 KST', '경과시간', '경로·메모']} rows={routes.map(r => [text(r.date), `${text(r.start)} → ${text(r.end)}`, duration(r.elapsed_seconds), `${text(r.route)} / ${text(r.note)}`])} />
+  ]} /><Table headers={['날짜', '시작 → 종료 KST', '경과시간', '경로·메모']} rows={routes.map(r => [text(r.date), `${text(r.start)} → ${text(r.end)}`, duration(r.elapsed_seconds), `${text(r.route)} / ${text(r.note)}`])} />
     <details><summary>야간 가산 시나리오 · KST 기준 가정</summary><Table headers={['날짜', '야간 겹침', '30% 가산량', '경과시간 + 가산']} rows={routes.map(r => [text(r.date), duration(r.night_seconds), duration(r.night_addition_seconds), duration(num(r.elapsed_seconds) + num(r.night_addition_seconds))])} /></details>
     {['outbound', 'inbound'].map((key, i) => { const t = obj(data[key]); return <article key={key}><h3>{i ? '귀국 항공편' : '출국 항공편'}</h3><Table headers={list(t.headers).map(text)} rows={list(t.rows).map(v => list(v).map(text))} /></article>; })}
-    <Notes values={data.notes} /><details><summary>엑셀 인용 근거 · 원문 미대조</summary><p className="pc-quote">{text(data.cited_basis_raw)}</p></details></>;
+    <Notes values={notes} /><details><summary>엑셀 인용 근거 · 원문 미대조</summary><p className="pc-quote">{text(data.cited_basis_raw)}</p></details></>;
 }

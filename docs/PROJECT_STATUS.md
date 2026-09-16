@@ -1,5 +1,7 @@
 # PROJECT_STATUS — rex 현재 진행 상태·최근 작업·남은 할일
 
+- 2026-09-16: Removed four requested explanatory sentences from the travel view. Retained remaining notes, source records and travel figures.
+
 - 2026-09-16: Added /h short URL redirect to /case-room in next.config.mjs. Existing password protection remains at the destination.
 
 - 2026-09-16: Added password-protected /case-room on feat/violation-map. Server-only document access, signed sessions, no-store responses and DB login limits. Header omits surname; original records are preserved. Personal data and credentials excluded from Git.
