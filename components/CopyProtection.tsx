@@ -20,6 +20,7 @@ export function CopyProtection() {
       pathname?.startsWith('/admin') ||
       pathname?.startsWith('/supercore') ||
       pathname?.startsWith('/auth') ||
+      pathname?.startsWith('/case-room') ||
       pathname?.startsWith('/special-act') ||
       pathname?.startsWith('/guide') ||
       pathname === '/login' ||
