@@ -37,16 +37,16 @@ export function Emergency({ data }: { data: Obj }) {
   const complaint = obj(data.chief_complaint), pain = obj(data.pain);
   return <><h2>응급실 기록</h2><p className="pc-source">사용자 제공 발췌 · 원본 PDF 미대조</p><Table headers={['항목', '기재 내용']} rows={[
     ['주호소', text(complaint.raw)], ['증상 시작 시각', text(complaint.onset)], ['통증', `${text(pain.scale)} ${text(pain.score)}점 · 부위 ${text(pain.site)}`], ['활력징후 숫자열', text(obj(data.arrival_vitals).raw)],
-  ]} /><p className="pc-source">항목명이 없는 숫자열은 원본 확인이 필요합니다. 119 기록과 응급실 진술의 시각을 합쳐 하나의 시각으로 확정하지 않습니다.</p><h3>제공된 발췌 기록</h3><p className="pc-quote">{text(data.excerpt_spacing_normalized)}</p><details><summary>해석을 보류한 표현</summary><ul>{list(data.unresolved_raw).map((v, i) => <li key={i}>{text(v)}</li>)}</ul></details></>;
+  ]} /><h3>제공된 발췌 기록</h3><p className="pc-quote">{text(data.excerpt_spacing_normalized)}</p><details><summary>해석을 보류한 표현</summary><ul>{list(data.unresolved_raw).map((v, i) => <li key={i}>{text(v)}</li>)}</ul></details></>;
 }
 export function Questionnaire({ data }: { data: Obj }) {
-  return <><h2>건강검진 문진표</h2><p className="pc-source">정리 엑셀의 자기보고 응답 · 원본 PDF 미대조</p><Table headers={['문항', '2022년', '2024년', '출처 셀']} rows={list(data.items).map(v => { const r = obj(v), a = obj(r.answers), x = obj(a['2022']), y = obj(a['2024']); return [text(r.question_raw), text(x.value_raw), text(y.value_raw), `${text(x.cell)} / ${text(y.cell)}`]; })} /><Notes values={data.notes} /></>;
+  return <><h2>건강검진 문진표</h2><Table headers={['문항', '2022년', '2024년', '출처 셀']} rows={list(data.items).map(v => { const r = obj(v), a = obj(r.answers), x = obj(a['2022']), y = obj(a['2024']); return [text(r.question_raw), text(x.value_raw), text(y.value_raw), `${text(x.cell)} / ${text(y.cell)}`]; })} /></>;
 }
 export function Checkups({ data, year, onYear }: { data: Obj; year: string; onYear: (v: string) => void }) {
   const years = obj(data.years), keys = Object.keys(years).sort().reverse(), current = year in years ? year : keys[0], r = obj(years[current]);
   return <><h2>건강검진 요약</h2><label>검진 연도<select value={current} onChange={e => onYear(e.target.value)}>{keys.map(k => <option key={k}>{k}</option>)}</select></label><p className="pc-source">{text(r.source_label)} · {text(r.status_label)}</p>
     {list(r.findings).map((v, i) => { const x = obj(v); return <article key={i}><h3>{text(x.title)}</h3><p>{text(x.summary)}</p><details><summary>검진기관 권고문 보기</summary><p className="pc-quote">{text(x.original_text)}</p></details></article>; })}
-    {list(r.tables).map((v, i) => { const t = obj(v); return <article key={i}><h3>{text(t.heading)}</h3><Table headers={list(t.headers).map(text)} rows={list(t.rows).map(row => list(row).map(v => text(v).replace(/\*\*/g, '')))} /></article>; })}<Notes values={r.notes} /></>;
+    {list(r.tables).map((v, i) => { const t = obj(v); return <article key={i}><h3>{text(t.heading)}</h3><Table headers={list(t.headers).map(text)} rows={list(t.rows).map(row => list(row).map(v => text(v).replace(/\*\*/g, '')))} /></article>; })}<Notes values={list(r.notes).filter(note => text(note).trim() !== '권고문은 당시 검진기관의 안내로 보존했으며 새로운 진료 권고가 아닙니다.')} /></>;
 }
 export function History({ data, year, search, onYear, onSearch }: { data: Obj; year: string; search: string; onYear: (v: string) => void; onSearch: (v: string) => void }) {
   const all = list(data.records).map(obj), rows = all.filter(r => (!year || text(r.date).startsWith(year)) && `${text(r.institution)} ${text(r.department)}`.includes(search.trim()));
