@@ -9,7 +9,7 @@ export const SESSION_SECONDS = 8 * 60 * 60;
 export const SOURCE_NAMES = [
   'baseline.json', 'ambulance-2026-07-01.json', 'emergency-record-2026-07-01.json',
   'health-checkup-results.json', 'health-questionnaires.json', 'basic-care-history.json',
-  'travel-records-2026.json',
+  'travel-records-2026.json', 'attendance-2026-h1.json',
 ] as const;
 
 function config() {
@@ -104,7 +104,7 @@ export async function login(request: NextRequest) {
     const response = reply({ ok: true, expiresAt: session.expiresAt });
     setSession(response, session.token);
     return response;
-  } catch { return reply({ error: '접속 준비 중입니다. 관리자에게 문의해 주세요.' }, 503); }
+  } catch (e) { if (process.env.NODE_ENV !== 'production') console.error('[private-case] login unavailable:', e instanceof Error ? e.message : e); return reply({ error: '접속 준비 중입니다. 관리자에게 문의해 주세요.' }, 503); }
 }
 export async function readData(request: NextRequest) {
   const expiresAt = verifySession(request.cookies.get(COOKIE_NAME)?.value);
@@ -118,8 +118,18 @@ export async function readData(request: NextRequest) {
       if (error) throw new Error('Read unavailable');
       return [name, data?.[0]?.payload] as const;
     }));
-    return reply({ documents: Object.fromEntries(rows.filter(([, payload]) => payload != null)), expiresAt });
-  } catch { return reply({ error: '자료를 불러오지 못했습니다.' }, 503); }
+    const documents: Record<string, unknown> = Object.fromEntries(rows.filter(([, payload]) => payload != null));
+    // 개발 전용: DB 적재 전 로컬 검토용 보강. 운영 빌드에서는 디렉터리 설정이 없어 동작하지 않는다.
+    const localDir = process.env.NODE_ENV !== 'production' ? process.env.PRIVATE_CASE_LOCAL_DIR : undefined;
+    if (localDir) {
+      const { readFile } = await import('fs/promises'); const { join, basename } = await import('path');
+      for (const name of SOURCE_NAMES) {
+        if (name in documents) continue;
+        try { documents[name] = JSON.parse(await readFile(join(localDir, basename(name)), 'utf8')); } catch { /* 로컬 파일 없음 */ }
+      }
+    }
+    return reply({ documents, expiresAt });
+  } catch (e) { if (process.env.NODE_ENV !== 'production') console.error('[private-case] read unavailable:', e instanceof Error ? e.message : e); return reply({ error: '자료를 불러오지 못했습니다.' }, 503); }
 }
 export async function logout(request: NextRequest) {
   if (!sameOrigin(request)) return reply({ error: '허용되지 않은 요청입니다.' }, 403);

@@ -7,7 +7,7 @@ jest.mock('bcryptjs', () => ({ __esModule: true, default: { compare: jest.fn() }
 import bcrypt from 'bcryptjs';
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { COOKIE_NAME, issueSession, verifySession, readData, login, logout } from '../server';
+import { COOKIE_NAME, issueSession, verifySession, readData, login, logout, SOURCE_NAMES } from '../server';
 
 const passwordHash = '$2b$12$' + 'a'.repeat(53);
 function request(path: string, options: RequestInit = {}) {
@@ -70,7 +70,7 @@ test('authenticated reads filter by configured case and allowlisted source, late
   expect(chain.eq).toHaveBeenCalledWith('case_key', process.env.PRIVATE_CASE_KEY);
   expect(chain.order).toHaveBeenCalledWith('imported_at', { ascending: false });
   expect(chain.limit).toHaveBeenCalledWith(1);
-  expect(Object.keys((await response.json()).documents)).toHaveLength(7);
+  expect(Object.keys((await response.json()).documents)).toHaveLength(SOURCE_NAMES.length);
   expect(response.headers.get('cache-control')).toContain('no-store');
 });
 

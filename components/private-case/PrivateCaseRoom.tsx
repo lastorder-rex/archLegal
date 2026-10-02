@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Ambulance, Checkups, Diagnosis, Emergency, History, Questionnaire, Travel, obj, text, list, type Obj } from './RecordViews';
+import { Attendance, WeeklySummary } from './AttendanceViews';
 
 const tabs = [
   ['diagnosis', '진단/기본정보', 'baseline.json'],
@@ -11,6 +12,8 @@ const tabs = [
   ['questionnaire', '건강검진 문진표', 'health-questionnaires.json'],
   ['history', '년도별 병원 방문기록', 'basic-care-history.json'],
   ['travel', '출장 기록', 'travel-records-2026.json'],
+  ['attendance', '근무기록', 'attendance-2026-h1.json'],
+  ['weekly', '근무 주별집계', 'attendance-2026-h1.json'],
 ] as const;
 
 export default function PrivateCaseRoom() {
@@ -22,6 +25,7 @@ export default function PrivateCaseRoom() {
   const [tab, setTab] = useState<string>('diagnosis');
   const [year, setYear] = useState('');
   const [checkupYear, setCheckupYear] = useState('2025');
+  const [month, setMonth] = useState('');
   const [search, setSearch] = useState('');
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const generation = useRef(0);
@@ -99,6 +103,7 @@ export default function PrivateCaseRoom() {
         {tab === 'diagnosis' && <Diagnosis data={data} />}{tab === 'ambulance' && <Ambulance data={data} />}{tab === 'emergency' && <Emergency data={data} />}
         {tab === 'checkups' && <Checkups data={data} year={checkupYear} onYear={setCheckupYear} />}{tab === 'questionnaire' && <Questionnaire data={data} />}
         {tab === 'history' && <History data={data} year={year} search={search} onYear={setYear} onSearch={setSearch} />}{tab === 'travel' && <Travel data={data} />}
+        {tab === 'attendance' && <Attendance data={data} month={month} onMonth={setMonth} />}{tab === 'weekly' && <WeeklySummary data={data} />}
       </>}</section>
     </>}
   </main>;

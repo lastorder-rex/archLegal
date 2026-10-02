@@ -40,3 +40,10 @@ Vercel의 해당 프로젝트 환경설정에 아래 여섯 값을 등록한다.
 3. Vercel 환경변수를 등록한 후 배포한다. HTTPS 운영 환경은 Secure + HttpOnly + SameSite Strict 쿠키를 사용한다.
 4. 운영 주소에서 미인증 GET 401, 비밀번호 로그인, 로그아웃 후 401을 확인한다. API는 private/no-store, 세션 만료 시 화면 메모리도 지운다.
 5. 공개 배포와 Git commit/push는 사용자 지시 후 수행한다. 이번 작업은 사용자 지시에 따라 운영 배포를 진행한다.
+
+## 근무기록·근무 주별집계 탭 (2026-10-02)
+
+- 자료 파일명 `attendance-2026-h1.json` 하나를 두 탭이 공유한다. 생성: 출입기록 xls + 출장 노트북 로그 xlsm + 사용자 제공 이동기록을 로컬 스크립트로 정리(개인식별정보 없이 날짜·시각만). 원본 JSON은 `disease-case-lab/data/private/heonwoo/`(Git 제외)에 둔다.
+- 화면: `components/private-case/AttendanceViews.tsx`. 근무기록 탭은 월별 합계 → 월 선택 → 날짜별 표(공휴일 빨강, 출장 파랑, 추정 노랑, 회사휴무 회색). 주별집계 탭은 7/1·4/1 기준 12주 블록, 직전 4주, 휴무 주 제외 A/B 평균, 달력 분기, 근거 판례(서울행정법원 2022구합55859).
+- 개발 전용 env `PRIVATE_CASE_LOCAL_DIR`: DB 적재 전 로컬 검토용으로, DB에 없는 허용 파일명만 이 폴더에서 보강한다. `NODE_ENV=production`에서는 코드상 무시된다. 운영 반영은 다른 자료와 같이 `private_case_staging`에 적재한 뒤 배포한다.
+- 테스트의 자료 개수 검증은 `SOURCE_NAMES.length`를 참조한다.
