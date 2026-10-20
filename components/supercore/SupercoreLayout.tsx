@@ -4,13 +4,22 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ReactNode, useEffect, useState } from 'react';
 import { handleAdminLogout } from '@/lib/auth/logout';
-import { Box, FileText, Users, CreditCard, UserCog, LogOut } from 'lucide-react';
+import { Box, FileText, Users, CreditCard, Map, UserCog, LogOut } from 'lucide-react';
 
 interface SupercoreLayoutProps {
   children: ReactNode;
   title?: string;
   onLogout?: () => void;
 }
+
+const NAV_ITEMS = [
+  { path: '/supercore', label: '대시보드', Icon: Box, exact: true },
+  { path: '/supercore/consultations', label: '상담 게시판', Icon: FileText, exact: false },
+  { path: '/supercore/users', label: '회원 관리', Icon: Users, exact: false },
+  { path: '/supercore/payments', label: '결제 관리', Icon: CreditCard, exact: false },
+  { path: '/map', label: '위반 지도', Icon: Map, exact: false, newTab: true }, // 지도는 새 탭 — 관리자 화면 유지
+  { path: '/supercore/admins', label: '관리자 계정', Icon: UserCog, exact: false },
+] as const;
 
 export default function SupercoreLayout({ children, title, onLogout }: SupercoreLayoutProps) {
   const router = useRouter();
@@ -47,8 +56,12 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
     return pathname?.startsWith(path);
   };
 
-  const handleMenuClick = (path: string) => {
-    router.push(path);
+  const handleMenuClick = (path: string, newTab?: boolean) => {
+    if (newTab) {
+      window.open(path, '_blank', 'noopener');
+    } else {
+      router.push(path);
+    }
     setIsMobileMenuOpen(false);
   };
 
@@ -131,71 +144,21 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
             </button>
           </div>
           <ul className="space-y-2">
-            <li>
-              <button
-                onClick={() => handleMenuClick('/supercore')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                  pathname === '/supercore'
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                }`}
-              >
-                <Box className="w-5 h-5" />
-                <span>대시보드</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => handleMenuClick('/supercore/consultations')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                  isActive('/supercore/consultations')
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                }`}
-              >
-                <FileText className="w-5 h-5" />
-                <span>상담 게시판</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => handleMenuClick('/supercore/users')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                  isActive('/supercore/users')
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                }`}
-              >
-                <Users className="w-5 h-5" />
-                <span>회원 관리</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => handleMenuClick('/supercore/payments')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                  isActive('/supercore/payments')
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                }`}
-              >
-                <CreditCard className="w-5 h-5" />
-                <span>결제 관리</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => handleMenuClick('/supercore/admins')}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                  isActive('/supercore/admins')
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                }`}
-              >
-                <UserCog className="w-5 h-5" />
-                <span>관리자 계정</span>
-              </button>
-            </li>
+            {NAV_ITEMS.map(({ path, label, Icon, exact, ...item }) => (
+              <li key={path}>
+                <button
+                  onClick={() => handleMenuClick(path, 'newTab' in item && item.newTab)}
+                  className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
+                    (exact ? pathname === path : isActive(path))
+                      ? 'bg-primary text-white'
+                      : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span>{label}</span>
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
       </aside>
@@ -207,71 +170,23 @@ export default function SupercoreLayout({ children, title, onLogout }: Supercore
             <nav className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 sticky top-8">
               <h2 className="text-lg font-semibold text-slate-900 mb-4">메뉴</h2>
               <ul className="space-y-2">
-                <li>
-                  <button
-                    onClick={() => router.push('/supercore')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                      pathname === '/supercore'
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                    }`}
-                  >
-                    <Box className="w-5 h-5" />
-                    <span>대시보드</span>
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => router.push('/supercore/consultations')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                      isActive('/supercore/consultations')
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                    }`}
-                  >
-                    <FileText className="w-5 h-5" />
-                    <span>상담 게시판</span>
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => router.push('/supercore/users')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                      isActive('/supercore/users')
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                    }`}
-                  >
-                    <Users className="w-5 h-5" />
-                    <span>회원 관리</span>
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => router.push('/supercore/payments')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                      isActive('/supercore/payments')
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                    }`}
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    <span>결제 관리</span>
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => router.push('/supercore/admins')}
-                    className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
-                      isActive('/supercore/admins')
-                        ? 'bg-primary text-white'
-                        : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                    }`}
-                  >
-                    <UserCog className="w-5 h-5" />
-                    <span>관리자 계정</span>
-                  </button>
-                </li>
+                {NAV_ITEMS.map(({ path, label, Icon, exact, ...item }) => (
+                  <li key={path}>
+                    <button
+                      onClick={() =>
+                        'newTab' in item && item.newTab ? window.open(path, '_blank', 'noopener') : router.push(path)
+                      }
+                      className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${
+                        (exact ? pathname === path : isActive(path))
+                          ? 'bg-primary text-white'
+                          : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{label}</span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </nav>
           </aside>

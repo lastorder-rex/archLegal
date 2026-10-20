@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
-import { verifyAdminSession } from '@/lib/utils/admin-auth';
+import { verifyAdminSession } from '@/lib/admin/auth';
 import {
   normalizeAudience,
   resolveAllowedTemplates,
   resolveMaxFilesPerFolder
 } from '@/lib/services/upload-context';
-
-function buildUploadUrl(token: string) {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'http://localhost:3002';
-  return `${base.replace(/\/$/, '')}/upload?token=${token}`;
-}
+import { buildUploadUrl } from '@/lib/admin/upload-url';
 
 export async function PATCH(
   request: NextRequest,

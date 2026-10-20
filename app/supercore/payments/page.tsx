@@ -3,43 +3,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Folder } from 'lucide-react';
-
-interface Admin {
-  id: string;
-  username: string;
-}
-
-interface PaymentRow {
-  id: string;
-  userId: string;
-  consultationId: string | null;
-  stageTemplateId: string;
-  status: string;
-  requestAmount: number | null;
-  requestedAt: string | null;
-  requestedBy: string | null;
-  paidAmount: number | null;
-  paidAt: string | null;
-  paymentKey: string | null;
-  updatedAt: string | null;
-  consultation: {
-    id: string;
-    name: string | null;
-    phone: string | null;
-    address: string | null;
-    address_detail: string | null;
-  } | null;
-  driveFolder: {
-    driveFolderId: string | null;
-    driveFolderName: string | null;
-    status: string | null;
-  } | null;
-}
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import type { PaymentRow } from '@/types/admin';
+import { statusLabelMap, formatDateTimeShortSafe as formatDateTime, formatAmountNumber as formatAmount } from '@/lib/admin/format';
 
 interface SearchFilters {
   requestedFrom: string;
@@ -63,14 +35,6 @@ const statusOptions = [
   { value: 'paid', label: '결제 완료' }
 ];
 
-const statusLabelMap: Record<string, string> = {
-  awaiting: '결제 대기',
-  requested: '요청됨',
-  paid: '결제 완료',
-  locked: '잠금',
-  canceled: '결제취소'
-};
-
 const statusClassMap: Record<string, string> = {
   awaiting: 'bg-amber-100 text-amber-800 border-amber-200',
   requested: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -78,23 +42,6 @@ const statusClassMap: Record<string, string> = {
   locked: 'bg-slate-100 text-slate-700 border-slate-200',
   canceled: 'bg-red-100 text-red-800 border-red-200'
 };
-
-function formatDateTime(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  const year = date.getFullYear().toString().slice(-2);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
-
-function formatAmount(value: number | null) {
-  if (value === null || Number.isNaN(value)) return '-';
-  return new Intl.NumberFormat('ko-KR').format(value);
-}
 
 function getDefaultDateRange() {
   const today = new Date();
@@ -109,9 +56,6 @@ function getDefaultDateRange() {
 
 export default function AdminPaymentsPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [admin, setAdmin] = useState<Admin | null>(null);
 
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -179,32 +123,8 @@ export default function AdminPaymentsPage() {
     }
   }, [itemsPerPage]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/supercore');
-        return;
-      }
-
-      const data = await response.json();
-      setAdmin(data.admin);
-      setIsAuthenticated(true);
-      await loadPayments(1);
-    } catch (error) {
-      console.error('관리자 인증 오류', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadPayments, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(() => loadPayments(1), [loadPayments]);
+  const { isAuthenticated, isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   const handleFilterChange = (field: keyof SearchFilters, value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
@@ -234,12 +154,8 @@ export default function AdminPaymentsPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+  if (isCheckingAuth) {
+    return <AdminLoadingScreen />;
   }
 
   if (!isAuthenticated) {

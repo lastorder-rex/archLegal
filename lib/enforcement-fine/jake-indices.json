@@ -1,0 +1,85 @@
+{
+  "additionRates": [
+    { "code": "intelligent_system_4_elements", "description": "(1) 특수설비가 설치되어 있는 건물(빌딩관리요소 4가지)", "rate": 0.05 },
+    { "code": "intelligent_system_5_plus_elements", "description": "(1) 특수설비가 설치되어 있는 건물(빌딩관리요소 5가지이상)", "rate": 0.1 },
+    { "code": "special_building", "description": "(2) 특수건물", "rate": 0.05 },
+    { "code": "commercial_1f_under_5_floors", "description": "(3) 5층미만 건물", "rate": 0.17 },
+    { "code": "commercial_1f_5_to_10_floors", "description": "(4) 5층이상 10층이하 건물", "rate": 0.27 },
+    { "code": "commercial_1f_11_to_20_floors", "description": "(5) 11층이상 20층이하 건물", "rate": 0.32 },
+    { "code": "commercial_1f_21_to_30_floors", "description": "(6) 21층이상 30층이하 건물", "rate": 0.36 },
+    { "code": "commercial_1f_over_30_floors", "description": "(7) 30층초과 건물", "rate": 0.46 },
+    { "code": "commercial_2f_11_to_20_floors", "description": "(8) 11층 이상 20층 이하 건물", "rate": 0.04 },
+    { "code": "commercial_2f_21_to_30_floors", "description": "(9) 21층 이상 30층 이하 건물", "rate": 0.05 },
+    { "code": "commercial_2f_over_30_floors", "description": "(10) 30층 초과 건물", "rate": 0.06 },
+    { "code": "nuclear_power_facility", "description": "(11) 원자력발전시설", "rate": 0.5 },
+    { "code": "floating_building", "description": "(12) 수상건축물", "rate": 0.1 },
+    { "code": "high_rise_building", "description": "(13) 고층건축물", "rate": 0.01 },
+    { "code": "super_high_rise_under_60_floors", "description": "(14) 초고층 건축물", "rate": 0.06 },
+    { "code": "super_high_rise_60_to_79_floors", "description": "(14) 초고층 건축물", "rate": 0.07 },
+    { "code": "super_high_rise_80_plus", "description": "(14) 초고층 건축물", "rate": 0.08 }
+  ],
+  "reductionRates": [
+    { "code": "single_house_area_60_to_85", "description": "(1) 단독주택(1구의 연면적이 60㎡초과 85㎡이하)", "rate": 0.03 },
+    { "code": "single_house_area_60_or_less", "description": "(1) 단독주택(1구의 연면적이 60㎡이하)", "rate": 0.05 },
+    { "code": "residential_garage", "description": "(2) 주택의 차고", "rate": 0.45 },
+    { "code": "no_wall_25_to_50_percent", "description": "(3) 무벽감산(무벽 면적비율 1/4이상 ~ 2/4미만)", "rate": 0.2 },
+    { "code": "no_wall_50_to_75_percent", "description": "(3) 무벽감산(무벽 면적비율 2/4이상 ~ 3/4미만)", "rate": 0.3 },
+    { "code": "no_wall_75_plus_percent", "description": "(3) 무벽감산(무벽 면적비율 3/4이상)", "rate": 0.4 },
+    { "code": "commercial_basement_2_or_lower", "description": "(4) 지하2층 이상 상가부분(지식산업센터 공장 포함)", "rate": 0.4 },
+    { "code": "commercial_basement_1_under_10_floors", "description": "(5) 지하1층 상가부분(지식산업센터 공장 포함)(10층 이하 건물)", "rate": 0.25 },
+    { "code": "commercial_basement_1_over_10_floors", "description": "(5) 지하1층 상가부분(지식산업센터 공장 포함)(10층 초과 건물)", "rate": 0.2 },
+    { "code": "commercial_5f_plus_5_to_10_floors", "description": "(6) 5층 이상 10층 이하 건물(5층이상 상가부분)", "rate": 0.12 },
+    { "code": "commercial_5f_plus_11_to_20_floors", "description": "(7) 11층 이상 20층 이하 건물(5층 이상 상가부분)", "rate": 0.05 },
+    { "code": "commercial_5f_plus_21_to_30_floors", "description": "(8) 21층 이상 30층 이하 건물(5층 이상 상가부분)", "rate": 0.02 },
+    { "code": "commercial_5f_plus_over_30_floors", "description": "(9) 30층 초과 건물(5층 이상 상가부분)", "rate": 0.01 },
+    { "code": "parking_lot_2f_plus", "description": "(10) 주차장(주차장으로 사용되고 있는 2층 이상 건축물)", "rate": 0.1 },
+    { "code": "steel_structure_wall_material", "description": "(11) 철골조 건축물(벽면 구조)(조립식패널, 칼라강판, 시멘트블록, 슬레이트벽)", "rate": 0.1 },
+    { "code": "container_temp_under_30m2", "description": "(12) 연면적 30m² 이하 컨테이너 구조 가설건축물", "rate": 0.2 }
+  ],
+  "foundationOptions": [
+    { "code": "not_applicable", "description": "해당없음" },
+    { "code": "without_foundation", "description": "기초공사 안 함" },
+    { "code": "with_foundation", "description": "기초공사 함" },
+    { "code": "without_foundation_multilevel", "description": "기초공사 안 함 (복층 증축)" }
+  ],
+  "violationTypes": [
+    { "id": "violation_1", "description": "허가를 받지 않거나, 신고를 하지 않고 신축, 증축한 건축물", "legalBasis": "법 제11조, 법 제14조", "rate": 0.5 },
+    { "id": "unauthorized_major_repair", "description": "허가를 받지 않거나 신고를 하지 않고 제3조의2제8호에 따른 증설 또는 해체로 대수선을 한 건축물", "legalBasis": "법 제11조, 법 제14조", "rate": 0.1 },
+    { "id": "unauthorized_use_change", "description": "허가를 받지 아니하거나 신고를 하지 아니하고 용도변경을 한 건축물", "legalBasis": "법 제19조", "rate": 0.1 },
+    { "id": "use_without_approval", "description": "사용승인을 받지 아니하고 사용 중인 건축물", "legalBasis": "법 제22조", "rate": 0.02 },
+    { "id": "landscape_violation", "description": "대지의 조경에 관한 사항을 위반한 건축물", "legalBasis": "법 제42조", "rate": 0.1 },
+    { "id": "building_line_violation", "description": "건축선에 적합하지 아니한 건축물", "legalBasis": "법 제47조", "rate": 0.1 },
+    { "id": "structural_safety_violation", "description": "구조내력기준에 적합하지 아니한 건축물", "legalBasis": "법 제48조", "rate": 0.1 },
+    { "id": "evacuation_fire_compartment_violation", "description": "피난시설, 건축물의 용도·구조의 제한, 방화구획, 계단, 거실의 반자 높이, 거실의 채광·환기와 바닥의 방습 등이 법령등의 기준에 적합하지 아니한 건축물", "legalBasis": "법 제49조", "rate": 0.1 },
+    { "id": "fire_resistant_wall_violation", "description": "내화구조 및 방화벽이 법령등의 기준에 적합하지 아니한 건축물", "legalBasis": "법 제50조", "rate": 0.1 },
+    { "id": "fire_district_violation", "description": "방화지구 안의 건축물에 관한 법령등의 기준에 적합하지 아니한 건축물", "legalBasis": "법 제51조", "rate": 0.1 },
+    { "id": "finish_material_violation", "description": "법령등에 적합하지 않은 마감재료를 사용한 건축물", "legalBasis": "법 제52조", "rate": 0.1 },
+    { "id": "height_limit_violation", "description": "높이 제한을 위반한 건축물", "legalBasis": "법 제60조", "rate": 0.1 },
+    { "id": "sunlight_height_violation", "description": "일조 등의 확보를 위한 높이제한을 위반한 건축물", "legalBasis": "법 제61조", "rate": 0.1 },
+    { "id": "building_equipment_violation", "description": "건축설비의 설치·구조에 관한 기준과 그 설계 및 공사감리에 관한 법령 등의 기준을 위반한 건축물", "legalBasis": "법 제62조", "rate": 0.1 },
+    { "id": "building_act_order_violation", "description": "그 밖에 이 법 또는 이 법에 따른 명령이나 처분을 위반한 건축물", "legalBasis": "-", "rate": 0.03 }
+  ],
+  "chargeRates": [
+    { "id": "coverage_ratio_excess", "description": "건폐율을 초과하여 건축한 경우", "rate": 0.8 },
+    { "id": "floor_area_ratio_excess", "description": "용적률을 초과하여 건축한 경우", "rate": 0.9 },
+    { "id": "unauthorized_extension", "description": "허가를 받지 아니하고 건축한 경우", "rate": 1 },
+    { "id": "unreported_extension", "description": "신고를 하지 아니하고 건축한 경우", "rate": 0.7 }
+  ],
+  "aggravationRates": [
+    { "id": "for_profit_purpose", "description": "임대 등 영리를 목적으로 불법 용도변경 또는 불법 신축·증축한 경우", "rate": 1.5 },
+    { "id": "repeated_violation", "description": "동일인이 최근 3년 내에 2회 이상 법 또는 법에 따른 명령이나 처분을 위반한 경우", "rate": 1.5 }
+  ],
+  "mitigationRates": [
+    { "id": "acquired_after_violation", "description": "위반행위 후 소유권이 변경된 경우", "rate": 0.25 },
+    { "id": "tenant_correction_difficulty", "description": "임차인이 있어 현실적으로 임대기간 중에 위반내용을 시정하기 어려운 경우", "rate": 0.25 },
+    { "id": "existing_at_use_approval", "description": "사용승인 당시 존재하던 위반사항으로서 사용승인 이후 확인된 경우", "rate": 0.25 }
+  ],
+  "residentialSpecialRates": [
+    { "id": "article80_small_residential_half", "description": "60제곱미터 이하의 주거용건축물", "rate": 0.5 },
+    { "id": "article80_use_without_approval_residential_half", "description": "사용승인을 받지 아니하고 건축물을 사용한 주거용건축물", "rate": 0.5 },
+    { "id": "article80_landscape_residential_half", "description": "대지의 조경에 관한 사항을 위반한 주거용건축물", "rate": 0.5 },
+    { "id": "article80_height_residential_half", "description": "건축물의 높이 제한을 위반한 주거용건축물", "rate": 0.5 },
+    { "id": "article80_sunlight_residential_half", "description": "일조 등의 확보를 위한 건축물의 높이 제한을 위반한 주거용건축물", "rate": 0.5 },
+    { "id": "article80_ordinance_residential_half", "description": "그밖의 건축조례로 정하는 위반사항", "rate": 0.5 }
+  ]
+}

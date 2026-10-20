@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
-import { verifyAdminSession } from '@/lib/utils/admin-auth';
+import { verifyAdminSession } from '@/lib/admin/auth';
 import {
   UploadAudience,
   normalizeAudience,
   resolveAllowedTemplates,
   resolveMaxFilesPerFolder
 } from '@/lib/services/upload-context';
+import { buildUploadUrl } from '@/lib/admin/upload-url';
 
 const DEFAULT_EXPIRY_HOURS = 24;
 const DEFAULT_EXPIRY_BY_AUDIENCE: Record<UploadAudience, number> = {
@@ -20,11 +21,6 @@ function computeExpiresAt(hours: number, audience: UploadAudience) {
   const safeHours = Number.isFinite(hours) && hours > 0 ? hours : fallback;
   const expires = new Date(Date.now() + safeHours * 60 * 60 * 1000);
   return expires.toISOString();
-}
-
-function buildUploadUrl(token: string) {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'http://localhost:3002';
-  return `${base.replace(/\/$/, '')}/upload?token=${token}`;
 }
 
 async function expireOverdueTokens(paymentStageId: string) {

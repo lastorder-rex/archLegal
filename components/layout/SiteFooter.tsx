@@ -7,8 +7,37 @@ export function SiteFooter() {
     <footer className="border-t border-border bg-background/80">
       <div className="mx-auto w-full max-w-6xl px-6 py-10 text-sm text-muted-foreground">
         <div className="space-y-10">
-          
-          
+          <nav aria-label="주요 메뉴" className="flex flex-wrap gap-x-5 gap-y-2">
+            <Link href="/special-act" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              특별조치법 안내
+            </Link>
+            <Link href="/guide" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              양성화 가이드
+            </Link>
+            <Link href="/region" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              지역별 위반현황
+            </Link>
+            <Link href="/qna3d" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              3D 위반사례
+            </Link>
+            <Link href="/check" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              1분 자가진단
+            </Link>
+            <Link href="/calc" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              이행강제금 계산기
+            </Link>
+            <Link href="/enforcement-stats" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              이행강제금 통계
+            </Link>
+            <Link href="/card-news" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              핵심정리
+            </Link>
+            <Link href="/campaign" className="font-medium text-foreground transition-colors hover:text-primary hover:underline">
+              캠페인
+            </Link>
+          </nav>
+
+
           {/*
                 <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-primary">회사 소개</p>
@@ -24,11 +53,11 @@ export function SiteFooter() {
              
               <div className="space-y-1 leading-relaxed">
                 <p> &copy; {currentYear} ArchLegal. All rights reserved.</p>
-                <p>양성화.com은 인건(仁建)의 위반건축물·불법건축물 양성화 상담 서비스입니다.</p>
-                <p>사업자등록번호: 120-81-59920 | 
+                <p>양성화.com·인건(仁建)은 ㈜인터월드엔지니어링건축사사무소가 운영하는 위반건축물·불법건축물 양성화 상담 서비스의 브랜드명입니다.</p>
+                <p>상호: ㈜인터월드엔지니어링건축사사무소 |
                 대표: 김형준 |
-                호스팅서비스: (주) 인터월드엔지니어링건축사사무소 </p>
-                <p>주소: 서울특별시 금천구 벚꽃로 286, 1407호(가산동, 삼성리더스타워)</p>
+                사업자등록번호: 120-81-59920</p>
+                <p>주소: 서울특별시 금천구 벚꽃로 286, 1407호(가산동, 삼성리더스타워) | 고객센터: 02-6348-1009</p>
               </div>
             </div>
 

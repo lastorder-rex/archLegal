@@ -18,9 +18,10 @@ interface ConsultationModalProps {
   initialMessage?: string;
   initialAddress?: AddressSearchResult | null;
   initialAddressDetail?: string;
+  breakoutLogin?: boolean;
 }
 
-export function ConsultationModal({ open, onClose, nextPath = '/', initialMessage = '', initialAddress, initialAddressDetail }: ConsultationModalProps) {
+export function ConsultationModal({ open, onClose, nextPath = '/', initialMessage = '', initialAddress, initialAddressDetail, breakoutLogin = false }: ConsultationModalProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,18 +86,21 @@ export function ConsultationModal({ open, onClose, nextPath = '/', initialMessag
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
-        options: getKakaoOAuthOptions(nextPath)
+        options: { ...getKakaoOAuthOptions(nextPath), skipBrowserRedirect: breakoutLogin }
       });
 
       if (error) {
         console.error('Kakao sign-in failed', error);
+      } else if (breakoutLogin && data?.url && typeof window !== 'undefined') {
+        // iframe(임베드) 안에서는 카카오가 프레임 로드를 막으므로 상위창을 OAuth로 이동
+        (window.top ?? window).location.href = data.url;
       }
     } finally {
       setLoading(false);
     }
-  }, [nextPath, supabase]);
+  }, [nextPath, supabase, breakoutLogin]);
 
   return (
     <Transition appear show={open} as={Fragment}>

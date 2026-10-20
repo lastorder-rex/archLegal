@@ -1,29 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
-
-interface Admin {
-  id: string;
-  username: string;
-}
-
-interface User {
-  id: string;
-  legal_name: string;
-  email: string;
-  phone: string;
-  birth_date: string | null;
-  created_at: string;
-  last_sign_in_at: string;
-  consultation_count: number;
-  payment_count: number;
-}
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
+import Pagination from '@/components/supercore/Pagination';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import type { User } from '@/types/admin';
+import { formatDateTimeShort as formatDateTime, formatDate } from '@/lib/admin/format';
 
 interface SearchFilters {
   dateFrom: string;
@@ -33,9 +21,6 @@ interface SearchFilters {
 
 export default function UsersPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [admin, setAdmin] = useState<Admin | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -57,12 +42,19 @@ export default function UsersPage() {
     ...getDefaultDates(),
     name: ''
   });
+
+  const searchFiltersRef = useRef<SearchFilters>(searchFilters);
+
+  useEffect(() => {
+    searchFiltersRef.current = searchFilters;
+  }, [searchFilters]);
+
   const itemsPerPage = 15;
 
   const loadUsers = useCallback(async (page = 1, filters?: SearchFilters) => {
     setIsLoadingUsers(true);
     try {
-      const effectiveFilters = filters ?? searchFilters;
+      const effectiveFilters = filters ?? searchFiltersRef.current;
       const params = new URLSearchParams({
         page: page.toString(),
         limit: itemsPerPage.toString(),
@@ -89,33 +81,10 @@ export default function UsersPage() {
     } finally {
       setIsLoadingUsers(false);
     }
-  }, [itemsPerPage, searchFilters]);
+  }, [itemsPerPage]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAdmin(data.admin);
-        setIsAuthenticated(true);
-        await loadUsers();
-      } else {
-        router.push('/supercore');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadUsers, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(() => loadUsers(), [loadUsers]);
+  const { isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   const handleSearch = () => {
     loadUsers(1, searchFilters);
@@ -137,32 +106,10 @@ export default function UsersPage() {
     });
   };
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear().toString().slice(-2);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear().toString().slice(-2);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+  if (isCheckingAuth) {
+    return <AdminLoadingScreen />;
   }
 
   return (
@@ -305,52 +252,7 @@ export default function UsersPage() {
 
             {/* Pagination */}
             {!isLoadingUsers && totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-center gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => loadUsers(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  이전
-                </Button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant="primary"
-                        size="sm"
-                        onClick={() => loadUsers(pageNum)}
-                        className="w-10"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => loadUsers(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  다음
-                </Button>
-              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} onChange={loadUsers} />
             )}
           </div>
         </div>

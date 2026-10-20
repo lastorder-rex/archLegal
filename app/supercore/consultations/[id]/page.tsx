@@ -5,13 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { Dialog, Transition } from '@headlessui/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getFileUrl } from '@/lib/utils/file-upload';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
-
-interface Admin {
-  id: string;
-  username: string;
-}
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { formatAmountWonLocale as formatCurrency, formatDateTimeLocale as formatDateTime } from '@/lib/admin/format';
 
 interface Consultation {
   id: string;
@@ -53,6 +50,26 @@ interface PaymentStage {
   updatedAt: string | null;
 }
 
+type ViolationCheckStatus =
+  | 'idle'
+  | 'loading'
+  | 'violation'
+  | 'not_found'
+  | 'no_data_region'
+  | 'no_code'
+  | 'error';
+
+interface ViolationBuilding {
+  jibun: string | null;
+  bld_nm: string | null;
+  use_name: string | null;
+  floors: number | null;
+  useapr_day: string | null;
+  collected_at: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
 const stageStatusMeta: Record<PaymentStageStatus, { text: string; className: string }> = {
   locked: { text: '비활성', className: 'bg-slate-200 text-slate-700' },
   requested: { text: '결제 요청됨', className: 'bg-amber-100 text-amber-700 border border-amber-200' },
@@ -60,24 +77,11 @@ const stageStatusMeta: Record<PaymentStageStatus, { text: string; className: str
   paid: { text: '결제 완료', className: 'bg-emerald-100 text-emerald-700 border border-emerald-200' }
 };
 
-const formatCurrency = (value: number | null | undefined) => {
-  if (value === null || value === undefined) return '-';
-  return `${value.toLocaleString('ko-KR')}원`;
-};
-
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) return '-';
-  return new Date(value).toLocaleString('ko-KR');
-};
-
 export default function ConsultationDetailPage() {
   const router = useRouter();
   const params = useParams();
   const consultationId = params.id as string;
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [admin, setAdmin] = useState<Admin | null>(null);
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [isLoadingConsultation, setIsLoadingConsultation] = useState(false);
   const [paymentStages, setPaymentStages] = useState<PaymentStage[]>([]);
@@ -88,16 +92,34 @@ export default function ConsultationDetailPage() {
   const [cancellingStageId, setCancellingStageId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'info' | 'error'; message: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [violationStatus, setViolationStatus] = useState<ViolationCheckStatus>('idle');
+  const [violationBuilding, setViolationBuilding] = useState<ViolationBuilding | null>(null);
 
   const downloadAttachment = async (attachment: { name: string; size: number; type: string; storagePath: string }) => {
     try {
-      const result = await getFileUrl(attachment.storagePath);
-      if (!result.url) {
-        alert(`다운로드 실패: ${result.error}`);
+      const urlResponse = await fetch(
+        `/api/admin/consultations/${consultationId}/attachment-url`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storagePath: attachment.storagePath })
+        }
+      );
+
+      if (!urlResponse.ok) {
+        const errorData = await urlResponse.json().catch(() => ({}));
+        alert(`다운로드 실패: ${errorData.error ?? '첨부파일 URL을 가져올 수 없습니다.'}`);
         return;
       }
 
-      const response = await fetch(result.url);
+      const { url } = await urlResponse.json();
+      if (!url) {
+        alert('다운로드 실패: 첨부파일 URL을 가져올 수 없습니다.');
+        return;
+      }
+
+      const response = await fetch(url);
       if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
 
       const blob = await response.blob();
@@ -158,32 +180,8 @@ export default function ConsultationDetailPage() {
     }
   }, [consultationId, router]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/supercore');
-        return;
-      }
-
-      const data = await response.json();
-      setAdmin(data.admin);
-      setIsAuthenticated(true);
-      await loadConsultation();
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadConsultation, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(() => loadConsultation(), [loadConsultation]);
+  const { isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   useEffect(() => {
     if (!toast) return;
@@ -192,6 +190,39 @@ export default function ConsultationDetailPage() {
     }, 4000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  // 상세 진입/상담 로드 시마다 위반건축물 등재 여부를 fresh 하게 재검사한다.
+  useEffect(() => {
+    if (!consultation?.id) return;
+    let cancelled = false;
+
+    setViolationStatus('loading');
+    setViolationBuilding(null);
+
+    (async () => {
+      try {
+        const response = await fetch(
+          `/api/admin/consultations/${consultation.id}/violation-check`,
+          { credentials: 'include' }
+        );
+        if (!response.ok) throw new Error('violation check failed');
+        const data = await response.json();
+        if (cancelled) return;
+        setViolationStatus((data?.status as ViolationCheckStatus) ?? 'error');
+        setViolationBuilding(data?.building ?? null);
+      } catch (error) {
+        console.error('Violation check error:', error);
+        if (!cancelled) {
+          setViolationStatus('error');
+          setViolationBuilding(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [consultation?.id]);
 
   const requestableStages = useMemo(() => {
     if (!paymentStages.length) return [];
@@ -321,12 +352,8 @@ export default function ConsultationDetailPage() {
     }
   };
 
-  if (isLoading || isLoadingConsultation) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+  if (isCheckingAuth || isLoadingConsultation) {
+    return <AdminLoadingScreen />;
   }
 
   if (!consultation) {
@@ -381,6 +408,46 @@ export default function ConsultationDetailPage() {
               {consultation.address_detail ? (
                 <p className="text-sm text-slate-700 mt-1">{consultation.address_detail}</p>
               ) : null}
+
+              {/* 위반건축물 등재 여부 */}
+              <div className="mt-2">
+                {violationStatus === 'loading' ? (
+                  <p className="text-xs text-slate-500">위반건축물 조회 중…</p>
+                ) : violationStatus === 'violation' ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-full border border-red-200 bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+                      🚨 위반건축물 등재
+                    </span>
+                    <span className="text-xs text-slate-600">
+                      {[
+                        violationBuilding?.jibun,
+                        violationBuilding?.use_name,
+                        violationBuilding?.floors != null ? `${violationBuilding.floors}층` : null,
+                        violationBuilding?.collected_at
+                          ? violationBuilding.collected_at.slice(0, 10)
+                          : null
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  </div>
+                ) : violationStatus === 'not_found' ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                      위반건축물 등재 없음
+                    </span>
+                    <span className="text-xs text-slate-400">(수집 데이터 기준)</span>
+                  </div>
+                ) : violationStatus === 'no_data_region' ? (
+                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                    지역 데이터 미수집 — 판단 불가
+                  </span>
+                ) : violationStatus === 'no_code' || violationStatus === 'error' ? (
+                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                    위반 여부 확인 불가
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             <div className="rounded-md border border-border bg-muted/30 p-4 space-y-3">
@@ -401,35 +468,6 @@ export default function ConsultationDetailPage() {
             </div>
           </div>
         </div>
-
-        {/* 건축물 정보 */}
-        {/* <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">건축물 정보</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-slate-600">주요 용도</p>
-              <p className="text-base font-medium text-slate-900">{consultation.main_purps}</p>
-            </div>
-            {consultation.tot_area && (
-              <div>
-                <p className="text-sm text-slate-600">연면적</p>
-                <p className="text-base font-medium text-slate-900">{consultation.tot_area.toFixed(2)}㎡</p>
-              </div>
-            )}
-            {consultation.plat_area && (
-              <div>
-                <p className="text-sm text-slate-600">대지면적</p>
-                <p className="text-base font-medium text-slate-900">{consultation.plat_area.toFixed(2)}㎡</p>
-              </div>
-            )}
-            {consultation.ground_floor_cnt && (
-              <div>
-                <p className="text-sm text-slate-600">지상 층수</p>
-                <p className="text-base font-medium text-slate-900">{consultation.ground_floor_cnt}층</p>
-              </div>
-            )}
-          </div>
-        </div> */}
 
         {/* 상담 내용 */}
         {consultation.message && (

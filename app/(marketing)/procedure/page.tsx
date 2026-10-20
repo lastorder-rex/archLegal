@@ -1,6 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import { HouseHeart } from 'lucide-react';
+import { SiteHeader } from '@/components/layout/SiteHeader';
 
 const PDF_URL = 'https://rylclvdntoelktrameow.supabase.co/storage/v1/object/public/docu/interword_process.pdf';
 
@@ -12,26 +11,7 @@ export const metadata = {
 export default function ProcedurePage() {
   return (
     <>
-      <header className="sticky top-0 z-20 bg-background/90 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-muted-foreground transition hover:text-primary"
-          >
-            <Image src="/docu/logo.png" alt="" width={28} height={28} aria-hidden="true" />
-            <span>양성화.com</span>
-          </Link>
-          <nav className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 transition hover:border-primary hover:text-primary"
-            >
-              <HouseHeart className="h-4 w-4" aria-hidden="true" />
-              홈으로 돌아가기
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="min-h-screen bg-background">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pt-2 pb-0">

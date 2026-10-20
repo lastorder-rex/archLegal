@@ -1,6 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { withSupabaseAuth } from '@/lib/auth/server-auth';
+import { createSupabaseAdminClient } from '@/supabase/admin';
+
+/**
+ * 결제잠금 검사: 결제완료(paid_at 존재 && canceled_at 없음) 상담글은 수정/삭제 금지.
+ * 잠금이면 403 응답을 반환하고, 조회 에러면 500, 잠금이 아니면 null을 반환한다.
+ * RLS 우회를 위해 admin 클라이언트로 user_payment_stages를 확인한다.
+ */
+async function assertNotPaidLocked(
+  consultationId: string
+): Promise<NextResponse | null> {
+  const admin = createSupabaseAdminClient();
+
+  const { count, error } = await admin
+    .from('user_payment_stages')
+    .select('id', { count: 'exact', head: true })
+    .eq('consultation_id', consultationId)
+    .not('paid_at', 'is', null)
+    .is('canceled_at', null);
+
+  if (error) {
+    console.error('Payment lock check error:', error);
+    return NextResponse.json(
+      { error: '결제 상태 확인 중 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+
+  if ((count ?? 0) > 0) {
+    return NextResponse.json(
+      {
+        error:
+          '결제가 완료된 상담은 수정/삭제할 수 없습니다. 결제 취소 후 다시 시도해주세요.'
+      },
+      { status: 403 }
+    );
+  }
+
+  return null;
+}
 
 /**
  * 상담 메시지 입력 필터링 (서버 측) - SQL injection 및 XSS 방지
@@ -30,6 +69,9 @@ export async function PATCH(
     return await withSupabaseAuth(request, async ({ supabase, userId }) => {
       const consultationId = params.id;
       const body: UpdateConsultationRequest = await request.json();
+
+      const paidLockResponse = await assertNotPaidLocked(consultationId);
+      if (paidLockResponse) return paidLockResponse;
 
       if (body.message !== undefined) {
         if (!body.message || typeof body.message !== 'string' || body.message.trim().length === 0) {
@@ -115,6 +157,9 @@ export async function DELETE(
   try {
     return await withSupabaseAuth(request, async ({ supabase, userId }) => {
       const consultationId = params.id;
+
+      const paidLockResponse = await assertNotPaidLocked(consultationId);
+      if (paidLockResponse) return paidLockResponse;
 
       const { data: consultation, error: deleteError } = await supabase
         .from('consultations')

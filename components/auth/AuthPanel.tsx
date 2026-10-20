@@ -115,12 +115,19 @@ export default function AuthPanel({ sessionUser, profile, authError }: Props) {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">카카오로 로그인</h1>
-        <p className="text-sm text-muted-foreground">로그인과 회원가입이 한 번에 진행됩니다.</p>
+      <header className="space-y-1.5 text-center">
+        <h1 className="text-2xl font-bold tracking-tight">로그인 / 회원가입</h1>
+        <p className="text-sm text-muted-foreground">카카오로 3초 만에 — 로그인과 회원가입이 한 번에 진행됩니다.</p>
       </header>
-      <Button onClick={handleSignIn} disabled={loading}>
-        {loading ? '카카오 로그인 준비중...' : '카카오 계정으로 시작하기'}
+      <Button
+        onClick={handleSignIn}
+        disabled={loading}
+        className="h-12 w-full gap-2.5 bg-[#FEE500] text-[15px] font-bold text-[#181600] shadow-sm hover:bg-[#f4dc00]"
+      >
+        <span className="grid h-5 w-7 flex-none place-items-center rounded-md bg-[#181600] text-[9px] font-black tracking-tight text-[#FEE500]">
+          TALK
+        </span>
+        {loading ? '카카오 로그인 준비중...' : '카카오로 시작하기'}
       </Button>
       {authErrorMessage ? (
         <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">

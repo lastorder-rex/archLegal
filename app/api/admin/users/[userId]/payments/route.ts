@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,11 +10,9 @@ export async function GET(
 ) {
   try {
     // Check admin authentication
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('admin_session');
-
-    if (!sessionCookie) {
-      return NextResponse.json({ error: '인증되지 않았습니다.' }, { status: 401 });
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     const { userId } = await params;

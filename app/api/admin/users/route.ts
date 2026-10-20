@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -10,11 +10,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('admin_session');
-
-    if (!sessionCookie) {
-      return NextResponse.json({ error: '인증되지 않았습니다.' }, { status: 401 });
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     const { searchParams } = new URL(request.url);
@@ -91,7 +89,7 @@ export async function GET(request: NextRequest) {
       .from('consultations')
       .select('user_id')
       .in('user_id', authIds)
-      .is('deleted_at', null);
+      .eq('is_del', 'N'); // 상담 soft-delete 판정은 코드베이스 표준인 is_del 사용 (타 12곳과 통일)
 
     if (countError) {
       console.error('Consultation count error:', countError);

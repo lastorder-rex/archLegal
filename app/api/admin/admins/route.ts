@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-
-    // Verify admin authentication
-    const adminCookie = cookieStore.get('admin_session');
-    if (!adminCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     // Use service role to bypass RLS
@@ -44,12 +42,9 @@ export async function GET(request: NextRequest) {
 // Create new admin
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-
-    // Verify admin authentication
-    const adminCookie = cookieStore.get('admin_session');
-    if (!adminCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await verifyAdminSession();
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     // Use service role to bypass RLS
@@ -67,7 +62,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create admin user

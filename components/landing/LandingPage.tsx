@@ -17,20 +17,23 @@ import {
   ArrowBigDownDash,
   ArrowBigUpDash,
   Bell,
+  BookOpen,
   BookUp,
+  Building2,
   CheckLine,
   Handshake,
   Landmark,
-  Megaphone,
   MessageCircleMore,
   Menu,
   PenLine,
   Phone,
   PhoneCall,
+  Scale,
   Search,
   ShieldCheck,
   UserRoundCog,
-  Newspaper
+  Newspaper,
+  MapPinned
 } from 'lucide-react';
 import { SiteFooter } from '../layout/SiteFooter';
 import { CTAButton } from '../ui/cta-button';
@@ -44,6 +47,7 @@ import { Timeline } from './Timeline';
 import { FAQAccordion } from './FAQAccordion';
 import { handleUserLogout } from '@/lib/auth/logout';
 import { AuthButton } from './AuthButton';
+import { MyBuildingReport } from './MyBuildingReport';
 import { CONTACTS } from '@/lib/constants/contacts';
 import {
   interestItems,
@@ -55,7 +59,7 @@ import {
 
 type NavigationItem =
   | { label: string; type: 'modal'; icon?: ReactNode; requiresAuth?: boolean }
-  | { label: string; type: 'link'; href: string; icon?: ReactNode; requiresAuth?: boolean }
+  | { label: string; type: 'link'; href: string; icon?: ReactNode; requiresAuth?: boolean; compactLg?: boolean }
   | { label: string; type: 'anchor'; target: string; icon?: ReactNode; requiresAuth?: boolean }
   | { label: string; type: 'notification'; icon?: ReactNode; requiresAuth?: boolean };
 
@@ -72,16 +76,34 @@ const navigationItems: NavigationItem[] = [
     icon: <ShieldCheck className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
+    label: '특별조치법',
+    type: 'link',
+    href: '/special-act',
+    icon: <Scale className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '가이드',
+    type: 'link',
+    href: '/guide',
+    icon: <BookOpen className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '3D 위반사례',
+    type: 'link',
+    href: '/qna3d',
+    icon: <Building2 className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
+    label: '지역별 현황',
+    type: 'link',
+    href: '/region',
+    icon: <MapPinned className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
+  },
+  {
     label: '핵심정리',
     type: 'link',
     href: '/card-news',
     icon: <BookUp className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
-  },
-  {
-    label: '캠페인',
-    type: 'link',
-    href: '/campaign',
-    icon: <Megaphone className="h-6 w-6 lg:h-4 lg:w-4" aria-hidden />
   },
   {
     label: '언론보도',
@@ -94,7 +116,8 @@ const navigationItems: NavigationItem[] = [
     type: 'link',
     href: '/mypage',
     icon: <UserRoundCog className="h-4 w-4" aria-hidden />,
-    requiresAuth: true
+    requiresAuth: true,
+    compactLg: true // 로그인 시 폭 부족(lg)에서 아이콘만 — xl부터 라벨 표시
   },
   {
     label: '결제 알림',
@@ -153,7 +176,12 @@ const renderTimelineIcon = (type: TimelineIconKey) => {
   }
 };
 
-export function LandingPage() {
+export function LandingPage({
+  kickSlot,
+  addressHero = false,
+}: { kickSlot?: ReactNode; addressHero?: boolean } = {}) {
+  // 메인 히어로: 우측 카드를 「내 집 양성화 리포트」 주소박스로 교체. 좌측 1차 CTA는 기존 무료상담 팝업 유지.
+  const [addressOpenSignal, setAddressOpenSignal] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
   const [consultationNextPath, setConsultationNextPath] = useState('/?consultation=open');
   const [consultationInitialMessage, setConsultationInitialMessage] = useState('');
@@ -285,11 +313,30 @@ export function LandingPage() {
   }, [router]);
 
   const openConsultationModal = useCallback(() => {
+    // 일반 "무료 상담 신청" 진입 — 히어로 상담에서 남았을 수 있는 프리필을 비운다(스테일 방지).
+    setConsultationInitialAddress(null);
+    setConsultationInitialMessage('');
+    setConsultationInitialAddressDetail('');
     if (typeof window !== 'undefined') {
       setConsultationNextPath(`${window.location.pathname}?consultation=open`);
     }
     setModalOpen(true);
   }, []);
+
+  // 히어로 "내 집 양성화 리포트"의 "이 위반, 무료 상담받기" — /qna 이동 대신 상담 팝업을 프리필로 연다.
+  // 주소·메시지 백업(sessionStorage)은 MyBuildingReport가 수행 → 로그인 왕복 후에도 복원됨.
+  const handleHeroConsult = useCallback(
+    ({ address, message }: { address: import('@/lib/validations/consultation').AddressSearchResult; message: string }) => {
+      setConsultationInitialAddress(address);
+      setConsultationInitialMessage(message);
+      setConsultationInitialAddressDetail('');
+      if (typeof window !== 'undefined') {
+        setConsultationNextPath(`${window.location.pathname}?consultation=open`);
+      }
+      setModalOpen(true);
+    },
+    []
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -321,6 +368,13 @@ export function LandingPage() {
       } catch {}
       setModalOpen(true);
       url.searchParams.delete('consultation');
+      shouldCleanUrl = true;
+    }
+
+    if (url.searchParams.get('address') === 'open') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      setAddressOpenSignal(n => n + 1);
+      url.searchParams.delete('address');
       shouldCleanUrl = true;
     }
 
@@ -445,13 +499,13 @@ export function LandingPage() {
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6">
             <a
               href="#attention-section"
-              className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:text-white"
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-sm font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:text-white"
             >
               <Image src="/docu/logo.png" alt="" width={28} height={28} aria-hidden="true" />
               <span>양성화.com</span>
             </a>
             <div className="flex items-center gap-3">
-              <nav className="hidden items-center gap-6 text-base font-medium text-white/80 lg:flex">
+              <nav className="hidden items-center gap-3 text-sm font-medium text-white/80 lg:flex xl:gap-4">
                 {navigationItems.map(item => {
                   if (item.requiresAuth && !sessionUser) {
                     return null;
@@ -463,7 +517,7 @@ export function LandingPage() {
                         key={item.label}
                         type="button"
                         onClick={() => setAboutModalOpen(true)}
-                        className="flex items-center gap-2 bg-transparent transition hover:text-white focus:outline-none"
+                        className="flex items-center gap-2 whitespace-nowrap bg-transparent transition hover:text-white focus:outline-none"
                       >
                         {icon}
                         <span>{item.label}</span>
@@ -475,30 +529,34 @@ export function LandingPage() {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="flex items-center gap-2 transition hover:text-white"
+                        className="flex items-center gap-2 whitespace-nowrap transition hover:text-white"
+                        aria-label={item.compactLg ? item.label : undefined}
+                        title={item.compactLg ? item.label : undefined}
                       >
                         {icon}
-                        <span>{item.label}</span>
+                        <span className={item.compactLg ? 'hidden xl:inline' : undefined}>{item.label}</span>
                       </Link>
                     );
                   }
                   if (item.type === 'notification') {
+                    const badgeCount =
+                      paymentNoticeItems.reduce((sum, item) => sum + item.count, 0) + paymentNoticeOverflow;
                     return (
                       <div
                         key={item.label}
-                        className="relative flex items-center"
+                        className="relative flex shrink-0 items-center"
                         onMouseEnter={() => setPaymentNoticeOpen(true)}
                         onMouseLeave={() => setPaymentNoticeOpen(false)}
                       >
                         <Link
                           href="/mypage/payments"
-                          className="flex items-center gap-1 p-0 text-white opacity-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.65)] transition hover:text-white"
-                          aria-label="결제 알림"
+                          className="relative flex items-center p-0 text-white opacity-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.65)] transition hover:text-white"
+                          aria-label={`결제 알림${badgeCount > 0 ? ` ${badgeCount}건` : ''}`}
                         >
                           {icon}
-                          {paymentNoticeItems.length > 0 || paymentNoticeOverflow > 0 ? (
-                            <span className="text-sm">
-                              ({paymentNoticeItems.reduce((sum, item) => sum + item.count, 0) + paymentNoticeOverflow})
+                          {badgeCount > 0 ? (
+                            <span className="absolute -right-2.5 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                              {badgeCount}
                             </span>
                           ) : null}
                         </Link>
@@ -535,7 +593,7 @@ export function LandingPage() {
                       key={item.target}
                       href={`#${item.target}`}
                       onClick={event => handleSectionNavigate(event, item.target)}
-                      className="flex items-center gap-2 transition hover:text-white"
+                      className="flex items-center gap-2 whitespace-nowrap transition hover:text-white"
                     >
                       {icon}
                       <span>{item.label}</span>
@@ -670,11 +728,15 @@ export function LandingPage() {
         </header>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-24 sm:py-32 lg:flex-row lg:items-center lg:gap-16">
           <div className="flex-1 space-y-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground opacity-70">
+            <Link
+              href="/special-act"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground opacity-70 underline-offset-4 transition hover:opacity-100 hover:underline"
+            >
               법률 제21820호 · 2026.12.17 시행
-            </p>
+              <span className="normal-case tracking-normal opacity-80">자세히 보기 →</span>
+            </Link>
             <h1 id="attention-section" className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-              양성화, 이제 ‘법’으로 길이 열렸습니다
+              위반건축물 양성화, 이제 ‘법’으로 길이 열렸습니다
             </h1>
             <p className="text-lg text-primary-foreground opacity-80 sm:text-xl">
               「특정건축물 정리에 관한 특별조치법」이 2026년 6월 16일 제정·공포되어 12월 17일 시행됩니다.
@@ -682,13 +744,12 @@ export function LandingPage() {
               시행일부터 18개월 한시 — 지금 준비를 시작해야 안전하게 합법화할 수 있습니다.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
+              {/* 1차 CTA는 addressHero 여부와 무관하게 기존 랜딩의 무료상담 팝업으로 유지 */}
               <CTAButton className="sm:w-auto" onClick={openConsultationModal}>
                 무료 상담 신청
               </CTAButton>
               <CTAButton tone="secondary" className="sm:w-auto" asChild>
-                <Link href="/check" target="_blank" rel="noopener noreferrer">
-                  자가진단 하기
-                </Link>
+                <Link href="/check">1분 자가진단</Link>
               </CTAButton>
               {/* <CTAButton tone="secondary" className="sm:w-auto" asChild>
                 <Link href="/calc" target="_blank" rel="noopener noreferrer">
@@ -701,21 +762,25 @@ export function LandingPage() {
             </div>
           </div>
           <div className="flex-1">
-            <div className="rounded-3xl border border-white bg-white/10 p-8 shadow-2xl backdrop-blur">
-              <h2 className="text-xl font-semibold text-white">필수 일정 요약</h2>
-              <dl className="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-100 sm:grid-cols-2">
-                {interestItems.map((item) => (
-                  <div key={item.title} className="rounded-2xl border border-white bg-white/10 p-4">
-                    <dt className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-100">{item.title}</dt>
-                    <dd className="mt-2 text-xl font-semibold text-white">{item.highlight}</dd>
-                    <p className="mt-2 text-sm text-white/90">{item.description}</p>
-                  </div>
-                ))}
-              </dl>
-              <p className="mt-6 inline-flex items-center rounded-full border border-white/70 bg-white/90 px-4 py-1 text-sm font-semibold text-amber-500 shadow-sm">
-                빠르게 준비해야 안전합니다.
-              </p>
-            </div>
+            {addressHero ? (
+              <MyBuildingReport variant="hero" openSignal={addressOpenSignal} onConsult={handleHeroConsult} />
+            ) : (
+              <div className="rounded-3xl border border-white bg-white/10 p-8 shadow-2xl backdrop-blur">
+                <h2 className="text-xl font-semibold text-white">필수 일정 요약</h2>
+                <dl className="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-100 sm:grid-cols-2">
+                  {interestItems.map((item) => (
+                    <div key={item.title} className="rounded-2xl border border-white bg-white/10 p-4">
+                      <dt className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-100">{item.title}</dt>
+                      <dd className="mt-2 text-xl font-semibold text-white">{item.highlight}</dd>
+                      <p className="mt-2 text-sm text-white/90">{item.description}</p>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-6 inline-flex items-center rounded-full border border-white/70 bg-white/90 px-4 py-1 text-sm font-semibold text-amber-500 shadow-sm">
+                  빠르게 준비해야 안전합니다.
+                </p>
+              </div>
+            )}
           </div>
         </div>
         <div
@@ -731,6 +796,9 @@ export function LandingPage() {
           <span>Scroll</span>
         </div>
       </section>
+
+      {/* 히어로 아래 슬롯(3D 위반사례 등): 메인 /에서 전달됨. 미전달 호출부에선 렌더 안 됨 */}
+      {kickSlot}
 
       {/* Interest */}
       <section

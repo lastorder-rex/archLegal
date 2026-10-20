@@ -7,4 +7,23 @@ Disallow: /auth/
 
 Allow: /
 
+# AI 검색·답변 엔진(GEO) 명시 허용 — 콘텐츠/Q&A를 AI 답변에 노출.
+# robots 스펙상 봇은 자기 그룹만 보고 '*'를 무시하므로 disallow를 동일하게 미러링.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: Claude-Web
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Bingbot
+User-agent: CCBot
+Disallow: /api/
+Disallow: /supercore/
+Disallow: /auth/
+Allow: /
+
 Sitemap: https://www.archlegal.co.kr/sitemap.xml

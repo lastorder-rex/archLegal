@@ -34,8 +34,9 @@ export function MyPageShell({ profile, fallbackEmail, consultations, children }:
     setProfileState(profile);
   }, [profile]);
 
-  const activeTab: TabId =
-    tabs.find(tab => pathname === tab.href || pathname.startsWith(`${tab.href}/`))?.id ?? 'info';
+  const activeTab: TabId = pathname.startsWith('/request/history')
+    ? 'consultations'
+    : (tabs.find(tab => pathname === tab.href || pathname.startsWith(`${tab.href}/`))?.id ?? 'info');
 
   const contextValue = useMemo(
     () => ({

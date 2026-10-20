@@ -1,110 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Download, FileText, X } from 'lucide-react';
-import { getFileUrl, getFileIcon, formatFileSize, AttachmentFile } from '@/lib/utils/file-upload';
-import FileUpload from '@/components/consultation/FileUpload';
-// import { BuildingInfoDisplay } from '@/components/consultation/BuildingInfoDisplay';
+import { AttachmentFile } from '@/lib/utils/file-upload';
 import type { ConsultationRecord as ConsultationRecordType } from '@/lib/validations/consultation';
 import {
-  // BuildingSearchResult,
   consultationRecordSchema,
   filterMessageInput
 } from '@/lib/validations/consultation';
 import { useConsultationList } from '@/hooks/useConsultationList';
-
-type ConsultationRecord = ConsultationRecordType;
-type ConsultationAttachment = NonNullable<ConsultationRecord['attachments']>[number];
-
-interface EditFormState {
-  name: string;
-  phone: string;
-  email: string;
-  message: string;
-  attachments: ConsultationAttachment[];
-}
-
-/* function createBuildingDisplay(record: ConsultationRecord): BuildingSearchResult | null {
-  const info = record.building_info;
-  if (!info) {
-    return null;
-  }
-
-  const rawDataSecondary =
-    info && (info as any).rawData
-      ? (info as any).rawData.secondaryUse ?? (info as any).rawData.secondary_use ?? null
-      : null;
-
-  const secondaryUseValue =
-    (info as any).secondaryUse ??
-    (info as any).secondary_use ??
-    rawDataSecondary ??
-    null;
-
-  const mainPurpose = record.main_purps || info.mainPurpsCdNm || '정보없음';
-  const totalArea = info.totArea ?? record.tot_area ?? null;
-  const plotArea = info.platArea ?? record.plat_area ?? null;
-  const groundFloors = info.groundFloorCnt ?? record.ground_floor_cnt ?? null;
-  const undergroundFloors = info.ugrndFloorCnt ?? null;
-  const households = info.hhldCnt ?? null;
-
-  const addressInfo = info.addressInfo
-    ? {
-        sigunguCd: String((info.addressInfo as any)?.sigunguCd ?? record.address_code.sigunguCd),
-        bjdongCd: String((info.addressInfo as any)?.bjdongCd ?? record.address_code.bjdongCd),
-        platGbCd: String((info.addressInfo as any)?.platGbCd ?? record.address_code.platGbCd),
-        bun: String((info.addressInfo as any)?.bun ?? record.address_code.bun),
-        ji: String((info.addressInfo as any)?.ji ?? record.address_code.ji)
-      }
-    : {
-        sigunguCd: record.address_code.sigunguCd,
-        bjdongCd: record.address_code.bjdongCd,
-        platGbCd: record.address_code.platGbCd,
-        bun: record.address_code.bun,
-        ji: record.address_code.ji
-      };
-
-  const rawData = info.rawData
-    ? { ...info.rawData, source: (info as any).source || (info.rawData as any)?.source }
-    : { ...info, source: (info as any).source };
-
-  const source = (info as any).source || (rawData as any)?.source || undefined;
-
-  return {
-    building: {
-      mainPurpsCdNm: mainPurpose,
-      secondaryUse: secondaryUseValue,
-      totArea: totalArea,
-      platArea: plotArea,
-      groundFloorCnt: groundFloors,
-      ugrndFloorCnt: undergroundFloors,
-      hhldCnt: households,
-      fmlyNum: info.fmlyNum ?? null,
-      mainBldCnt: info.mainBldCnt ?? null,
-      atchBldCnt: info.atchBldCnt ?? null,
-      platPlc: info.platPlc ?? record.address,
-      addressInfo,
-      rawData,
-      source
-    },
-    summary: {
-      mainPurpose,
-      secondaryUse: secondaryUseValue,
-      totalArea,
-      plotArea,
-      floors: {
-        ground: groundFloors,
-        underground: undergroundFloors
-      },
-      households
-    }
-  };
-} */
+import type { ConsultationRecord, ConsultationAttachment, EditFormState } from './types';
+import { downloadAttachment } from './utils';
+import { useConsultationHistoryInit } from './useConsultationHistoryInit';
+import { ConsultationRecordCard } from './ConsultationRecordCard';
+import { ConsultationEditForm } from './ConsultationEditForm';
 
 export default function ConsultationHistoryPage() {
   const router = useRouter();
@@ -125,10 +35,12 @@ export default function ConsultationHistoryPage() {
       router.push('/login?redirect=/request/history');
     }
   });
-  const [initializing, setInitializing] = useState(true);
-  const [pageError, setPageError] = useState<string | null>(null);
+  const { initializing, pageError, user } = useConsultationHistoryInit({
+    refreshConsultations,
+    consultationsError,
+    setConsultationsError
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [user, setUser] = useState<{ id: string } | null>(null);
   const [formState, setFormState] = useState<EditFormState>({
     name: '',
     phone: '',
@@ -139,95 +51,6 @@ export default function ConsultationHistoryPage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [newUploadedFiles, setNewUploadedFiles] = useState<ConsultationAttachment[]>([]);
-
-  // Download attachment file
-  const downloadAttachment = async (attachment: ConsultationAttachment) => {
-    try {
-      const result = await getFileUrl(attachment.storagePath);
-      if (result.url) {
-        // Fetch file as blob to force download instead of opening in browser
-        const response = await fetch(result.url);
-        if (!response.ok) {
-          throw new Error('파일 다운로드에 실패했습니다.');
-        }
-
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = attachment.name;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-
-        // Cleanup
-        setTimeout(() => {
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(blobUrl);
-        }, 100);
-      } else {
-        alert(`다운로드 실패: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Download error:', error);
-      alert('파일 다운로드 중 오류가 발생했습니다.');
-    }
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const initialize = async () => {
-      try {
-        setPageError(null);
-        setConsultationsError(null);
-
-        const userResponse = await fetch('/api/debug/user-info', {
-          credentials: 'include'
-        });
-
-        if (userResponse.status === 401) {
-          if (!cancelled) {
-            setPageError('로그인이 필요합니다.');
-            router.push('/login?redirect=/request/history');
-          }
-          return;
-        }
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          if (!cancelled) {
-            setUser({ id: userData.user_id });
-          }
-        }
-
-        await refreshConsultations();
-      } catch (err) {
-        if (!cancelled) {
-          const message =
-            err instanceof Error ? err.message : '상담 내역을 가져오지 못했습니다.';
-          setPageError(message);
-        }
-      } finally {
-        if (!cancelled) {
-          setInitializing(false);
-        }
-      }
-    };
-
-    initialize().catch(() => undefined);
-
-    return () => {
-      cancelled = true;
-    };
-  }, [refreshConsultations, router, setConsultationsError]);
-
-  useEffect(() => {
-    if (consultationsError) {
-      setPageError(consultationsError);
-    }
-  }, [consultationsError]);
 
   const handleStartEdit = (record: ConsultationRecord) => {
     const existingAttachments = (record.attachments ?? []) as ConsultationAttachment[];
@@ -272,6 +95,13 @@ export default function ConsultationHistoryPage() {
       }));
 
     setFormState(prev => ({ ...prev, attachments: formattedAttachments }));
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setFormState(prev => ({
+      ...prev,
+      attachments: (prev.attachments ?? []).filter((_, i) => i !== index),
+    }));
   };
 
   const handleUpdate = async (record: ConsultationRecord) => {
@@ -412,8 +242,6 @@ export default function ConsultationHistoryPage() {
     );
   }
 
-  const currentAttachments = formState.attachments ?? [];
-
   return (
     <section className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
       <header className="space-y-1">
@@ -455,9 +283,6 @@ export default function ConsultationHistoryPage() {
           {recordsToDisplay.map(record => {
             const isEditing = editingId === record.id;
             const createdAt = new Date(record.created_at);
-            // const rawData = record.building_info?.rawData as { status?: string } | null;
-            // const isBuildingUnavailable = rawData && typeof rawData === 'object' && rawData.status === 'UNAVAILABLE';
-            // const buildingInfoForDisplay = createBuildingDisplay(record);
 
             return (
               <div key={record.id} className="border border-border rounded-lg p-5 space-y-4 bg-card shadow-md">
@@ -477,210 +302,52 @@ export default function ConsultationHistoryPage() {
                       )}
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      variant="outline"
-                      className="md:w-auto"
-                      onClick={() => (isEditing ? resetEditing() : handleStartEdit(record))}
-                    >
-                      {isEditing ? '취소' : '수정'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="md:w-auto border-destructive text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDelete(record)}
-                      disabled={submitting}
-                    >
-                      삭제
-                    </Button>
-                  </div>
+
+                  {record.payment_locked ? (
+                    <span className="inline-flex items-center self-start rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      결제 완료 (수정·삭제 불가)
+                    </span>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        variant="outline"
+                        className="md:w-auto"
+                        onClick={() => (isEditing ? resetEditing() : handleStartEdit(record))}
+                      >
+                        {isEditing ? '취소' : '수정'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="md:w-auto border-destructive text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(record)}
+                        disabled={submitting}
+                      >
+                        삭제
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
-                {/* {buildingInfoForDisplay ? (
-                  <div className="rounded-lg border border-border bg-muted/20 p-4">
-                    <BuildingInfoDisplay buildingInfo={buildingInfoForDisplay} />
-                  </div>
-                ) : (
-                  <div className="text-xs text-muted-foreground bg-muted/40 p-3 rounded-md">
-                    저장된 건축물 표제부 정보를 찾지 못했습니다. 상담 등록 당시 주소를 다시 조회해 보세요.
-                  </div>
-                )} */}
-
                 {!isEditing && (
-                  <>
-                    {/* {isBuildingUnavailable && (
-                      <div className="text-xs text-muted-foreground bg-muted/40 border border-dashed border-border/60 rounded-md p-3">
-                        건축물대장 API 장애로 상세 건축물 정보를 확인하지 못했습니다. 상담 시 추가 확인이 필요합니다.
-                      </div>
-                    )} */}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div className="space-y-1">
-                        <p className="text-muted-foreground">이름</p>
-                        <p className="font-medium">{record.name}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-muted-foreground">연락처</p>
-                        <p className="font-medium">{record.phone}</p>
-                      </div>
-                      {record.email && (
-                        <div className="space-y-1">
-                          <p className="text-muted-foreground">이메일</p>
-                          <p className="font-medium">{record.email}</p>
-                        </div>
-                      )}
-                      
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">상담 요청 내용</p>
-                      <div className="rounded-md border border-border bg-muted/10 p-3 text-sm whitespace-pre-wrap">
-                        {record.message ? record.message : '추가 요청사항이 없습니다.'}
-                      </div>
-                    </div>
-
-                    {/* Attachments Section */}
-                    {((record.attachments ?? []) as ConsultationAttachment[]).length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">첨부파일</p>
-                        <div className="flex flex-wrap gap-2">
-                          {((record.attachments ?? []) as ConsultationAttachment[]).map((attachment, index) => (
-                            <button
-                              key={index}
-                              onClick={() => downloadAttachment(attachment)}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
-                            >
-                              <span>{getFileIcon(attachment.type ?? '')}</span>
-                              <span className="truncate max-w-[120px]">{attachment.name}</span>
-                              <Download className="h-3 w-3 flex-shrink-0" />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
+                  <ConsultationRecordCard
+                    record={record}
+                    onDownloadAttachment={downloadAttachment}
+                  />
                 )}
 
                 {isEditing && (
-                  <div className="border-t border-border pt-4 space-y-4">
-                    <h3 className="text-md font-semibold">상담 요청 수정</h3>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`edit-message-${record.id}`}>
-                          상담 요청사항 <span className="text-destructive">*</span>
-                        </Label>
-                        <Textarea
-                          id={`edit-message-${record.id}`}
-                          value={formState.message}
-                          onChange={e => handleInputChange('message', e.target.value)}
-                          rows={4}
-                        />
-                        <p className="text-xs text-muted-foreground text-right">
-                          {formState.message.length}/1000
-                        </p>
-                      </div>
-
-                      {/* Attachments Edit Section */}
-                      <div className="space-y-2 md:col-span-2">
-                        <Label>첨부파일 관리</Label>
-                <div className="rounded-md border border-border bg-muted/5 p-4 space-y-3">
-                          {/* Existing Attachments */}
-                          {formState.attachments.length > 0 && (
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium">기존 첨부파일</p>
-                              <div className="space-y-2">
-                                {formState.attachments.map((attachment, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-center gap-3 p-3 border border-border rounded-lg bg-background"
-                                  >
-                                    {/* File Icon/Preview */}
-                                    <div className="flex-shrink-0">
-                                      {(attachment.type ?? '').startsWith('image/') ? (
-                                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded">
-                                      <span className="text-lg">{getFileIcon(attachment.type ?? '')}</span>
-                                        </div>
-                                      ) : (
-                                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded">
-                                          <span className="text-lg">{getFileIcon(attachment.type ?? '')}</span>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* File Info */}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium truncate">{attachment.name}</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {formatFileSize(attachment.size ?? 0)}
-                                      </p>
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="flex items-center gap-1">
-                                      {/* Remove Button */}
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          const newAttachments = currentAttachments.filter((_, i) => i !== index);
-                                          setFormState(prev => ({ ...prev, attachments: newAttachments }));
-                                        }}
-                                        disabled={submitting}
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Add New Files */}
-                          {currentAttachments.length < 3 && (
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium">새 파일 추가</p>
-                              <FileUpload
-                                key={`file-upload-${record.id}-${editingId}`}
-                                userId={user?.id || ''}
-                                consultationId={record.id}
-                                initialFiles={[]}
-                                onFilesChange={(newFiles) => {
-                                  // 새로 업로드한 파일만 별도 state에 저장
-                                  const completedFiles = newFiles
-                                    .filter(file => file.uploadStatus === 'completed' && file.storagePath)
-                                    .map(file => ({
-                                      name: file.name,
-                                      size: file.size,
-                                      type: file.type,
-                                      storagePath: file.storagePath!
-                                    }));
-
-                                  setNewUploadedFiles(completedFiles);
-                                }}
-                                disabled={submitting}
-                              />
-                            </div>
-                          )}
-
-                          {currentAttachments.length >= 3 && (
-                            <p className="text-sm text-muted-foreground">
-                              최대 3개 파일까지 첨부 가능합니다. 새 파일을 추가하려면 기존 파일을 삭제해주세요.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" className="md:w-auto" onClick={resetEditing} disabled={submitting}>
-                        취소
-                      </Button>
-                      <Button className="md:w-auto" onClick={() => handleUpdate(record)} disabled={submitting}>
-                        {submitting ? '저장 중...' : '저장'}
-                      </Button>
-                    </div>
-                  </div>
+                  <ConsultationEditForm
+                    record={record}
+                    formState={formState}
+                    submitting={submitting}
+                    userId={user?.id || ''}
+                    editingId={editingId}
+                    onMessageChange={value => handleInputChange('message', value)}
+                    onRemoveAttachment={handleRemoveAttachment}
+                    onNewFilesChange={setNewUploadedFiles}
+                    onCancel={resetEditing}
+                    onSubmit={() => handleUpdate(record)}
+                  />
                 )}
               </div>
             );

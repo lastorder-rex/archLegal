@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/utils/supabase-admin';
 import { paymentStageStatusSchema } from '@/lib/validations/payment';
-import { verifyAdminSession } from '@/lib/utils/admin-auth';
+import { verifyAdminSession } from '@/lib/admin/auth';
 
 export async function GET(
   request: NextRequest,

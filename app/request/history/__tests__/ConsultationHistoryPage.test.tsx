@@ -128,7 +128,7 @@ describe('ConsultationHistoryPage', () => {
     const fetchMock = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString();
 
-      if (url.endsWith('/api/debug/user-info')) {
+      if (url.endsWith('/api/user/me')) {
         return {
           ok: true,
           json: async () => ({ user_id: 'user-1' }),
@@ -195,7 +195,7 @@ describe('ConsultationHistoryPage', () => {
     const fetchMock = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString();
 
-      if (url.endsWith('/api/debug/user-info')) {
+      if (url.endsWith('/api/user/me')) {
         return {
           ok: true,
           json: async () => ({ user_id: 'user-1' }),

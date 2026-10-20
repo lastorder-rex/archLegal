@@ -801,6 +801,24 @@
       flex: 0 0 auto;
     }
 
+    .diagnosis-root .option-card .option-icon.option-icon-image,
+    .diagnosis-root.dark-mode .option-card .option-icon.option-icon-image {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      color: inherit;
+      background: transparent;
+      box-shadow: none;
+      overflow: hidden;
+    }
+
+    .diagnosis-root .option-icon-image img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
     .diagnosis-root .option-content strong {
       display: block;
       margin-bottom: 4px;

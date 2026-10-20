@@ -3,26 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Comment1, CreditCardMultiple } from 'lineicons-react';
-
-interface UserDetail {
-  id: string;
-  legal_name: string;
-  email: string;
-  phone: string | null;
-  birth_date: string | null;
-  profile_completed: boolean;
-  profile_completed_at: string | null;
-  consent_terms_at: string | null;
-  consent_privacy_at: string | null;
-  created_at: string;
-  updated_at: string | null;
-  last_sign_in_at: string | null;
-  email_confirmed_at: string | null;
-  user_metadata: Record<string, unknown>;
-  app_metadata: Record<string, unknown>;
-}
+import type { UserDetail } from '@/types/admin';
+import { formatDateTimeShortSafe as formatDateTime } from '@/lib/admin/format';
 
 interface UserDetailResponse {
   user: UserDetail;
@@ -43,18 +28,6 @@ export default function UserDetailPage() {
   const [userDetail, setUserDetail] = useState<UserDetail | null>(null);
   const [stats, setStats] = useState<UserDetailResponse['stats'] | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return '-';
-    const year = date.getFullYear().toString().slice(-2);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
 
   const loadUserDetail = useCallback(async () => {
     try {
@@ -118,11 +91,7 @@ export default function UserDetailPage() {
   }, [checkAuth]);
 
   if (isLoading && !userDetail) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+    return <AdminLoadingScreen />;
   }
 
   return (

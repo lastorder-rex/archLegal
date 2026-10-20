@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
-import { ClipboardCheck, FileText, HouseHeart, MessageCircle } from 'lucide-react';
+import { ClipboardCheck, FileText, MessageCircle } from 'lucide-react';
+import { SiteHeader } from '@/components/layout/SiteHeader';
 import { CardNewsCarousel } from '@/components/card-news/CardNewsCarousel';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 
@@ -24,26 +24,7 @@ export const metadata: Metadata = {
 export default function CardNewsPage() {
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.35em] text-muted-foreground transition hover:text-primary"
-          >
-            <Image src="/docu/logo.png" alt="" width={28} height={28} aria-hidden="true" />
-            <span>양성화.com</span>
-          </Link>
-          <nav className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 transition hover:border-primary hover:text-primary"
-            >
-              <HouseHeart className="h-4 w-4" aria-hidden="true" />
-              홈으로 돌아가기
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="min-h-screen bg-background">
         <section className="border-b border-border bg-muted/30">

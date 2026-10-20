@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import SupercoreLayout from '@/components/supercore/SupercoreLayout';
+import AdminLoadingScreen from '@/components/supercore/AdminLoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check, X, Link as LinkIcon, Unplug } from 'lucide-react';
 import { CreditCardMultiple, Comment1, GoogleDrive, Link2AngularRight } from 'lineicons-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { statusLabelMap, formatDateTimeFullSafe as formatDateTime, formatDateTimeNoYear as formatDateTimeWithoutYear, formatAmountCurrency as formatAmount } from '@/lib/admin/format';
 
 interface DriveFolderChildSummary {
   id: string | null;
@@ -22,11 +25,6 @@ interface DriveFolderSummary {
     hasFiles: boolean | null;
     sampleFiles: { id: string; name: string }[];
   };
-}
-
-interface Admin {
-  id: string;
-  username: string;
 }
 
 interface PaymentDetail {
@@ -74,14 +72,6 @@ interface PaymentDetail {
   } | null;
 }
 
-const statusLabelMap: Record<string, string> = {
-  awaiting: '결제 대기',
-  requested: '요청됨',
-  paid: '결제 완료',
-  locked: '잠금',
-  canceled: '결제취소'
-};
-
 interface UploadTokenRow {
   id: string;
   token: string;
@@ -97,46 +87,13 @@ interface UploadTokenRow {
   maxFilesPerFolder: number;
 }
 
-function formatDateTime(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
-
-function formatDateTimeWithoutYear(value: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${month}-${day} ${hours}:${minutes}`;
-}
-
-function formatAmount(value: number | null) {
-  if (value === null || Number.isNaN(value)) {
-    return '-';
-  }
-  return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(value);
-}
-
 export default function AdminPaymentDetailPage() {
   const router = useRouter();
   const params = useParams();
   const paymentIdParam = params?.id;
   const paymentId = Array.isArray(paymentIdParam) ? paymentIdParam[0] : paymentIdParam;
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
-  const [admin, setAdmin] = useState<Admin | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isTokenLoading, setIsTokenLoading] = useState(false);
   const [uploadTokens, setUploadTokens] = useState<UploadTokenRow[]>([]);
@@ -204,33 +161,11 @@ export default function AdminPaymentDetailPage() {
     }
   }, [paymentId]);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/auth/verify', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/supercore');
-        return;
-      }
-
-      const data = await response.json();
-      setAdmin(data.admin);
-      setIsAuthenticated(true);
-      await loadPaymentDetail();
-      await loadUploadTokens();
-    } catch (error) {
-      console.error('관리자 인증 오류', error);
-      router.push('/supercore');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadPaymentDetail, loadUploadTokens, router]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const handleAuthReady = useCallback(async () => {
+    await loadPaymentDetail();
+    await loadUploadTokens();
+  }, [loadPaymentDetail, loadUploadTokens]);
+  const { isAuthenticated, isCheckingAuth } = useAdminAuth({ onReady: handleAuthReady });
 
   const handleCancelPayment = async () => {
     if (!paymentId) return;
@@ -354,12 +289,8 @@ export default function AdminPaymentDetailPage() {
     [loadUploadTokens, paymentId]
   );
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
+  if (isCheckingAuth) {
+    return <AdminLoadingScreen />;
   }
 
   if (!isAuthenticated) {
